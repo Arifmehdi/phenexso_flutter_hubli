@@ -9,6 +9,46 @@ class ProductDetailScreen extends StatelessWidget {
 
   const ProductDetailScreen({super.key, required this.product});
 
+  Widget _buildProductImage(String imageUrl) {
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        height: 300,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          height: 300,
+          color: Colors.grey[300],
+          child: const Center(
+            child: Icon(
+              Icons.image_not_supported,
+              size: 100,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+      );
+    } else {
+      return Image.network(
+        imageUrl,
+        height: 300,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          height: 300,
+          color: Colors.grey[300],
+          child: const Center(
+            child: Icon(
+              Icons.image_not_supported,
+              size: 100,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,23 +61,7 @@ class ProductDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.network(
-              product.imageUrl,
-              height: 300,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                height: 300,
-                color: Colors.grey[300],
-                child: const Center(
-                  child: Icon(
-                    Icons.image_not_supported,
-                    size: 100,
-                    color: Colors.grey,
-                  ),
-                ),
-              ),
-            ),
+            _buildProductImage(product.imageUrl),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(

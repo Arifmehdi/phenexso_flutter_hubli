@@ -93,6 +93,28 @@ class ProductGridItem extends StatelessWidget {
 
   const ProductGridItem({super.key, required this.product});
 
+  Widget _buildProductImage(String imageUrl) {
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        errorBuilder: (context, error, stackTrace) => const Center(
+          child: Icon(Icons.image_not_supported, size: 50),
+        ),
+      );
+    } else {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        errorBuilder: (context, error, stackTrace) => const Center(
+          child: Icon(Icons.image_not_supported, size: 50),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -111,14 +133,7 @@ class ProductGridItem extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(8.0)),
-                child: Image.network(
-                  product.imageUrl,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) => const Center(
-                    child: Icon(Icons.image_not_supported, size: 50),
-                  ),
-                ),
+                child: _buildProductImage(product.imageUrl),
               ),
             ),
             Padding(
