@@ -1,19 +1,17 @@
-class InventoryItem {
+class Product {
   final String id;
   final String name;
-  final String sku;
-  final int quantity;
   final double price;
+  final String imageUrl;
   final String category;
-  final String location;
+  final double rating;
 
-  InventoryItem({
+  Product({
     required this.id,
     required this.name,
-    required this.sku,
-    required this.quantity,
     required this.price,
+    required this.imageUrl,
     required this.category,
-    required this.location,
+    required this.rating,
   });
 }

@@ -1,4 +1,4 @@
 import 'package:flutter/material.dart';
 
-// Primary color for the Hubli app
-const Color appColorsPrimary = Color(0xFF72BF44);
+// Primary color for the E-commerce app (e.g., fresh produce green)
+const Color appColorsPrimary = Color(0xFF4CAF50); // A common green shade
