@@ -5,9 +5,25 @@ import 'package:hubli/screens/product_list_screen.dart';
 import 'package:hubli/screens/product_detail_screen.dart';
 import 'package:hubli/screens/cart_screen.dart';
 import 'package:hubli/models/product.dart'; // Import Product model for ProductDetailScreen arguments
+import 'package:provider/provider.dart';
+import 'package:hubli/providers/cart_provider.dart';
+import 'package:hubli/providers/order_provider.dart';
+
+import 'package:hubli/screens/order_confirmation_screen.dart';
+import 'package:hubli/screens/order_history_screen.dart';
+
+import 'package:hubli/screens/shipping_address_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => CartProvider()),
+        ChangeNotifierProvider(create: (context) => OrderProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -35,6 +51,9 @@ class MyApp extends StatelessWidget {
           return ProductDetailScreen(product: product);
         },
         '/cart': (context) => const CartScreen(),
+        '/order-confirmation': (context) => const OrderConfirmationScreen(),
+        '/shipping-address': (context) => const ShippingAddressScreen(),
+        '/orders': (context) => const OrderHistoryScreen(),
       },
     );
   }

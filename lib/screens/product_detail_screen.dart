@@ -3,6 +3,8 @@ import 'package:hubli/models/product.dart';
 import 'package:hubli/utils/colors.dart';
 import 'package:intl/intl.dart';
 import 'package:hubli/widgets/custom_app_bar.dart';
+import 'package:provider/provider.dart';
+import 'package:hubli/providers/cart_provider.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   final Product product;
@@ -118,10 +120,11 @@ class ProductDetailScreen extends StatelessWidget {
                   Center(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: Implement add to cart functionality
+                        Provider.of<CartProvider>(context, listen: false).addItem(product);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('${product.name} added to cart!'),
+                            duration: const Duration(seconds: 2),
                           ),
                         );
                       },

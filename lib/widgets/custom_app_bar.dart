@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hubli/providers/cart_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:badges/badges.dart' as badges;
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final TextEditingController searchController;
@@ -48,10 +51,28 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
       actions: [
+        Consumer<CartProvider>(
+          builder: (_, cart, ch) => badges.Badge(
+            badgeContent: Text(
+              cart.itemCount.toString(),
+              style: const TextStyle(color: Colors.white),
+            ),
+            position: badges.BadgePosition.topEnd(top: 0, end: 3),
+            showBadge: cart.itemCount > 0,
+            child: ch,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.shopping_cart),
+            onPressed: () {
+              Navigator.of(context).pushNamed('/cart');
+            },
+          ),
+        ),
         IconButton(
-          icon: const Icon(Icons.shopping_cart),
+          icon: const Icon(Icons.list_alt),
           onPressed: () {
-            Navigator.of(context).pushNamed('/cart');
+            debugPrint('Navigating to /orders');
+            Navigator.of(context).pushNamed('/orders');
           },
         ),
       ],

@@ -1,17 +1,27 @@
+import 'package:hubli/models/cart_item.dart';
+
 class Order {
   final String id;
-  final String customerName;
-  final DateTime orderDate;
   final double totalAmount;
-  final String status;
-  final List<String> itemIds; // To link with InventoryItem
+  final List<CartItem> products;
+  final DateTime orderDate;
+  final String fullName;
+  final String addressLine1;
+  final String addressLine2;
+  final String city;
+  final String postalCode;
+  final String country;
 
   Order({
     required this.id,
-    required this.customerName,
-    required this.orderDate,
     required this.totalAmount,
-    required this.status,
-    required this.itemIds,
+    required this.products,
+    required this.orderDate,
+    required this.fullName,
+    required this.addressLine1,
+    this.addressLine2 = '',
+    required this.city,
+    required this.postalCode,
+    required this.country,
   });
 }
