@@ -4,8 +4,52 @@ import 'package:hubli/widgets/custom_app_bar.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
+
+  @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  int _selectedIndex = 2; // Index for Cart
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Handle navigation based on index
+    switch (index) {
+      case 0:
+        Navigator.of(context).pushReplacementNamed('/'); // Home
+        break;
+      case 1:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
+        );
+        break;
+      case 2:
+        // Already on Cart screen
+        break;
+      case 3:
+        Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
+        break;
+      case 4:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account Screen (Not Implemented)')),
+        );
+        break;
+    }
+  }
+
+  // Dummy controller for CustomAppBar in CartScreen
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Widget _buildProductImage(String imageUrl) {
     if (imageUrl.startsWith('assets/')) {
@@ -35,9 +79,8 @@ class CartScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: CustomAppBar(
-        searchController: TextEditingController(), // Dummy controller
+        searchController: _searchController, // Use dummy controller
         onSearch: () {}, // Dummy callback
-        titleText: 'My Cart',
       ),
       body: cart.itemCount == 0
           ? const Center(
@@ -144,6 +187,35 @@ class CartScreen extends StatelessWidget {
                 ),
               ],
             ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment),
+            label: 'RFQ',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_shipping),
+            label: 'Shipping',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Account',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Theme.of(context).primaryColor,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+      ),
     );
   }
 }

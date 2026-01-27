@@ -19,6 +19,39 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
   String _postalCode = '';
   String _country = '';
 
+  int _selectedIndex = 3; // Index for Shipping
+
+  void _onItemTapped(int index) {
+    if (index == _selectedIndex) {
+      return; // Do nothing if the current tab is re-selected
+    }
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Handle navigation based on index
+    switch (index) {
+      case 0:
+        Navigator.of(context).pushReplacementNamed('/'); // Home
+        break;
+      case 1:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
+        );
+        break;
+      case 2:
+        Navigator.of(context).pushReplacementNamed('/cart'); // Cart
+        break;
+      case 3:
+        // Already on Shipping screen
+        break;
+      case 4:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account Screen (Not Implemented)')),
+        );
+        break;
+    }
+  }
+
   void _saveAddress(CartProvider cart, OrderProvider orders) {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -128,6 +161,35 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment), // RFQ
+            label: 'RFQ',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_shipping), // Shipping
+            label: 'Shipping',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person), // Account
+            label: 'Account',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Theme.of(context).primaryColor,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed, // Ensure all items are visible
       ),
     );
   }

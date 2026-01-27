@@ -2,14 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:hubli/models/product.dart';
 import 'package:hubli/utils/colors.dart';
 import 'package:intl/intl.dart';
-import 'package:hubli/widgets/custom_app_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 
-class ProductDetailScreen extends StatelessWidget {
+class ProductDetailScreen extends StatefulWidget {
   final Product product;
 
   const ProductDetailScreen({super.key, required this.product});
+
+  @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  int _selectedIndex = 0; // Initialize to Home index
+
+  void _onItemTapped(int index) {
+    if (index == _selectedIndex) {
+      return; // Do nothing if the current tab is re-selected
+    }
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Handle navigation based on index
+    switch (index) {
+      case 0:
+        Navigator.of(context).pushReplacementNamed('/'); // Home
+        break;
+      case 1:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
+        );
+        break;
+      case 2:
+        Navigator.of(context).pushReplacementNamed('/cart'); // Cart
+        break;
+      case 3:
+        Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
+        break;
+      case 4:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account Screen (Not Implemented)')),
+        );
+        break;
+    }
+  }
 
   Widget _buildProductImage(String imageUrl) {
     if (imageUrl.startsWith('assets/')) {
@@ -54,23 +91,21 @@ class ProductDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        searchController: TextEditingController(), // Dummy controller
-        onSearch: () {}, // Dummy callback
-        titleText: product.name,
+      appBar: AppBar(
+        title: Text(widget.product.name),
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildProductImage(product.imageUrl),
+            _buildProductImage(widget.product.imageUrl),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product.name,
+                    widget.product.name,
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -81,7 +116,7 @@ class ProductDetailScreen extends StatelessWidget {
                     NumberFormat.currency(
                       locale: 'en_BD',
                       symbol: 'BDT ',
-                    ).format(product.price),
+                    ).format(widget.product.price),
                     style: TextStyle(
                       fontSize: 24,
                       color: Theme.of(context).primaryColor,
@@ -93,14 +128,14 @@ class ProductDetailScreen extends StatelessWidget {
                     children: [
                       Icon(Icons.star, color: Colors.amber, size: 20),
                       Text(
-                        '${product.rating} (${(product.rating * 20).toInt()} reviews)', // Placeholder for review count
+                        '${widget.product.rating} (${(widget.product.rating * 20).toInt()} reviews)', // Placeholder for review count
                         style: const TextStyle(fontSize: 18),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Category: ${product.category}',
+                    'Category: ${widget.product.category}',
                     style: const TextStyle(
                       fontSize: 18,
                       fontStyle: FontStyle.italic,
@@ -120,10 +155,10 @@ class ProductDetailScreen extends StatelessWidget {
                   Center(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Provider.of<CartProvider>(context, listen: false).addItem(product);
+                        Provider.of<CartProvider>(context, listen: false).addItem(widget.product);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('${product.name} added to cart!'),
+                            content: Text('${widget.product.name} added to cart!'),
                             duration: const Duration(seconds: 2),
                           ),
                         );
@@ -150,6 +185,35 @@ class ProductDetailScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment), // RFQ
+            label: 'RFQ',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_shipping), // Shipping
+            label: 'Shipping',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person), // Account
+            label: 'Account',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Theme.of(context).primaryColor,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed, // Ensure all items are visible
       ),
     );
   }

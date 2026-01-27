@@ -1,10 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:hubli/providers/cart_provider.dart';
-import 'package:hubli/providers/order_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
-class OrderConfirmationScreen extends StatelessWidget {
+class OrderConfirmationScreen extends StatefulWidget {
   const OrderConfirmationScreen({super.key});
+
+  @override
+  State<OrderConfirmationScreen> createState() => _OrderConfirmationScreenState();
+}
+
+class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
+  int _selectedIndex = 0; // Initialize to Home index
+
+  void _onItemTapped(int index) {
+    if (index == _selectedIndex) {
+      return; // Do nothing if the current tab is re-selected
+    }
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Handle navigation based on index
+    switch (index) {
+      case 0:
+        Navigator.of(context).pushReplacementNamed('/'); // Home
+        break;
+      case 1:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
+        );
+        break;
+      case 2:
+        Navigator.of(context).pushReplacementNamed('/cart'); // Cart
+        break;
+      case 3:
+        Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
+        break;
+      case 4:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Account Screen (Not Implemented)')),
+        );
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +67,7 @@ class OrderConfirmationScreen extends StatelessWidget {
                   const Spacer(),
                   Chip(
                     label: Text(
-                      '\$${cart.totalAmount.toStringAsFixed(2)}',
+                      NumberFormat.currency(locale: 'en_BD', symbol: 'BDT ').format(cart.totalAmount),
                       style: TextStyle(
                         color: Theme.of(context).primaryTextTheme.titleLarge?.color,
                       ),
@@ -56,29 +94,34 @@ class OrderConfirmationScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(15.0),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 15),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
           ),
-          child: const Text(
-            'Confirm Order',
-            style: TextStyle(fontSize: 18),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment), // RFQ
+            label: 'RFQ',
           ),
-          onPressed: () {
-            if (cart.totalAmount <= 0) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Cart is empty. Add items to confirm order.'),
-                ),
-              );
-              return;
-            }
-            // Navigate to the shipping address screen
-            Navigator.of(context).pushNamed('/shipping-address');
-          },
-        ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_shipping), // Shipping
+            label: 'Shipping',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person), // Account
+            label: 'Account',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Theme.of(context).primaryColor,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed, // Ensure all items are visible
       ),
     );
   }
