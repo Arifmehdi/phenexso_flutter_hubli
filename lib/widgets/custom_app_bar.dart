@@ -24,32 +24,44 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               // First row: Logo, Globe, Notification
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribute space
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                    child: Image.asset(
-                      'assets/images/hubli_logo.png', // Assuming hubli_logo.png is in assets/images
-                      height: 30.0, // Adjust height as needed
+                    padding: const EdgeInsets.only(left: 16.0), // Changed from 12.0 to 16.0
+                    child: SizedBox(
+                      height: 32.0, // A bit larger for the logo
+                      child: Image.asset(
+                        'assets/images/hubli_logo.png',
+                        fit: BoxFit.contain, // Ensure logo fits within the SizedBox
+                      ),
                     ),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.public, color: Colors.black), // Changed icon color to black
-                    onPressed: () {
-                      // Handle globe press
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.notifications, color: Colors.black), // Changed icon color to black
-                    onPressed: () {
-                      // Handle notification press
-                    },
+                  Padding( // Added Padding around the icon group
+                    padding: const EdgeInsets.only(right: 16.0), // 16.0 right padding
+                    child: Row( // Group icons together
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.public, color: Colors.black),
+                          onPressed: () {
+                            // Handle globe press
+                          },
+                          iconSize: 28.0, // Consistent icon size
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.notifications, color: Colors.black),
+                          onPressed: () {
+                            // Handle notification press
+                          },
+                          iconSize: 28.0, // Consistent icon size
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
               // Second row: Search bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0), // Changed from 10.0 to 16.0
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
