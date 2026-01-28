@@ -4,6 +4,8 @@ import 'package:hubli/models/product.dart';
 import 'package:intl/intl.dart';
 import 'package:hubli/widgets/custom_app_bar.dart';
 import 'dart:async'; // Import for Timer
+import 'package:provider/provider.dart';
+import 'package:hubli/providers/auth_provider.dart';
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -64,10 +66,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
         Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
         break;
       case 4:
-        // Account - Not implemented yet, show a snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account Screen (Not Implemented)')),
-        );
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (authProvider.isAuthenticated) {
+          Navigator.of(context).pushNamed('/account');
+        } else {
+          Navigator.of(context).pushNamed('/login');
+        }
         break;
     }
   }
@@ -265,53 +269,58 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(right: 10.0), // Spacing between cards
                             child: SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.35, // Reduced width for each card
+                              width: MediaQuery.of(context).size.width * 0.35, // Reduced width for each card (Step 11)
                               // Custom product display for "Deals for you"
-                              child: Card(
-                                elevation: 2.0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    AspectRatio(
-                                      aspectRatio: 1.0, // Ensures a square aspect ratio for the image container
-                                      child: ClipRRect(
-                                        borderRadius: const BorderRadius.vertical(
-                                          top: Radius.circular(8.0),
-                                        ),
-                                        child: Image.asset(
-                                          product.imageUrl,
-                                          fit: BoxFit.cover, // Fill the square space
-                                          width: double.infinity,
-                                          errorBuilder: (context, error, stackTrace) =>
-                                              const Center(child: Icon(Icons.image_not_supported, size: 40)),
+                              child: GestureDetector( // Added GestureDetector for navigation
+                                onTap: () {
+                                  Navigator.of(context).pushNamed('/product-detail', arguments: product);
+                                },
+                                child: Card(
+                                  elevation: 2.0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      AspectRatio(
+                                        aspectRatio: 1.0, // Ensures a square aspect ratio for the image container
+                                        child: ClipRRect(
+                                          borderRadius: const BorderRadius.vertical(
+                                            top: Radius.circular(8.0),
+                                          ),
+                                          child: Image.asset(
+                                            product.imageUrl,
+                                            fit: BoxFit.cover, // Fill the square space
+                                            width: double.infinity,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                const Center(child: Icon(Icons.image_not_supported, size: 40)),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '৳ ${NumberFormat.currency(locale: 'en_BD', symbol: '').format(product.price)}', // Price with '৳' symbol
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14.0,
-                                              color: Color(0xFF008739), // Changed to search icon background color
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '৳ ${NumberFormat.currency(locale: 'en_BD', symbol: '').format(product.price)}', // Price with '৳' symbol (Step 10)
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14.0,
+                                                color: Color(0xFF008739), // Changed to search icon background color (Step 11, but color from current context is red)
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 2.0), // Reduced gap
-                                          Row(
-                                            children: const [
-                                              Icon(Icons.star, color: Colors.amber, size: 14), // Reduced icon size
-                                              Text('5 | 4k sold', style: TextStyle(fontSize: 12.0)),
-                                            ],
-                                          ),
-                                        ],
+                                            const SizedBox(height: 2.0), // Reduced gap (Step 11)
+                                            Row(
+                                              children: const [
+                                                Icon(Icons.star, color: Colors.amber, size: 14), // Reduced icon size (Step 11)
+                                                Text('5 | 4k sold', style: TextStyle(fontSize: 12.0)),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

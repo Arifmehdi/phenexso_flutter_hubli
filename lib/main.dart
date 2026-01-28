@@ -8,16 +8,21 @@ import 'package:hubli/models/product.dart'; // Import Product model for ProductD
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
+import 'package:hubli/providers/auth_provider.dart';
 
 import 'package:hubli/screens/order_confirmation_screen.dart';
 import 'package:hubli/screens/order_history_screen.dart';
 
 import 'package:hubli/screens/shipping_address_screen.dart';
+import 'package:hubli/screens/login_screen.dart';
+import 'package:hubli/screens/registration_screen.dart';
+import 'package:hubli/screens/account_screen.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => CartProvider()),
         ChangeNotifierProvider(create: (context) => OrderProvider()),
       ],
@@ -54,6 +59,9 @@ class MyApp extends StatelessWidget {
         '/order-confirmation': (context) => const OrderConfirmationScreen(),
         '/shipping-address': (context) => const ShippingAddressScreen(),
         '/orders': (context) => const OrderHistoryScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegistrationScreen(),
+        '/account': (context) => const AccountScreen(),
       },
     );
   }
