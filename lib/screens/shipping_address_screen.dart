@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
 import 'package:provider/provider.dart';
@@ -12,12 +13,12 @@ class ShippingAddressScreen extends StatefulWidget {
 
 class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _fullName = '';
+  String _receiverName = '';
+  String _receiverPhoneNumber = ''; // New field
   String _addressLine1 = '';
-  String _addressLine2 = '';
   String _city = '';
   String _postalCode = '';
-  String _country = '';
+  double _contentWeight = 1.0; // New field for slider
 
   int _selectedIndex = 3; // Index for Shipping
 
@@ -45,9 +46,12 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
         // Already on Shipping screen
         break;
       case 4:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account Screen (Not Implemented)')),
-        );
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (authProvider.isAuthenticated) {
+          Navigator.of(context).pushNamed('/account');
+        } else {
+          Navigator.of(context).pushNamed('/login');
+        }
         break;
     }
   }
@@ -59,12 +63,12 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
       orders.addOrder(
         cart.items.values.toList(),
         cart.totalAmount,
-        _fullName,
+        _receiverName, // Using receiver name
         _addressLine1,
-        _addressLine2,
         _city,
         _postalCode,
-        _country,
+        '', // Pass empty string for addressLine2
+        '', // Pass empty string for country
       );
       cart.clear();
       Navigator.of(context).pushReplacementNamed('/orders');
@@ -78,7 +82,15 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shipping Address'),
+        backgroundColor: Colors.white,
+        foregroundColor:
+            Colors.black, // Ensure title and other icons are visible
+        elevation: 1, // Add a subtle shadow
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Shipping Details'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -86,20 +98,56 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
           key: _formKey,
           child: ListView(
             children: <Widget>[
+              // Receiver Details
+              const Text(
+                'Receiver Details',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Full Name'),
+                decoration: const InputDecoration(
+                  labelText: 'Receiver Name',
+                  border: OutlineInputBorder(), // Added border
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your full name.';
+                    return 'Please enter receiver\'s name.';
                   }
                   return null;
                 },
                 onSaved: (value) {
-                  _fullName = value!;
+                  _receiverName = value!;
                 },
               ),
+              const SizedBox(height: 10),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Address Line 1'),
+                decoration: const InputDecoration(
+                  labelText: 'Receiver Phone Number',
+                  border: OutlineInputBorder(), // Added border
+                ),
+                keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter receiver\'s phone number.';
+                  }
+                  return null;
+                },
+                onSaved: (value) {
+                  _receiverPhoneNumber = value!;
+                },
+              ),
+              const SizedBox(height: 20),
+              // Delivery Address
+              const Text(
+                'Delivery Address',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                decoration: const InputDecoration(
+                  labelText: 'Enter Full Address',
+                  border: OutlineInputBorder(), // Added border
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your address.';
@@ -110,14 +158,12 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
                   _addressLine1 = value!;
                 },
               ),
+              const SizedBox(height: 10),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Address Line 2 (Optional)'),
-                onSaved: (value) {
-                  _addressLine2 = value ?? '';
-                },
-              ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'City'),
+                decoration: const InputDecoration(
+                  labelText: 'City',
+                  border: OutlineInputBorder(), // Added border
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your city.';
@@ -128,8 +174,12 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
                   _city = value!;
                 },
               ),
+              const SizedBox(height: 10),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Postal Code'),
+                decoration: const InputDecoration(
+                  labelText: 'Postal Code',
+                  border: OutlineInputBorder(), // Added border
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -141,33 +191,40 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
                   _postalCode = value!;
                 },
               ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Country'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your country.';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _country = value!;
+              const SizedBox(height: 20),
+              // Content Weight Slider
+              Text(
+                'Content Weight: ${_contentWeight.toStringAsFixed(1)} kg',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Slider(
+                value: _contentWeight,
+                min: 0.1,
+                max: 100.0,
+                divisions: 1000,
+                label: _contentWeight.toStringAsFixed(1),
+                onChanged: (double value) {
+                  setState(() {
+                    _contentWeight = value;
+                  });
                 },
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => _saveAddress(cart, orders),
-                child: const Text('Place Order'),
+                child: const Text('Confirm'), // Changed button text
               ),
             ],
           ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment), // RFQ
             label: 'RFQ',

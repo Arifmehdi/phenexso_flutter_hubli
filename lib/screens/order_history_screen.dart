@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -37,9 +38,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
         break;
       case 4:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account Screen (Not Implemented)')),
-        );
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (authProvider.isAuthenticated) {
+          Navigator.of(context).pushNamed('/account');
+        } else {
+          Navigator.of(context).pushNamed('/login');
+        }
         break;
     }
   }
@@ -49,6 +53,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     final orderData = Provider.of<OrderProvider>(context);
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('My Orders'),
       ),
       body: orderData.orders.isEmpty
@@ -82,6 +93,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               },
             ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),

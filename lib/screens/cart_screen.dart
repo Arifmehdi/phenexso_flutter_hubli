@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/widgets/custom_app_bar.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +16,9 @@ class _CartScreenState extends State<CartScreen> {
   int _selectedIndex = 2; // Index for Cart
 
   void _onItemTapped(int index) {
+    if (index == _selectedIndex) {
+      return; // Do nothing if the current tab is re-selected
+    }
     setState(() {
       _selectedIndex = index;
     });
@@ -35,9 +39,12 @@ class _CartScreenState extends State<CartScreen> {
         Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
         break;
       case 4:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account Screen (Not Implemented)')),
-        );
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (authProvider.isAuthenticated) {
+          Navigator.of(context).pushNamed('/account');
+        } else {
+          Navigator.of(context).pushNamed('/login');
+        }
         break;
     }
   }
@@ -188,6 +195,7 @@ class _CartScreenState extends State<CartScreen> {
               ],
             ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
         items: <BottomNavigationBarItem>[
           const BottomNavigationBarItem(
             icon: Icon(Icons.home),

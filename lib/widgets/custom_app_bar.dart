@@ -18,7 +18,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return PreferredSize(
       preferredSize: preferredSize,
       child: Container(
-        color: Colors.white, // Changed to white background
+        decoration: BoxDecoration(
+          color: Colors.white, // Changed to white background
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: const Offset(0, 1), // changes position of shadow
+            ),
+          ],
+        ),
         child: SafeArea(
           child: Column(
             children: [

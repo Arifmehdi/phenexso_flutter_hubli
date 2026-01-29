@@ -47,8 +47,31 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.poppinsTextTheme(),
         appBarTheme: const AppBarTheme(
-          backgroundColor: appColorsPrimary,
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: appColorsPrimary, // Use primary color for ElevatedButtons
+            foregroundColor: Colors.white, // Text color for ElevatedButtons
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0), // Consistent border radius
+            ),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: appColorsPrimary, // Text color for TextButtons
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: appColorsPrimary, // Text color for OutlinedButtons
+            side: const BorderSide(color: appColorsPrimary), // Border color
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0), // Consistent border radius
+            ),
+          ),
         ),
       ),
       initialRoute: '/',

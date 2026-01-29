@@ -308,8 +308,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 },
                 child: const Text('Buy Now'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF00883C),
-                  foregroundColor: Colors.white,
+                  // backgroundColor: const Color(0xFF00883C), // Removed hardcoded color
+                  // foregroundColor: Colors.white, // Removed hardcoded color
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0), // Added border radius
@@ -333,8 +333,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 icon: const Icon(Icons.add_shopping_cart),
                 label: const Text('Add to Cart'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDEFFEC),
-                  foregroundColor: Colors.black, // Changed to black for contrast
+                  // backgroundColor: const Color(0xFFDEFFEC), // Removed hardcoded color
+                  // foregroundColor: Colors.black, // Removed hardcoded color
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0), // Added border radius
