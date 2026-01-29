@@ -67,7 +67,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                   const Spacer(),
                   Chip(
                     label: Text(
-                      NumberFormat.currency(locale: 'en_BD', symbol: 'BDT ').format(cart.totalAmount),
+                      NumberFormat.currency(locale: 'en_BD', symbol: '৳ ').format(cart.totalAmount),
                       style: TextStyle(
                         color: Theme.of(context).primaryTextTheme.titleLarge?.color,
                       ),
@@ -87,7 +87,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                 return ListTile(
                   title: Text(cartItem.product.name),
                   subtitle: Text('Quantity: ${cartItem.quantity}'),
-                  trailing: Text('\$${(cartItem.product.price * cartItem.quantity).toStringAsFixed(2)}'),
+                  trailing: Text('৳${(cartItem.product.price * cartItem.quantity).toStringAsFixed(2)}'),
                 );
               },
             ),

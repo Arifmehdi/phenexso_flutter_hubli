@@ -65,7 +65,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     children: <Widget>[
                       ListTile(
                         title: Text(
-                            NumberFormat.currency(locale: 'en_BD', symbol: 'BDT ').format(order.totalAmount)),
+                            NumberFormat.currency(locale: 'en_BD', symbol: '৳ ').format(order.totalAmount)),
                         subtitle: Text(
                           DateFormat('dd/MM/yyyy hh:mm').format(order.orderDate),
                         ),

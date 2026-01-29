@@ -17,6 +17,9 @@ import 'package:hubli/screens/shipping_address_screen.dart';
 import 'package:hubli/screens/login_screen.dart';
 import 'package:hubli/screens/registration_screen.dart';
 import 'package:hubli/screens/account_screen.dart';
+import 'package:hubli/screens/admin_panel_screen.dart';
+import 'package:hubli/screens/seller_panel_screen.dart';
+import 'package:hubli/screens/rider_panel_screen.dart';
 
 void main() {
   runApp(
@@ -62,6 +65,9 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegistrationScreen(),
         '/account': (context) => const AccountScreen(),
+        '/admin-panel': (context) => const AdminPanelScreen(),
+        '/seller-panel': (context) => const SellerPanelScreen(),
+        '/rider-panel': (context) => const RiderPanelScreen(),
       },
     );
   }

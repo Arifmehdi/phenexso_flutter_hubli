@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
+import 'package:hubli/models/user_role.dart'; // Import UserRole
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -40,6 +41,34 @@ class AccountScreen extends StatelessWidget {
                 title: Text(user?.email ?? ''),
               ),
             ),
+            if (user != null && user.role != UserRole.user) ...[
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () {
+                  String route = '';
+                  switch (user.role) {
+                    case UserRole.admin:
+                      route = '/admin-panel';
+                      break;
+                    case UserRole.seller:
+                      route = '/seller-panel';
+                      break;
+                    case UserRole.rider:
+                      route = '/rider-panel';
+                      break;
+                    default:
+                      break;
+                  }
+                  if (route.isNotEmpty) {
+                    Navigator.of(context).pushNamed(route);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: Text('Go to ${user.role.toString().split('.').last} Panel'),
+              ),
+            ],
             const Spacer(),
             ElevatedButton(
               onPressed: () {
@@ -57,4 +86,5 @@ class AccountScreen extends StatelessWidget {
     );
   }
 }
+
 

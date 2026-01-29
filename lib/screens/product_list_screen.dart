@@ -6,6 +6,7 @@ import 'package:hubli/widgets/custom_app_bar.dart';
 import 'dart:async'; // Import for Timer
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
+import 'package:hubli/providers/cart_provider.dart';
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -288,7 +289,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                             top: Radius.circular(8.0),
                                           ),
                                           child: Image.asset(
-                                            product.imageUrl,
+                                            product.imageUrls.first, // Changed to imageUrls.first
                                             fit: BoxFit.cover, // Fill the square space
                                             width: double.infinity,
                                             errorBuilder: (context, error, stackTrace) =>
@@ -382,24 +383,54 @@ class _ProductListScreenState extends State<ProductListScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
+        items: <BottomNavigationBarItem>[
+          const BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.assignment), // RFQ
             label: 'RFQ',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
+            icon: Consumer<CartProvider>(
+              builder: (context, cart, child) => Stack(
+                children: [
+                  const Icon(Icons.shopping_cart),
+                  if (cart.itemCount > 0)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          cart.itemCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
             label: 'Cart',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.local_shipping), // Shipping
             label: 'Shipping',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.person), // Account
             label: 'Account',
           ),
@@ -455,10 +486,10 @@ class ProductGridItem extends StatelessWidget {
 
   const ProductGridItem({super.key, required this.product});
 
-  Widget _buildProductImage(String imageUrl) {
-    if (imageUrl.startsWith('assets/')) {
+  Widget _buildProductImage(List<String> imageUrls) {
+    if (imageUrls.first.startsWith('assets/')) {
       return Image.asset(
-        imageUrl,
+        imageUrls.first,
         fit: BoxFit.cover,
         width: double.infinity,
         errorBuilder: (context, error, stackTrace) =>
@@ -466,7 +497,7 @@ class ProductGridItem extends StatelessWidget {
       );
     } else {
       return Image.network(
-        imageUrl,
+        imageUrls.first,
         fit: BoxFit.cover,
         width: double.infinity,
         errorBuilder: (context, error, stackTrace) =>
@@ -492,7 +523,7 @@ class ProductGridItem extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(8.0),
                 ),
-                child: _buildProductImage(product.imageUrl),
+                child: _buildProductImage(product.imageUrls),
               ),
             ),
             Padding(
@@ -513,7 +544,7 @@ class ProductGridItem extends StatelessWidget {
                   Text(
                     NumberFormat.currency(
                       locale: 'en_BD',
-                      symbol: 'BDT ',
+                      symbol: '৳ ',
                     ).format(product.price),
                     style: TextStyle(
                       color: Theme.of(context).primaryColor,

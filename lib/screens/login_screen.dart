@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
+import 'package:hubli/models/user_role.dart'; // Import UserRole enum
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  UserRole _selectedRole = UserRole.user; // Default role
 
   @override
   void dispose() {
@@ -62,12 +64,31 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: 16.0),
+              DropdownButtonFormField<UserRole>(
+                value: _selectedRole,
+                decoration: const InputDecoration(
+                  labelText: 'Select Role',
+                  border: OutlineInputBorder(),
+                ),
+                items: UserRole.values.map((UserRole role) {
+                  return DropdownMenuItem<UserRole>(
+                    value: role,
+                    child: Text(role.toString().split('.').last),
+                  );
+                }).toList(),
+                onChanged: (UserRole? newValue) {
+                  setState(() {
+                    _selectedRole = newValue!;
+                  });
+                },
+              ),
               const SizedBox(height: 24.0),
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
                     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                    authProvider.login(_emailController.text, _passwordController.text);
+                    authProvider.login(_emailController.text, _passwordController.text, _selectedRole);
                     Navigator.of(context).pushNamedAndRemoveUntil('/account', (route) => false);
                   }
                 },

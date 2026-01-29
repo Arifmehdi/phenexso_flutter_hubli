@@ -51,10 +51,10 @@ class _CartScreenState extends State<CartScreen> {
     super.dispose();
   }
 
-  Widget _buildProductImage(String imageUrl) {
-    if (imageUrl.startsWith('assets/')) {
+  Widget _buildProductImage(List<String> imageUrls) {
+    if (imageUrls.first.startsWith('assets/')) {
       return Image.asset(
-        imageUrl,
+        imageUrls.first,
         fit: BoxFit.cover,
         width: double.infinity,
         errorBuilder: (context, error, stackTrace) => const Center(
@@ -63,7 +63,7 @@ class _CartScreenState extends State<CartScreen> {
       );
     } else {
       return Image.network(
-        imageUrl,
+        imageUrls.first,
         fit: BoxFit.cover,
         width: double.infinity,
         errorBuilder: (context, error, stackTrace) => const Center(
@@ -117,7 +117,7 @@ class _CartScreenState extends State<CartScreen> {
                                 const Spacer(),
                                 Chip(
                                   label: Text(
-                                    NumberFormat.currency(locale: 'en_BD', symbol: 'BDT ').format(cart.totalAmount),
+                                    NumberFormat.currency(locale: 'en_BD', symbol: '৳ ').format(cart.totalAmount),
                                     style: TextStyle(
                                       color: Theme.of(context).primaryTextTheme.titleLarge?.color,
                                     ),
@@ -151,7 +151,7 @@ class _CartScreenState extends State<CartScreen> {
                               leading: CircleAvatar(
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(5.0),
-                                  child: _buildProductImage(cartItem.product.imageUrl),
+                                  child: _buildProductImage(cartItem.product.imageUrls),
                                 ),
                               ),
                                                           title: Text(cartItem.product.name),
@@ -188,24 +188,54 @@ class _CartScreenState extends State<CartScreen> {
               ],
             ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
+        items: <BottomNavigationBarItem>[
+          const BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.assignment),
             label: 'RFQ',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
+            icon: Consumer<CartProvider>(
+              builder: (context, cart, child) => Stack(
+                children: [
+                  const Icon(Icons.shopping_cart),
+                  if (cart.itemCount > 0)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          cart.itemCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
             label: 'Cart',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.local_shipping),
             label: 'Shipping',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Account',
           ),
