@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:hubli/providers/wishlist_provider.dart'; // Add this import
+import 'package:share_plus/share_plus.dart'; // Add this import
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -106,7 +108,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<CartProvider>(context); // Listen to cart changes
+    final cart = Provider.of<CartProvider>(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: CustomScrollView(
@@ -119,17 +121,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             elevation: _appBarColor == Colors.white ? 4 : 0,
             leading: _buildIcon(Icons.arrow_back, () => Navigator.of(context).pop()),
             actions: [
-              _buildIcon(Icons.favorite_border, () { // Wishlist icon
-                // TODO: Implement wishlist functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Wishlist functionality not implemented yet.')),
-                );
-              }),
+              Consumer<WishlistProvider>(
+                builder: (context, wishlist, child) {
+                  final isFavorite = wishlist.isInWishlist(widget.product);
+                  return _buildIcon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    () {
+                      wishlist.toggleWishlist(widget.product);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(isFavorite
+                              ? '${widget.product.name} removed from wishlist!'
+                              : '${widget.product.name} added to wishlist!'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
               _buildIcon(Icons.share, () { // Share icon
-                // TODO: Implement share functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Share functionality not implemented yet.')),
-                );
+                Share.share(
+                    'Check out this product: ${widget.product.name} - \$${widget.product.price.toStringAsFixed(2)} '
+                    'Link: https://hublibd.com/products/${widget.product.id}'); // Placeholder link
               }),
               _buildIcon(Icons.shopping_cart, () { // Swapped order
                 Navigator.of(context).pushNamed('/cart');

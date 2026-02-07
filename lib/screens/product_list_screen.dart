@@ -7,20 +7,21 @@ import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/product_provider.dart'; // Import ProductProvider
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:hubli/providers/category_provider.dart';
+import 'package:hubli/models/category.dart';
 
 class ProductListScreen extends StatefulWidget {
-  const ProductListScreen({super.key});
+  final String? categorySlug;
+  const ProductListScreen({super.key, this.categorySlug});
 
   @override
   State<ProductListScreen> createState() => _ProductListScreenState();
 }
 
 class _ProductListScreenState extends State<ProductListScreen> {
-  List<String> _categories = [];
-  String? _selectedCategory;
   final TextEditingController _searchController = TextEditingController();
-  List<Product> _displayProducts = []; // Products currently displayed after filtering/search
-  List<Product> _allProducts = []; // All products fetched from the provider
+
 
   // For auto-sliding image carousel
   final PageController _pageController = PageController();
@@ -35,56 +36,44 @@ class _ProductListScreenState extends State<ProductListScreen> {
     'assets/images/slider/supply_chain_2.png',
   ];
 
-  final List<Map<String, dynamic>> _menuItems = [
-    {'title': 'All Category', 'icon': Icons.category, 'onTap': () => print('All Category tapped')},
-    {'title': 'RFQ', 'icon': Icons.assignment, 'onTap': () => print('RFQ tapped')},
-    {'title': 'Ship For Me', 'icon': Icons.local_shipping, 'onTap': () => print('Ship For Me tapped')},
-    {'title': 'Cost Calculator', 'icon': Icons.calculate, 'onTap': () => print('Cost Calculator tapped')},
-    {'title': 'Wishlist', 'icon': Icons.favorite_border, 'onTap': () => print('Wishlist tapped')},
-  ];
+  List<Map<String, dynamic>> get _menuItems {
+    return [
+      {'title': 'All Category', 'icon': Icons.category, 'onTap': () => Navigator.of(context).pushNamed('/all-categories')},
+      {'title': 'RFQ', 'icon': Icons.assignment, 'onTap': () => print('RFQ tapped')},
+      {'title': 'Ship For Me', 'icon': Icons.local_shipping, 'onTap': () => print('Ship For Me tapped')},
+      {'title': 'Cost Calculator', 'icon': Icons.calculate, 'onTap': () => print('Cost Calculator tapped')},
+      {'title': 'Wishlist', 'icon': Icons.favorite_border, 'onTap': () => Navigator.of(context).pushNamed('/wishlist')},
+    ];
+  }
 
   int _selectedIndex = 0; // New state variable for bottom navigation
 
   @override
   void initState() {
     super.initState();
-    // Listen to page changes to keep _currentPage in sync
-    _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page!.round();
+
+    // Defer all initial setup that might cause setState or rebuilds until after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Start fetching products immediately, potentially filtered by categorySlug
+      Provider.of<ProductProvider>(context, listen: false).fetchProducts(
+        categorySlug: widget.categorySlug,
+      );
+
+      // Listen to page changes to keep _currentPage in sync
+      _pageController.addListener(() {
+        setState(() {
+          _currentPage = _pageController.page!.round();
+        });
       });
-    });
 
-    _startAutoSlide();
-    _searchController.addListener(_filterProducts); // Add listener for live search
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Only fetch products if they haven't been loaded yet or if a refresh is needed.
-    // listen: false because we only need to call a method, not rebuild on changes here.
-    final productProvider = Provider.of<ProductProvider>(context, listen: false);
-    if (_allProducts.isEmpty && !productProvider.isLoading) {
-      // Ensure products are fetched only once initially or if not loaded
-      productProvider.fetchProducts().then((_) {
-        _updateProductsAndCategories(productProvider.products);
-        _filterProducts(); // Apply initial filter after products are loaded
-      });
-    } else if (_allProducts.isEmpty && productProvider.products.isNotEmpty) {
-      // If products were already fetched by another widget, initialize
-      _updateProductsAndCategories(productProvider.products);
-      _filterProducts(); // Apply initial filter if products are already present
-    }
-  }
-
-  void _updateProductsAndCategories(List<Product> products) {
-    setState(() {
-      _allProducts = products;
-      _categories = _allProducts.map((product) => product.category).toSet().toList();
-      _displayProducts = List.from(_allProducts); // Initialize with all products
+      _startAutoSlide(); // Starts a timer which calls setState
+      _searchController.addListener(_filterProducts); // Add listener for live search (calls setState)
     });
   }
+
+
+
+
 
   void _startAutoSlide() {
     _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
@@ -130,7 +119,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
     // Handle navigation based on index
     switch (index) {
       case 0:
-        Navigator.of(context).pushReplacementNamed('/'); // Home
+        // Pop all routes until the first route (usually the home screen)
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        // If already on the home screen, just ensure the index is correct (which it would be)
         break;
       case 1:
         // RFQ - Not implemented yet, show a snackbar
@@ -172,10 +163,20 @@ class _ProductListScreenState extends State<ProductListScreen> {
             return Center(child: Text('Error: ${productProvider.errorMessage}'));
           }
 
-          // Update _allProducts and _displayProducts when provider's products change
-          if (productProvider.products.isNotEmpty && _allProducts.isEmpty) {
-            _updateProductsAndCategories(productProvider.products);
-          }
+          final products = productProvider.products;
+
+          // Compute categories for display in ChoiceChips
+          final displayedCategories = products.map((product) => product.category).toSet().toList();
+
+          // Compute filtered products (only by search query)
+          final currentFilteredProducts = products.where((product) {
+            final matchesSearch =
+                _searchController.text.isEmpty ||
+                product.name.toLowerCase().contains(
+                  _searchController.text.toLowerCase(),
+                );
+            return matchesSearch; // Only search filter applies locally
+          }).toList();
 
 
           return SingleChildScrollView(
@@ -263,6 +264,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   ),
                 ), // Closing bracket for the new menu section
 
+
+
                 // New Banner Section
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Consistent horizontal padding
@@ -308,7 +311,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
-                            children: _allProducts.take(5).map((product) { // Using _allProducts
+                            children: products.take(5).map((product) { // Using 'products'
                               return Padding(
                                 padding: const EdgeInsets.only(right: 10.0), // Spacing between cards
                                 child: SizedBox(
@@ -370,34 +373,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   ),
                 ),
 
-                Padding( // This is the category chips section
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10.0,
-                    vertical: 8.0,
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _categories
-                          .map(
-                            (category) => Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                              child: ChoiceChip(
-                                label: Text(category),
-                                selected: _selectedCategory == category,
-                                onSelected: (selected) {
-                                  setState(() {
-                                    _selectedCategory = selected ? category : null;
-                                    _filterProducts();
-                                  });
-                                },
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                ),
+
                 // Removed Expanded from here
                 GridView.builder(
                   shrinkWrap: true, // Make GridView take only necessary space
@@ -409,15 +385,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     mainAxisSpacing: 10.0,
                     childAspectRatio: 0.75, // Adjust as needed
                   ),
-                  itemCount: _displayProducts.length, // Use _displayProducts
+                  itemCount: currentFilteredProducts.length, // Use currentFilteredProducts
                   itemBuilder: (context, index) {
-                    final product = _displayProducts[index];
+                    final product = currentFilteredProducts[index]; // Use currentFilteredProducts
                     return ProductGridItem(product: product);
                   },
                 ),
               ],
             ),
           );
+
         },
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -485,16 +462,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   void _filterProducts() {
     setState(() {
-      _displayProducts = _allProducts.where((product) {
-        final matchesCategory =
-            _selectedCategory == null || product.category == _selectedCategory;
-        final matchesSearch =
-            _searchController.text.isEmpty ||
-            product.name.toLowerCase().contains(
-              _searchController.text.toLowerCase(),
-            );
-        return matchesCategory && matchesSearch;
-      }).toList();
+      // Rebuild will trigger the filtering logic in the build method.
     });
   }
 
@@ -508,12 +476,19 @@ class _ProductListScreenState extends State<ProductListScreen> {
             const Center(child: Icon(Icons.image_not_supported, size: 50)),
       );
     } else {
-      return Image.network(
-        imageUrls.first,
+      return CachedNetworkImage(
+        imageUrl: imageUrls.first,
         fit: BoxFit.cover,
         width: double.infinity,
-        errorBuilder: (context, error, stackTrace) =>
-            const Center(child: Icon(Icons.image_not_supported, size: 50)),
+        placeholder: (context, url) => Container(color: Colors.grey[200]),
+        errorWidget: (context, url, error) =>
+            const Center(child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.image_not_supported, size: 50),
+                Text('Failed to load image'),
+              ],
+            )),
       );
     }
   }
@@ -555,12 +530,19 @@ class ProductGridItem extends StatelessWidget {
             const Center(child: Icon(Icons.image_not_supported, size: 50)),
       );
     } else {
-      return Image.network(
-        imageUrls.first,
+      return CachedNetworkImage(
+        imageUrl: imageUrls.first,
         fit: BoxFit.cover,
         width: double.infinity,
-        errorBuilder: (context, error, stackTrace) =>
-            const Center(child: Icon(Icons.image_not_supported, size: 50)),
+        placeholder: (context, url) => Container(color: Colors.grey[200]),
+        errorWidget: (context, url, error) =>
+            const Center(child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.image_not_supported, size: 50),
+                Text('Failed to load image'),
+              ],
+            )),
       );
     }
   }

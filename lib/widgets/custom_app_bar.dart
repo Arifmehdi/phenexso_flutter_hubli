@@ -3,15 +3,21 @@ import 'package:flutter/material.dart';
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final TextEditingController searchController;
   final VoidCallback onSearch;
+  final String? title;
+  final bool showBackButton; // New parameter
+  final VoidCallback? onBackButtonPressed; // New parameter
 
   const CustomAppBar({
     super.key,
     required this.searchController,
     required this.onSearch,
+    this.title,
+    this.showBackButton = false, // Default to false
+    this.onBackButtonPressed,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight * 2); // Two rows
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight * 2);
 
   @override
   Widget build(BuildContext context) {
@@ -19,34 +25,50 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       preferredSize: preferredSize,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white, // Changed to white background
+          color: Colors.white,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
               spreadRadius: 1,
               blurRadius: 3,
-              offset: const Offset(0, 1), // changes position of shadow
+              offset: const Offset(0, 1),
             ),
           ],
         ),
         child: SafeArea(
           child: Column(
             children: [
-              // First row: Logo, Globe, Notification
+              // First row: Back button (optional), Title/Logo, Globe, Notification
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Distribute space
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16.0), // Changed from 12.0 to 16.0
-                    child: SizedBox(
-                      height: 32.0, // A bit larger for the logo
-                      child: Image.asset(
-                        'assets/images/hubli_logo.png',
-                        fit: BoxFit.contain, // Ensure logo fits within the SizedBox
+                  Row( // Group back button and title/logo together
+                    children: [
+                      if (showBackButton) // Conditionally display back button
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Colors.black),
+                          onPressed: onBackButtonPressed ?? () => Navigator.of(context).pop(),
+                        )
+                      else
+                        const SizedBox(width: 16.0), // Padding if no back button
+                      Padding(
+                        padding: const EdgeInsets.only(left: 0.0), // No extra left padding here
+                        child: SizedBox(
+                          height: 32.0,
+                          child: title != null
+                              ? Text( // No Align needed, it's naturally left within the Row
+                                  title!,
+                                  style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+                                )
+                              : Image.asset(
+                                  'assets/images/hubli_logo.png',
+                                  fit: BoxFit.contain,
+                                ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  Padding( // Added Padding around the icon group
+                  Padding( // This is the right-aligned action icon group
                     padding: const EdgeInsets.only(right: 16.0), // 16.0 right padding
                     child: Row( // Group icons together
                       children: [

@@ -21,6 +21,11 @@ import 'package:hubli/screens/account_screen.dart';
 import 'package:hubli/screens/admin_panel_screen.dart';
 import 'package:hubli/screens/seller_panel_screen.dart';
 import 'package:hubli/screens/rider_panel_screen.dart';
+import 'package:hubli/providers/category_provider.dart';
+import 'package:hubli/screens/all_categories_screen.dart';
+import 'package:hubli/screens/category_products_screen.dart';
+import 'package:hubli/providers/wishlist_provider.dart';
+import 'package:hubli/screens/wishlist_screen.dart'; // Add this import // Add this import
 
 void main() {
   runApp(
@@ -30,6 +35,8 @@ void main() {
         ChangeNotifierProvider(create: (context) => CartProvider()),
         ChangeNotifierProvider(create: (context) => OrderProvider()),
         ChangeNotifierProvider(create: (context) => ProductProvider()),
+        ChangeNotifierProvider(create: (context) => CategoryProvider()),
+        ChangeNotifierProvider(create: (context) => WishlistProvider()), // Add WishlistProvider
       ],
       child: const MyApp(),
     ),
@@ -41,7 +48,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return Builder(
+      builder: (context) {
+        return MaterialApp(
       title: 'Hubli E-commerce', // Changed title
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -77,23 +86,51 @@ class MyApp extends StatelessWidget {
         ),
       ),
       initialRoute: '/',
-      routes: {
-        '/': (context) => const ProductListScreen(),
-        '/product-detail': (context) {
-          final product = ModalRoute.of(context)!.settings.arguments as Product;
-          return ProductDetailScreen(product: product);
-        },
-        '/cart': (context) => const CartScreen(),
-        '/order-confirmation': (context) => const OrderConfirmationScreen(),
-        '/shipping-address': (context) => const ShippingAddressScreen(),
-        '/orders': (context) => const OrderHistoryScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegistrationScreen(),
-        '/account': (context) => const AccountScreen(),
-        '/admin-panel': (context) => const AdminPanelScreen(),
-        '/seller-panel': (context) => const SellerPanelScreen(),
-        '/rider-panel': (context) => const RiderPanelScreen(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/':
+            // This is the default home route, so no initial category filter
+            return MaterialPageRoute(builder: (context) => const ProductListScreen());
+          case '/category-products':
+            final args = settings.arguments as Map<String, String>;
+            return MaterialPageRoute(
+                builder: (context) => CategoryProductsScreen(
+                      categorySlug: args['slug']!,
+                      categoryName: args['name']!,
+                    ));
+          case '/product-detail':
+            final product = settings.arguments as Product;
+            return MaterialPageRoute(builder: (context) => ProductDetailScreen(product: product));
+          case '/cart':
+            return MaterialPageRoute(builder: (context) => const CartScreen());
+          case '/order-confirmation':
+            return MaterialPageRoute(builder: (context) => const OrderConfirmationScreen());
+          case '/shipping-address':
+            return MaterialPageRoute(builder: (context) => const ShippingAddressScreen());
+          case '/orders':
+            return MaterialPageRoute(builder: (context) => const OrderHistoryScreen());
+          case '/login':
+            return MaterialPageRoute(builder: (context) => const LoginScreen());
+          case '/register':
+            return MaterialPageRoute(builder: (context) => const RegistrationScreen());
+          case '/account':
+            return MaterialPageRoute(builder: (context) => const AccountScreen());
+          case '/admin-panel':
+            return MaterialPageRoute(builder: (context) => const AdminPanelScreen());
+          case '/seller-panel':
+            return MaterialPageRoute(builder: (context) => const SellerPanelScreen());
+          case '/rider-panel':
+            return MaterialPageRoute(builder: (context) => const RiderPanelScreen());
+          case '/all-categories':
+            return MaterialPageRoute(builder: (context) => const AllCategoriesScreen());
+          case '/wishlist': // Add WishlistScreen route
+            return MaterialPageRoute(builder: (context) => const WishlistScreen());
+          default:
+            return MaterialPageRoute(builder: (context) => Text('Error: Unknown route ${settings.name}'));
+        }
       },
-    );
+    ); // End of MaterialApp
+      }, // End of Builder's builder function
+    ); // End of Builder widget
   }
 }

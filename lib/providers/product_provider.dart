@@ -13,18 +13,23 @@ class ProductProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   ProductProvider() {
-    fetchProducts();
+    // fetchProducts(); // Removed: Fetching should be triggered by widget lifecycle
   }
 
-  Future<void> fetchProducts() async {
+  Future<void> fetchProducts({String? categorySlug}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final response = await http.get(
-        Uri.parse('https://hublibd.com/api/products'),
-      );
+      final String url;
+      if (categorySlug != null) {
+        url = 'https://hublibd.com/api/products/by-slug/$categorySlug';
+      } else {
+        url = 'https://hublibd.com/api/products';
+      }
+
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
@@ -46,6 +51,10 @@ class ProductProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> fetchProductsByCategorySlug(String slug) async {
+    await fetchProducts(categorySlug: slug);
   }
 
   // Method to get a product by ID (useful for detail screen)

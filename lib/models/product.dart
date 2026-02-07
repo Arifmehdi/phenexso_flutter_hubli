@@ -32,4 +32,16 @@ class Product {
       description: json['description_en'] as String? ?? 'No description available.', // Map description_en
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name_en': name, // Use 'name_en' to match fromJson expectation
+      'price': price,
+      'featured_image': imageUrls.isNotEmpty ? imageUrls[0].replaceAll('https://hublibd.com/uslive/pnism/', '') : null, // Reverse image URL logic
+      'category': category,
+      'average_rating': rating,
+      'description_en': description, // Use 'description_en' to match fromJson expectation
+    };
+  }
 }
