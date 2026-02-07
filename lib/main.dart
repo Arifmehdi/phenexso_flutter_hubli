@@ -8,6 +8,7 @@ import 'package:hubli/models/product.dart'; // Import Product model for ProductD
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
+import 'package:hubli/providers/product_provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
 
 import 'package:hubli/screens/order_confirmation_screen.dart';
@@ -28,6 +29,7 @@ void main() {
         ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => CartProvider()),
         ChangeNotifierProvider(create: (context) => OrderProvider()),
+        ChangeNotifierProvider(create: (context) => ProductProvider()),
       ],
       child: const MyApp(),
     ),

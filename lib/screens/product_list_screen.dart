@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hubli/data/placeholder_data.dart';
 import 'package:hubli/models/product.dart';
 import 'package:intl/intl.dart';
 import 'package:hubli/widgets/custom_app_bar.dart';
@@ -7,6 +6,7 @@ import 'dart:async'; // Import for Timer
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
+import 'package:hubli/providers/product_provider.dart'; // Import ProductProvider
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -19,7 +19,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
   List<String> _categories = [];
   String? _selectedCategory;
   final TextEditingController _searchController = TextEditingController();
-  List<Product> _filteredProducts = [];
+  List<Product> _displayProducts = []; // Products currently displayed after filtering/search
+  List<Product> _allProducts = []; // All products fetched from the provider
 
   // For auto-sliding image carousel
   final PageController _pageController = PageController();
@@ -30,6 +31,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
     'assets/images/slider/fruit.png',
     'assets/images/slider/fresh.png',
     'assets/images/slider/dairy.png',
+    'assets/images/slider/supply_chain_1.png',
+    'assets/images/slider/supply_chain_2.png',
   ];
 
   final List<Map<String, dynamic>> _menuItems = [
@@ -41,6 +44,81 @@ class _ProductListScreenState extends State<ProductListScreen> {
   ];
 
   int _selectedIndex = 0; // New state variable for bottom navigation
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to page changes to keep _currentPage in sync
+    _pageController.addListener(() {
+      setState(() {
+        _currentPage = _pageController.page!.round();
+      });
+    });
+
+    _startAutoSlide();
+    _searchController.addListener(_filterProducts); // Add listener for live search
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Only fetch products if they haven't been loaded yet or if a refresh is needed.
+    // listen: false because we only need to call a method, not rebuild on changes here.
+    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    if (_allProducts.isEmpty && !productProvider.isLoading) {
+      // Ensure products are fetched only once initially or if not loaded
+      productProvider.fetchProducts().then((_) {
+        _updateProductsAndCategories(productProvider.products);
+        _filterProducts(); // Apply initial filter after products are loaded
+      });
+    } else if (_allProducts.isEmpty && productProvider.products.isNotEmpty) {
+      // If products were already fetched by another widget, initialize
+      _updateProductsAndCategories(productProvider.products);
+      _filterProducts(); // Apply initial filter if products are already present
+    }
+  }
+
+  void _updateProductsAndCategories(List<Product> products) {
+    setState(() {
+      _allProducts = products;
+      _categories = _allProducts.map((product) => product.category).toSet().toList();
+      _displayProducts = List.from(_allProducts); // Initialize with all products
+    });
+  }
+
+  void _startAutoSlide() {
+    _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+      if (_pageController.hasClients) { // Check if controller is attached
+        if (_currentPage < _sliderImages.length - 1) {
+          _currentPage++;
+        } else {
+          _currentPage = 0;
+        }
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeIn,
+        );
+      }
+    });
+  }
+
+  void _pauseAutoSlide() {
+    _timer.cancel();
+  }
+
+  void _resumeAutoSlide() {
+    _startAutoSlide();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _timer.cancel();
+    _searchController.removeListener(_filterProducts); // Remove listener
+    _searchController.dispose(); // Dispose search controller
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) {
@@ -78,309 +156,269 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _categories = dummyProducts
-        .map((product) => product.category)
-        .toSet()
-        .toList();
-    _filteredProducts = dummyProducts; // Initialize with all products
-
-    // Listen to page changes to keep _currentPage in sync
-    _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page!.round();
-      });
-    });
-
-    _startAutoSlide();
-  }
-
-  void _startAutoSlide() {
-    _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-      if (_pageController.hasClients) { // Check if controller is attached
-        if (_currentPage < _sliderImages.length - 1) {
-          _currentPage++;
-        } else {
-          _currentPage = 0;
-        }
-        _pageController.animateToPage(
-          _currentPage,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeIn,
-        );
-      }
-    });
-  }
-
-  void _pauseAutoSlide() {
-    _timer.cancel();
-  }
-
-  void _resumeAutoSlide() {
-    _startAutoSlide();
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _timer.cancel();
-    _searchController.dispose(); // Dispose search controller
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
         searchController: _searchController,
         onSearch: _filterProducts,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Image Slider/Carousel
-            Stack(
+      body: Consumer<ProductProvider>(
+        builder: (context, productProvider, child) {
+          if (productProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (productProvider.errorMessage != null) {
+            return Center(child: Text('Error: ${productProvider.errorMessage}'));
+          }
+
+          // Update _allProducts and _displayProducts when provider's products change
+          if (productProvider.products.isNotEmpty && _allProducts.isEmpty) {
+            _updateProductsAndCategories(productProvider.products);
+          }
+
+
+          return SingleChildScrollView(
+            child: Column(
               children: [
-                GestureDetector(
-                  onPanDown: (_) => _pauseAutoSlide(),
-                  onPanEnd: (_) => _resumeAutoSlide(),
-                  onPanCancel: () => _resumeAutoSlide(),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0), // Reduced vertical padding
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12.0), // Apply border radius
-                      child: SizedBox(
-                        height: 180.0, // Reduced height for the slider
-                        child: PageView.builder(
-                          controller: _pageController, // Attach controller
-                          itemCount: _sliderImages.length,
-                          itemBuilder: (context, index) {
-                            return Image.asset(_sliderImages[index], fit: BoxFit.cover);
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 18.0, // Adjusted to be slightly above the bottom of the slider
-                  left: 0,
-                  right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: _buildPageIndicator(),
-                  ),
-                ),
-              ],
-            ), // Closing bracket for the Stack (slider)
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _menuItems.expand((item) => [ // Use expand to interleave items and spacers
-                    Column(
-                      children: [
-                        SizedBox(
-                          width: 60.0, // Reduced width for the box (icon only)
-                          height: 60.0, // Make it square
-                          child: Card(
-                            elevation: 2.0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                            child: InkWell(
-                              onTap: item['onTap'],
-                              borderRadius: BorderRadius.circular(8.0),
-                              child: Center( // Center the icon within the card
-                                child: Icon(item['icon'], size: 28.0, color: Theme.of(context).primaryColor,), // Icon size adjustment
-                              ),
+                // Image Slider/Carousel
+                Stack(
+                  children: [
+                    GestureDetector(
+                      onPanDown: (_) => _pauseAutoSlide(),
+                      onPanEnd: (_) => _resumeAutoSlide(),
+                      onPanCancel: () => _resumeAutoSlide(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0), // Reduced vertical padding
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12.0), // Apply border radius
+                          child: SizedBox(
+                            height: 180.0, // Reduced height for the slider
+                            child: PageView.builder(
+                              controller: _pageController, // Attach controller
+                              itemCount: _sliderImages.length,
+                              itemBuilder: (context, index) {
+                                return Image.asset(_sliderImages[index], fit: BoxFit.cover);
+                              },
                             ),
                           ),
                         ),
-                        const SizedBox(height: 4.0), // Space between box and text
-                        SizedBox(
-                          width: 60.0, // Text width same as box width for alignment
-                          height: 28.0, // Fixed height to accommodate 2 lines of text (approx 2 * 10 + some line spacing)
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                            child: Text(
-                              item['title'],
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 10.0, fontWeight: FontWeight.bold),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(width: 8.0), // Spacing between items (reduced from 10.0)
-                  ]).toList()..removeLast(), // Remove the last SizedBox to avoid trailing space
-                ),
-              ),
-            ), // Closing bracket for the new menu section
-
-            // New Banner Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Consistent horizontal padding
-              child: Image.asset( // Removed ClipRRect
-                'assets/images/shop_ad.png', // Assuming this path
-                fit: BoxFit.cover, // Cover the available space
-                width: double.infinity, // Take full width
-                height: 70.0, // Reduced height
-              ),
-            ),
-
-            // Deals for you Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row( // New Row for title and arrow icon
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align title left, arrow right
-                    children: [
-                      const Text(
-                        'Deals for you',
-                        style: TextStyle(
-                          fontSize: 16.0, // Reduced font size
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.arrow_forward_ios), // Icon size is often affected by constraints
-                        onPressed: () {
-                          // TODO: Implement navigation to a "View All Deals" screen
-                          print('View All Deals tapped');
-                        },
-                        iconSize: 14.0, // Further reduced icon size
-                        padding: EdgeInsets.zero, // Remove default padding
-                        constraints: const BoxConstraints(), // Remove default constraints
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8.0),
-                  SizedBox(
-                    height: 220, // Reduced height for the entire section
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
+                    Positioned(
+                      bottom: 18.0, // Adjusted to be slightly above the bottom of the slider
+                      left: 0,
+                      right: 0,
                       child: Row(
-                        children: dummyProducts.take(5).map((product) { // Taking 5 products for demonstration
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 10.0), // Spacing between cards
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.35, // Reduced width for each card (Step 11)
-                              // Custom product display for "Deals for you"
-                              child: GestureDetector( // Added GestureDetector for navigation
-                                onTap: () {
-                                  Navigator.of(context).pushNamed('/product-detail', arguments: product);
-                                },
-                                child: Card(
-                                  elevation: 2.0,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      AspectRatio(
-                                        aspectRatio: 1.0, // Ensures a square aspect ratio for the image container
-                                        child: ClipRRect(
-                                          borderRadius: const BorderRadius.vertical(
-                                            top: Radius.circular(8.0),
-                                          ),
-                                          child: Image.asset(
-                                            product.imageUrls.first, // Changed to imageUrls.first
-                                            fit: BoxFit.cover, // Fill the square space
-                                            width: double.infinity,
-                                            errorBuilder: (context, error, stackTrace) =>
-                                                const Center(child: Icon(Icons.image_not_supported, size: 40)),
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '৳ ${NumberFormat.currency(locale: 'en_BD', symbol: '').format(product.price)}', // Price with '৳' symbol (Step 10)
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14.0,
-                                                color: Color(0xFF008739), // Changed to search icon background color (Step 11, but color from current context is red)
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2.0), // Reduced gap (Step 11)
-                                            Row(
-                                              children: const [
-                                                Icon(Icons.star, color: Colors.amber, size: 14), // Reduced icon size (Step 11)
-                                                Text('5 | 4k sold', style: TextStyle(fontSize: 12.0)),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: _buildPageIndicator(),
+                      ),
+                    ),
+                  ],
+                ), // Closing bracket for the Stack (slider)
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _menuItems.expand((item) => [ // Use expand to interleave items and spacers
+                        Column(
+                          children: [
+                            SizedBox(
+                              width: 60.0, // Reduced width for the box (icon only)
+                              height: 60.0, // Make it square
+                              child: Card(
+                                elevation: 2.0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                                child: InkWell(
+                                  onTap: item['onTap'],
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  child: Center( // Center the icon within the card
+                                    child: Icon(item['icon'], size: 28.0, color: Theme.of(context).primaryColor,), // Icon size adjustment
                                   ),
                                 ),
                               ),
                             ),
-                          );
-                        }).toList(),
-                      ),
+                            const SizedBox(height: 4.0), // Space between box and text
+                            SizedBox(
+                              width: 60.0, // Text width same as box width for alignment
+                              height: 28.0, // Fixed height to accommodate 2 lines of text (approx 2 * 10 + some line spacing)
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                                child: Text(
+                                  item['title'],
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 10.0, fontWeight: FontWeight.bold),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 8.0), // Spacing between items (reduced from 10.0)
+                      ]).toList()..removeLast(), // Remove the last SizedBox to avoid trailing space
                     ),
                   ),
-                ],
-              ),
-            ),
+                ), // Closing bracket for the new menu section
 
-            Padding( // This is the category chips section
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10.0,
-                vertical: 8.0,
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _categories
-                      .map(
-                        (category) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: ChoiceChip(
-                            label: Text(category),
-                            selected: _selectedCategory == category,
-                            onSelected: (selected) {
-                              setState(() {
-                                _selectedCategory = selected ? category : null;
-                                _filterProducts();
-                              });
+                // New Banner Section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Consistent horizontal padding
+                  child: Image.asset( // Removed ClipRRect
+                    'assets/images/shop_ad.png', // Assuming this path
+                    fit: BoxFit.cover, // Cover the available space
+                    width: double.infinity, // Take full width
+                    height: 70.0, // Reduced height
+                  ),
+                ),
+
+                // Deals for you Section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row( // New Row for title and arrow icon
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align title left, arrow right
+                        children: [
+                          const Text(
+                            'Deals for you',
+                            style: TextStyle(
+                              fontSize: 16.0, // Reduced font size
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.arrow_forward_ios), // Icon size is often affected by constraints
+                            onPressed: () {
+                              // TODO: Implement navigation to a "View All Deals" screen
+                              print('View All Deals tapped');
                             },
+                            iconSize: 14.0, // Further reduced icon size
+                            padding: EdgeInsets.zero, // Remove default padding
+                            constraints: const BoxConstraints(), // Remove default constraints
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8.0),
+                      SizedBox(
+                        height: 220, // Reduced height for the entire section
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: _allProducts.take(5).map((product) { // Using _allProducts
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 10.0), // Spacing between cards
+                                child: SizedBox(
+                                  width: MediaQuery.of(context).size.width * 0.35, // Reduced width for each card (Step 11)
+                                  // Custom product display for "Deals for you"
+                                  child: GestureDetector( // Added GestureDetector for navigation
+                                    onTap: () {
+                                      Navigator.of(context).pushNamed('/product-detail', arguments: product);
+                                    },
+                                    child: Card(
+                                      elevation: 2.0,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          AspectRatio(
+                                            aspectRatio: 1.0, // Ensures a square aspect ratio for the image container
+                                            child: ClipRRect(
+                                              borderRadius: const BorderRadius.vertical(
+                                                top: Radius.circular(8.0),
+                                              ),
+                                              child: _buildProductImage(product.imageUrls), // Use _buildProductImage
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '৳ ${NumberFormat.currency(locale: 'en_BD', symbol: '').format(product.price)}', // Price with '৳' symbol (Step 10)
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14.0,
+                                                    color: Color(0xFF008739), // Changed to search icon background color (Step 11, but color from current context is red)
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2.0), // Reduced gap (Step 11)
+                                                Row(
+                                                  children: [
+                                                    Icon(Icons.star, color: Colors.amber, size: 14), // Reduced icon size (Step 11)
+                                                    Text('${product.rating.toStringAsFixed(1)} | 4k sold', style: TextStyle(fontSize: 12.0)), // Display rating
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ),
-                      )
-                      .toList(),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+
+                Padding( // This is the category chips section
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10.0,
+                    vertical: 8.0,
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _categories
+                          .map(
+                            (category) => Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                              child: ChoiceChip(
+                                label: Text(category),
+                                selected: _selectedCategory == category,
+                                onSelected: (selected) {
+                                  setState(() {
+                                    _selectedCategory = selected ? category : null;
+                                    _filterProducts();
+                                  });
+                                },
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
+                // Removed Expanded from here
+                GridView.builder(
+                  shrinkWrap: true, // Make GridView take only necessary space
+                  physics: const NeverScrollableScrollPhysics(), // Disable GridView's own scrolling
+                  padding: const EdgeInsets.all(10.0),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10.0,
+                    mainAxisSpacing: 10.0,
+                    childAspectRatio: 0.75, // Adjust as needed
+                  ),
+                  itemCount: _displayProducts.length, // Use _displayProducts
+                  itemBuilder: (context, index) {
+                    final product = _displayProducts[index];
+                    return ProductGridItem(product: product);
+                  },
+                ),
+              ],
             ),
-            // Removed Expanded from here
-            GridView.builder(
-              shrinkWrap: true, // Make GridView take only necessary space
-              physics: const NeverScrollableScrollPhysics(), // Disable GridView's own scrolling
-              padding: const EdgeInsets.all(10.0),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10.0,
-                mainAxisSpacing: 10.0,
-                childAspectRatio: 0.75, // Adjust as needed
-              ),
-              itemCount: _filteredProducts.length,
-              itemBuilder: (context, index) {
-                final product = _filteredProducts[index];
-                return ProductGridItem(product: product);
-              },
-            ),
-          ],
-        ),
+          );
+        },
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
@@ -447,7 +485,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   void _filterProducts() {
     setState(() {
-      _filteredProducts = dummyProducts.where((product) {
+      _displayProducts = _allProducts.where((product) {
         final matchesCategory =
             _selectedCategory == null || product.category == _selectedCategory;
         final matchesSearch =
@@ -458,6 +496,26 @@ class _ProductListScreenState extends State<ProductListScreen> {
         return matchesCategory && matchesSearch;
       }).toList();
     });
+  }
+
+  Widget _buildProductImage(List<String> imageUrls) {
+    if (imageUrls.first.startsWith('assets/')) {
+      return Image.asset(
+        imageUrls.first,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        errorBuilder: (context, error, stackTrace) =>
+            const Center(child: Icon(Icons.image_not_supported, size: 50)),
+      );
+    } else {
+      return Image.network(
+        imageUrls.first,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        errorBuilder: (context, error, stackTrace) =>
+            const Center(child: Icon(Icons.image_not_supported, size: 50)),
+      );
+    }
   }
 
   List<Widget> _buildPageIndicator() {
