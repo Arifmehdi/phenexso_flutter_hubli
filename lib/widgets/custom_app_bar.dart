@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final TextEditingController searchController;
-  final VoidCallback onSearch;
+  final TextEditingController? searchController;
+  final VoidCallback? onSearch;
   final String? title;
   final bool showBackButton; // New parameter
   final VoidCallback? onBackButtonPressed; // New parameter
+  final bool showSearchBar; // New parameter
 
   const CustomAppBar({
     super.key,
-    required this.searchController,
-    required this.onSearch,
+    this.searchController, // No longer required
+    this.onSearch, // No longer required
     this.title,
     this.showBackButton = false, // Default to false
     this.onBackButtonPressed,
+    this.showSearchBar = true, // Default to true
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight * 2);
+  Size get preferredSize => showSearchBar ? const Size.fromHeight(kToolbarHeight * 2) : const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
@@ -91,58 +93,58 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ],
               ),
-              // Second row: Search bar
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0), // Changed from 10.0 to 16.0
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8.0),
-                    border: Border.all(color: const Color(0xFF008739)), // Border color added
-                  ),
-                  child: TextField(
-                    controller: searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search products...',
-                      hintStyle: const TextStyle(height: 1.0),
-                      isDense: true, // Reduce overall height
-                      contentPadding: const EdgeInsets.fromLTRB(10.0, 8.0, 10.0, 8.0), // Adjust padding
-                      border: InputBorder.none,
-                      suffixIcon: Container(
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF008739),
-                          borderRadius: BorderRadius.only(
-                            topRight: Radius.circular(8.0),
-                            bottomRight: Radius.circular(8.0),
+              if (showSearchBar) // Conditionally render search bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.0),
+                      border: Border.all(color: const Color(0xFF008739)),
+                    ),
+                    child: TextField(
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search products...',
+                        hintStyle: const TextStyle(height: 1.0),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.fromLTRB(10.0, 8.0, 10.0, 8.0),
+                        border: InputBorder.none,
+                        suffixIcon: Container(
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF008739),
+                            borderRadius: BorderRadius.only(
+                              topRight: Radius.circular(8.0),
+                              bottomRight: Radius.circular(8.0),
+                            ),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.search, color: Colors.white),
+                            onPressed: onSearch,
+                            iconSize: 20.0,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.search, color: Colors.white),
-                          onPressed: onSearch,
-                          iconSize: 20.0, // Reduce icon size to match dense padding
-                          padding: EdgeInsets.zero, // Remove default IconButton padding
-                          constraints: const BoxConstraints(), // Remove default IconButton constraints
-                        ),
+                        prefixIcon: searchController?.text.isNotEmpty == true // Null check
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, color: Color(0xFF008739)),
+                                onPressed: () {
+                                  searchController?.clear(); // Null check
+                                  onSearch?.call(); // Null check
+                                },
+                                iconSize: 20.0,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              )
+                            : null,
                       ),
-                      prefixIcon: searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, color: Color(0xFF008739)),
-                              onPressed: () {
-                                searchController.clear();
-                                onSearch();
-                              },
-                              iconSize: 20.0, // Reduce icon size
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            )
-                          : null,
+                      onChanged: (value) {
+                        onSearch?.call(); // Null check
+                      },
                     ),
-                    onChanged: (value) {
-                      onSearch();
-                    },
                   ),
                 ),
-              ),
             ],
           ),
         ),

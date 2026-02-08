@@ -40,8 +40,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
     return [
       {'title': 'All Category', 'icon': Icons.category, 'onTap': () => Navigator.of(context).pushNamed('/all-categories')},
       {'title': 'RFQ', 'icon': Icons.assignment, 'onTap': () => print('RFQ tapped')},
-      {'title': 'Ship For Me', 'icon': Icons.local_shipping, 'onTap': () => print('Ship For Me tapped')},
-      {'title': 'Cost Calculator', 'icon': Icons.calculate, 'onTap': () => print('Cost Calculator tapped')},
+      {'title': 'Order Tracking', 'icon': Icons.track_changes, 'onTap': () => Navigator.of(context).pushNamed('/order-tracking')},
+      {'title': 'Cost Calculator', 'icon': Icons.calculate, 'onTap': () => Navigator.of(context).pushNamed('/cost-calculator')},
       {'title': 'Wishlist', 'icon': Icons.favorite_border, 'onTap': () => Navigator.of(context).pushNamed('/wishlist')},
     ];
   }

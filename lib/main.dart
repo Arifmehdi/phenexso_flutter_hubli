@@ -25,7 +25,9 @@ import 'package:hubli/providers/category_provider.dart';
 import 'package:hubli/screens/all_categories_screen.dart';
 import 'package:hubli/screens/category_products_screen.dart';
 import 'package:hubli/providers/wishlist_provider.dart';
-import 'package:hubli/screens/wishlist_screen.dart'; // Add this import // Add this import
+import 'package:hubli/screens/wishlist_screen.dart'; // Add this import
+import 'package:hubli/screens/cost_calculator_screen.dart'; // Add this import
+import 'package:hubli/screens/order_tracking_screen.dart'; // Add this import // Add this import
 
 void main() {
   runApp(
@@ -125,6 +127,10 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (context) => const AllCategoriesScreen());
           case '/wishlist': // Add WishlistScreen route
             return MaterialPageRoute(builder: (context) => const WishlistScreen());
+          case '/cost-calculator': // Add CostCalculatorScreen route
+            return MaterialPageRoute(builder: (context) => const CostCalculatorScreen());
+          case '/order-tracking': // Add OrderTrackingScreen route
+            return MaterialPageRoute(builder: (context) => const OrderTrackingScreen());
           default:
             return MaterialPageRoute(builder: (context) => Text('Error: Unknown route ${settings.name}'));
         }
