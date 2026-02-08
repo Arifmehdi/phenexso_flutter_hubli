@@ -5,6 +5,7 @@ import '../models/product.dart';
 import '../widgets/custom_app_bar.dart'; // Assuming this exists for consistency
 import '../providers/auth_provider.dart'; // Add this import
 import '../providers/cart_provider.dart'; // Add this import
+import '../models/user_role.dart'; // Add this import
 
 class CategoryProductsScreen extends StatefulWidget {
   static const routeName = '/category-products';
@@ -31,10 +32,12 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     _searchController = TextEditingController();
     // Fetch products when the screen initializes
     Future.delayed(Duration.zero).then((_) {
+      if (!mounted) return; // Add mounted check here
       Provider.of<ProductProvider>(
         context,
         listen: false,
       ).fetchProductsByCategorySlug(widget.categorySlug).then((_) {
+        if (!mounted) return; // Add mounted check here
         _filterProducts(); // Initial filtering after products are fetched
       });
     });
@@ -53,33 +56,41 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
   void _onItemTapped(int index) {
     // This screen does not manage _selectedIndex directly, but navigates
+    if (!mounted) return; // Add mounted check here
+
     switch (index) {
       case 0:
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        // Navigate to home only if not already on home
+        if (ModalRoute.of(context)?.settings.name != '/') {
+          Navigator.of(context).pushReplacementNamed('/');
+        }
         break;
       case 1:
-        // RFQ - Not implemented yet, show a snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
         );
         break;
       case 2:
-        Navigator.of(context).pushNamed('/cart'); // Cart
+        Navigator.of(context).pushReplacementNamed('/cart'); // Cart
         break;
       case 3:
-        Navigator.of(context).pushNamed('/shipping-address'); // Shipping
+        Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
         break;
       case 4:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (!mounted) return; // Re-check mounted after potentially long Provider operation
         if (authProvider.isAuthenticated) {
-          Navigator.of(context).pushNamed('/account');
+          if (authProvider.user!.role == UserRole.admin) {
+            Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+          } else {
+            Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
+          }
         } else {
-          Navigator.of(context).pushNamed('/login');
+          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
         }
         break;
     }
   }
-
   void _filterProducts() {
     final productProvider = Provider.of<ProductProvider>(
       context,

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:hubli/widgets/custom_app_bar.dart';
 import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
+import 'package:hubli/models/user_role.dart'; // Import UserRole enum
 
 class OrderTrackingScreen extends StatefulWidget {
   static const routeName = '/order-tracking';
@@ -54,40 +55,49 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Widget build(BuildContext context) {
     int _selectedIndex = 0; // Default to Home for bottom nav consistency
 
-    void _onItemTapped(int index) {
-      if (index == _selectedIndex) {
-        return;
+      void _onItemTapped(int index) {
+        if (index == _selectedIndex) {
+          return;
+        }
+        setState(() {
+          _selectedIndex = index;
+        });
+    
+        if (!mounted) return; // Add mounted check here
+    
+        switch (index) {
+          case 0:
+            // Navigate to home only if not already on home
+            if (ModalRoute.of(context)?.settings.name != '/') {
+              Navigator.of(context).pushReplacementNamed('/');
+            }
+            break;
+          case 1:
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
+            );
+            break;
+          case 2:
+            Navigator.of(context).pushReplacementNamed('/cart'); // Cart
+            break;
+          case 3:
+            Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
+            break;
+          case 4:
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            if (!mounted) return; // Re-check mounted after potentially long Provider operation
+            if (authProvider.isAuthenticated) {
+              if (authProvider.user!.role == UserRole.admin) {
+                Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+              } else {
+                Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
+              }
+            } else {
+              Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
+            }
+            break;
+        }
       }
-      setState(() {
-        _selectedIndex = index;
-      });
-
-      switch (index) {
-        case 0:
-          Navigator.of(context).popUntil((route) => route.isFirst);
-          break;
-        case 1:
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
-          );
-          break;
-        case 2:
-          Navigator.of(context).pushNamed('/cart');
-          break;
-        case 3:
-          Navigator.of(context).pushNamed('/shipping-address');
-          break;
-        case 4:
-          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          if (authProvider.isAuthenticated) {
-            Navigator.of(context).pushNamed('/account');
-          } else {
-            Navigator.of(context).pushNamed('/login');
-          }
-          break;
-      }
-    }
-
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Order Tracking',

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
-import 'package:hubli/models/user_role.dart'; // Import UserRole enum
+import 'package:hubli/screens/admin_panel_screen.dart';
+import 'package:hubli/screens/rider_panel_screen.dart';
+import 'package:hubli/screens/seller_panel_screen.dart';
+import 'package:hubli/models/user_role.dart'; // Re-add the missing import
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,13 +17,45 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  UserRole _selectedRole = UserRole.user; // Default role
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _login() async {
+    if (_formKey.currentState!.validate()) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      try {
+        await authProvider.login(_emailController.text, _passwordController.text);
+        if (!mounted) return; // Add mounted check here
+
+        // Navigate based on user role
+        if (authProvider.user != null) {
+          String routeName;
+          switch (authProvider.user!.role) {
+            case UserRole.admin:
+              routeName = '/admin-panel'; // Corrected route name
+              break;
+            case UserRole.rider:
+              routeName = '/rider-panel'; // Corrected route name
+              break;
+            case UserRole.seller:
+            case UserRole.user: // Assuming regular users go to seller panel or similar default
+              routeName = '/seller-panel'; // Corrected route name
+              break;
+          }
+          Navigator.of(context).pushNamedAndRemoveUntil(routeName, (route) => false);
+        }
+      } catch (e) {
+        if (!mounted) return; // Add mounted check here
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
   }
 
   @override
@@ -71,34 +106,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16.0),
-              DropdownButtonFormField<UserRole>(
-                value: _selectedRole,
-                decoration: const InputDecoration(
-                  labelText: 'Select Role',
-                  border: OutlineInputBorder(),
-                ),
-                items: UserRole.values.map((UserRole role) {
-                  return DropdownMenuItem<UserRole>(
-                    value: role,
-                    child: Text(role.toString().split('.').last),
-                  );
-                }).toList(),
-                onChanged: (UserRole? newValue) {
-                  setState(() {
-                    _selectedRole = newValue!;
-                  });
-                },
-              ),
               const SizedBox(height: 24.0),
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                    authProvider.login(_emailController.text, _passwordController.text, _selectedRole);
-                    Navigator.of(context).pushNamedAndRemoveUntil('/account', (route) => false);
-                  }
-                },
+                onPressed: _login,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                 ),

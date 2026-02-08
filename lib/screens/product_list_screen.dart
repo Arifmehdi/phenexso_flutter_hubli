@@ -10,6 +10,7 @@ import 'package:hubli/providers/product_provider.dart'; // Import ProductProvide
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:hubli/providers/category_provider.dart';
 import 'package:hubli/models/category.dart';
+import 'package:hubli/models/user_role.dart'; // Import UserRole enum
 
 class ProductListScreen extends StatefulWidget {
   final String? categorySlug;
@@ -116,15 +117,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
     setState(() {
       _selectedIndex = index;
     });
+
+    if (!mounted) return; // Ensure widget is still active before navigating
+
     // Handle navigation based on index
     switch (index) {
       case 0:
-        // Pop all routes until the first route (usually the home screen)
-        Navigator.of(context).popUntil((route) => route.isFirst);
-        // If already on the home screen, just ensure the index is correct (which it would be)
+        // Navigate to home only if not already on home
+        if (ModalRoute.of(context)?.settings.name != '/') {
+          Navigator.of(context).pushReplacementNamed('/');
+        }
         break;
       case 1:
-        // RFQ - Not implemented yet, show a snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
         );
@@ -137,10 +141,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
         break;
       case 4:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (!mounted) return; // Re-check mounted after potentially long Provider operation
         if (authProvider.isAuthenticated) {
-          Navigator.of(context).pushNamed('/account');
+          if (authProvider.user!.role == UserRole.admin) {
+            Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+          } else {
+            Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
+          }
         } else {
-          Navigator.of(context).pushNamed('/login');
+          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
         }
         break;
     }

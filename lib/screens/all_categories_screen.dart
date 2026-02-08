@@ -17,6 +17,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
     super.initState();
     // Fetch categories when the screen is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return; // Add mounted check here
       Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
     });
   }

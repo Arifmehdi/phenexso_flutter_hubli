@@ -6,6 +6,7 @@ import 'package:hubli/widgets/custom_app_bar.dart';
 import 'package:hubli/providers/auth_provider.dart'; // For bottom nav
 import 'package:hubli/providers/cart_provider.dart'; // For bottom nav
 import 'package:intl/intl.dart'; // For currency formatting
+import 'package:hubli/models/user_role.dart'; // Import UserRole enum
 
 class WishlistScreen extends StatefulWidget {
   static const routeName = '/wishlist';
@@ -46,35 +47,43 @@ class _WishlistScreenState extends State<WishlistScreen> {
     setState(() {
       _selectedIndex = index;
     });
+
+    if (!mounted) return; // Add mounted check here
+
     // Handle navigation based on index, similar to ProductListScreen
     switch (index) {
       case 0:
-      // Navigate to the root of the home screen, clearing the stack
-        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        // Navigate to home only if not already on home
+        if (ModalRoute.of(context)?.settings.name != '/') {
+          Navigator.of(context).pushReplacementNamed('/');
+        }
         break;
       case 1:
-      // RFQ - Not implemented yet, show a snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
         );
         break;
       case 2:
-        Navigator.of(context).pushNamed('/cart'); // Cart
+        Navigator.of(context).pushReplacementNamed('/cart'); // Cart
         break;
       case 3:
-        Navigator.of(context).pushNamed('/shipping-address'); // Shipping
+        Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
         break;
       case 4:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (!mounted) return; // Re-check mounted after potentially long Provider operation
         if (authProvider.isAuthenticated) {
-          Navigator.of(context).pushNamed('/account');
+          if (authProvider.user!.role == UserRole.admin) {
+            Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+          } else {
+            Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
+          }
         } else {
-          Navigator.of(context).pushNamed('/login');
+          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
         }
         break;
     }
   }
-
   void _filterWishlist() {
     setState(() {
       // Rebuild will trigger the filtering logic in the Consumer
@@ -222,6 +231,7 @@ class WishlistItem extends StatelessWidget {
                           ),
                           onPressed: () {
                             wishlistProvider.toggleWishlist(product);
+                            if (!context.mounted) return; // Add mounted check here
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(wishlistProvider.isInWishlist(product)
@@ -264,6 +274,7 @@ class WishlistItem extends StatelessWidget {
                       icon: const Icon(Icons.add_shopping_cart, color: Colors.blue),
                       onPressed: () {
                         Provider.of<CartProvider>(context, listen: false).addItem(product);
+                        if (!context.mounted) return; // Add mounted check here
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('${product.name} added to cart!'),

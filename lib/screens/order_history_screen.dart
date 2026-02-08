@@ -3,6 +3,7 @@ import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:hubli/models/user_role.dart'; // Import UserRole enum
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -21,10 +22,16 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     setState(() {
       _selectedIndex = index;
     });
+
+    if (!mounted) return; // Add mounted check here
+
     // Handle navigation based on index
     switch (index) {
       case 0:
-        Navigator.of(context).pushReplacementNamed('/'); // Home
+        // Navigate to home only if not already on home
+        if (ModalRoute.of(context)?.settings.name != '/') {
+          Navigator.of(context).pushReplacementNamed('/');
+        }
         break;
       case 1:
         ScaffoldMessenger.of(context).showSnackBar(
@@ -39,10 +46,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         break;
       case 4:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (!mounted) return; // Re-check mounted after potentially long Provider operation
         if (authProvider.isAuthenticated) {
-          Navigator.of(context).pushNamed('/account');
+          if (authProvider.user!.role == UserRole.admin) {
+            Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+          } else {
+            Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
+          }
         } else {
-          Navigator.of(context).pushNamed('/login');
+          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
         }
         break;
     }

@@ -3,6 +3,7 @@ import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:hubli/models/user_role.dart'; // Import UserRole enum
 
 class ShippingAddressScreen extends StatefulWidget {
   const ShippingAddressScreen({super.key});
@@ -29,10 +30,16 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
     setState(() {
       _selectedIndex = index;
     });
+
+    if (!mounted) return; // Add mounted check here
+
     // Handle navigation based on index
     switch (index) {
       case 0:
-        Navigator.of(context).pushReplacementNamed('/'); // Home
+        // Navigate to home only if not already on home
+        if (ModalRoute.of(context)?.settings.name != '/') {
+          Navigator.of(context).pushReplacementNamed('/');
+        }
         break;
       case 1:
         ScaffoldMessenger.of(context).showSnackBar(
@@ -47,15 +54,19 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
         break;
       case 4:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (!mounted) return; // Re-check mounted after potentially long Provider operation
         if (authProvider.isAuthenticated) {
-          Navigator.of(context).pushNamed('/account');
+          if (authProvider.user!.role == UserRole.admin) {
+            Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+          } else {
+            Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
+          }
         } else {
-          Navigator.of(context).pushNamed('/login');
+          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
         }
         break;
     }
   }
-
   void _saveAddress(CartProvider cart, OrderProvider orders) {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -71,10 +82,10 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
         '', // Pass empty string for country
       );
       cart.clear();
+      if (!mounted) return; // Add mounted check here
       Navigator.of(context).pushReplacementNamed('/orders');
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);

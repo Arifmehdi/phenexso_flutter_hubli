@@ -128,6 +128,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     isFavorite ? Icons.favorite : Icons.favorite_border,
                     () {
                       wishlist.toggleWishlist(widget.product);
+                      if (!mounted) return; // Add mounted check here
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(isFavorite
@@ -325,6 +326,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 onPressed: () {
                   final cart = Provider.of<CartProvider>(context, listen: false);
                   cart.addItem(widget.product);
+                  if (!mounted) return; // Add mounted check here
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('${widget.product.name} added to cart!'),
