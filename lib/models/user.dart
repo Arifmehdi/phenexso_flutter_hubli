@@ -14,7 +14,10 @@ class User {
       id: json['id'],
       name: json['name'],
       email: json['email'],
-      role: UserRole.values.firstWhere((e) => e.toString().split('.').last == json['role']),
+      role: UserRole.values.firstWhere(
+        (e) => e.toString().split('.').last == json['role'],
+        orElse: () => UserRole.seller, // Default to seller if role not found or null
+      ),
       is_admin: json['is_admin'] ?? false, // Default to false if not provided
     );
   }

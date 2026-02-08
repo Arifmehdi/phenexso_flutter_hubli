@@ -145,11 +145,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
         if (authProvider.isAuthenticated) {
           if (authProvider.user!.role == UserRole.admin) {
             Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+          } else if (authProvider.user!.role == UserRole.rider) { // New condition for rider
+            Navigator.of(context).pushReplacementNamed('/rider-panel'); // Navigate to Rider Panel
           } else {
-            Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
+            Navigator.of(context).pushReplacementNamed('/seller-panel'); // Navigate to Seller Panel for all other authenticated roles
           }
         } else {
-          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
+          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login if not authenticated
         }
         break;
     }

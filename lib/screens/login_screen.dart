@@ -67,7 +67,14 @@ class _LoginScreenState extends State<LoginScreen> {
         elevation: 1,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              // If it's the last route, go to the main home page
+              Navigator.of(context).pushReplacementNamed('/');
+            }
+          },
         ),
         title: const Text('Login'),
       ),

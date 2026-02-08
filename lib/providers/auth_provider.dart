@@ -81,7 +81,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  void logout() {
-    _clearUserAndToken();
+  Future<void> logout() async {
+    await _clearUserAndToken();
   }
 }
