@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http; // Import for http requests
 import 'package:provider/provider.dart'; // Import for AuthProvider
 import 'package:hubli/providers/auth_provider.dart'; // Import AuthProvider
 import 'package:hubli/utils/api_constants.dart'; // Import API constants
+import 'package:hubli/screens/chat_screen.dart'; // Import ChatScreen
 import 'dart:convert'; // Import for json.decode
 
 class RiderPanelScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
     const ActiveOrdersScreen(),
     const HistoryScreen(),
     const MoreScreen(), // For drawer items or other secondary options (can be adjusted later)
+    const ChatScreen(), // New Chat Screen
   ];
 
   void _onItemTapped(int index) {
@@ -179,8 +181,8 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
             label: 'History',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz), // Icon for "More" or drawer items
-            label: 'More',
+            icon: Icon(Icons.chat), // New Chat item
+            label: 'Chat',
           ),
         ],
         currentIndex: _selectedIndex,

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http; // Import for http requests
 import 'package:provider/provider.dart'; // Import for AuthProvider
 import 'package:hubli/providers/auth_provider.dart'; // Import AuthProvider
 import 'package:hubli/utils/api_constants.dart'; // Import API constants
+import 'package:hubli/screens/chat_screen.dart'; // Import ChatScreen
 import 'dart:convert'; // Import for json.decode
 
 class SellerPanelScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
     const SellerProductListScreen(),
     const OrderManagementScreen(),
     const MoreSellerOptionsScreen(), // For drawer items or other secondary options
+    const ChatScreen(), // New Chat Screen
   ];
 
   void _onItemTapped(int index) {
@@ -174,8 +176,8 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
             label: 'Orders',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz), // Icon for "More" or drawer items
-            label: 'More',
+            icon: Icon(Icons.chat), // New Chat item
+            label: 'Chat',
           ),
         ],
         currentIndex: _selectedIndex,

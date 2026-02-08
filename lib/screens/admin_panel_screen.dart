@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
 import 'package:http/http.dart' as http; // Import for http requests
 import 'package:hubli/utils/api_constants.dart'; // Import API constants
+import 'package:hubli/screens/chat_screen.dart'; // Import ChatScreen
 import 'dart:convert'; // Import for json.decode
 
 class AdminPanelScreen extends StatefulWidget {
@@ -21,7 +22,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     const ProductManagementScreen(),
     const OrderManagementScreen(),
     const CategoryManagementScreen(),
-    const MoreAdminOptionsScreen(), // For other drawer items or settings
+    const ChatScreen(), // New Chat Screen
+    const MoreAdminOptionsScreen(), // Moved to index 6
   ];
 
   void _onItemTapped(int index) {
@@ -183,8 +185,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             label: 'Orders',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz),
-            label: 'More',
+            icon: Icon(Icons.chat), // New Chat item
+            label: 'Chat',
           ),
         ],
         currentIndex: _selectedIndex,
