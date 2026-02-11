@@ -4,6 +4,7 @@ import 'package:provider/provider.dart'; // Import for AuthProvider
 import 'package:hubli/providers/auth_provider.dart'; // Import AuthProvider
 import 'package:hubli/utils/api_constants.dart'; // Import API constants
 import 'package:hubli/screens/chat_screen.dart'; // Import ChatScreen
+import 'package:hubli/screens/seller_chat_users_screen.dart'; // New import for SellerChatUsersScreen
 import 'dart:convert'; // Import for json.decode
 
 class SellerPanelScreen extends StatefulWidget {
@@ -17,12 +18,12 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
   int _selectedIndex = 0; // Manages the selected index for BottomNavigationBar
 
   final List<Widget> _widgetOptions = <Widget>[
-    const SellerHomeScreen(), // New: Seller Home screen
-    const AddNewProductScreen(),
-    const SellerProductListScreen(),
-    const OrderManagementScreen(),
-    const MoreSellerOptionsScreen(), // For drawer items or other secondary options
-    const ChatScreen(), // New Chat Screen
+    const SellerHomeScreen(), // New: Seller Home screen (index 0)
+    const AddNewProductScreen(), // (index 1)
+    const SellerProductListScreen(), // (index 2)
+    const OrderManagementScreen(), // (index 3)
+    const SellerChatUsersScreen(), // Chat screen (index 4)
+    const MoreSellerOptionsScreen(), // More options (index 5)
   ];
 
   void _onItemTapped(int index) {

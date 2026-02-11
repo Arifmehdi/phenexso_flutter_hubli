@@ -35,7 +35,7 @@ class User {
       name: json['name'],
       email: json['email'],
       userType: json['user_type'],
-      profilePhoto: json['profile_photo'],
+      profilePhoto: json['image'],
     );
   }
 

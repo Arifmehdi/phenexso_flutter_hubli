@@ -1,23 +1,21 @@
-// lib/screens/chat_screen.dart
+// lib/screens/seller_chat_users_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/chat_provider.dart';
-import 'package:hubli/models/chat/conversation.dart';
+import 'package:hubli/models/chat/user.dart';
 import 'package:hubli/screens/conversation_screen.dart';
 import 'package:hubli/screens/search_users_screen.dart';
-import 'package:hubli/providers/auth_provider.dart';
-import 'package:hubli/providers/user_provider.dart'; // Import for fetching chat users
-import 'package:hubli/models/chat/user.dart'; // Import for chat user model
-import 'package:hubli/utils/api_constants.dart'; // New import for ApiConstants
+import 'package:hubli/providers/user_provider.dart';
+import 'package:hubli/utils/api_constants.dart';
 
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+class SellerChatUsersScreen extends StatefulWidget {
+  const SellerChatUsersScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  State<SellerChatUsersScreen> createState() => _SellerChatUsersScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _SellerChatUsersScreenState extends State<SellerChatUsersScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -55,7 +53,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chat Users'), // Changed title to reflect content
+        title: const Text('Seller Chats'), // Custom title for Seller Panel
       ),
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {

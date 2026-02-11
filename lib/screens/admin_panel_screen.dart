@@ -5,9 +5,11 @@ import 'package:http/http.dart' as http; // Import for http requests
 import 'package:hubli/utils/api_constants.dart'; // Import API constants
 import 'package:hubli/screens/chat_screen.dart'; // Import ChatScreen
 import 'package:hubli/screens/conversation_screen.dart'; // New import for ConversationScreen
-import 'package:hubli/providers/user_provider.dart'; // New import for UserProvider
+import 'package:hubli/providers/user_provider.dart'; // Original UserProvider (for chat if needed elsewhere)
 import 'package:hubli/providers/chat_provider.dart'; // New import for ChatProvider
-import 'package:hubli/models/chat/user.dart'; // New import for User model
+import 'package:hubli/models/chat/user.dart'; // Original chat User model (for chat if needed elsewhere)
+import 'package:hubli/providers/admin_user_provider.dart'; // New import for AdminUserProvider
+import 'package:hubli/models/user.dart'; // New import for general app User model
 import 'dart:convert'; // Import for json.decode
 
 class AdminPanelScreen extends StatefulWidget {
@@ -278,33 +280,13 @@ class UserManagementScreen extends StatefulWidget {
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<UserProvider>(context, listen: false).fetchAllUsers();
-    });
-  }
-
-  Future<void> _startChatWithUser(User user) async {
-    try {
-      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-      final conversation = await chatProvider.getOrCreatePrivateConversation(user.id);
-      if (conversation != null && mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ConversationScreen(
-              conversationId: conversation.id,
-              conversationTitle: user.name,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to start chat: ${e.toString()}')),
-        );
-      }
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Only fetch users if they haven't been fetched yet to avoid unnecessary calls on subsequent rebuilds
+    // and if there isn't an existing error that needs to be addressed first.
+    final adminUserProvider = Provider.of<AdminUserProvider>(context, listen: false);
+    if (!adminUserProvider.isLoading && adminUserProvider.users.isEmpty && adminUserProvider.errorMessage == null) {
+      adminUserProvider.fetchAllUsers();
     }
   }
 
@@ -315,22 +297,22 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         title: const Text('User Management'),
         automaticallyImplyLeading: false, // Don't show back button
       ),
-      body: Consumer<UserProvider>(
-        builder: (context, userProvider, child) {
-          if (userProvider.isLoading) {
+      body: Consumer<AdminUserProvider>(
+        builder: (context, adminUserProvider, child) {
+          if (adminUserProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (userProvider.errorMessage != null) {
-            return Center(child: Text('Error: ${userProvider.errorMessage}'));
+          if (adminUserProvider.errorMessage != null) {
+            return Center(child: Text('Error: ${adminUserProvider.errorMessage}'));
           }
-          if (userProvider.users.isEmpty) {
+          if (adminUserProvider.users.isEmpty) {
             return const Center(child: Text('No users found.'));
           }
 
           return ListView.builder(
-            itemCount: userProvider.users.length,
+            itemCount: adminUserProvider.users.length,
             itemBuilder: (context, index) {
-              final user = userProvider.users[index];
+              final user = adminUserProvider.users[index];
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: ListTile(
@@ -338,11 +320,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     child: Text(user.name.isNotEmpty ? user.name[0] : '?'),
                   ),
                   title: Text(user.name),
-                  subtitle: Text(user.email ?? 'No email'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.chat),
-                    onPressed: () => _startChatWithUser(user),
-                  ),
+                  subtitle: Text('${user.email} - Role: ${user.role.name}, Admin: ${user.is_admin ? 'Yes' : 'No'}'),
+                  // Removed chat icon and functionality
                   onTap: () {
                     // TODO: Implement user detail view or other actions
                     ScaffoldMessenger.of(context).showSnackBar(

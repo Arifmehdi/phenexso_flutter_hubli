@@ -1,5 +1,6 @@
 // lib/services/user_service.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart'; // Import for debugPrint
 import 'package:http/http.dart' as http;
 import 'package:hubli/utils/api_constants.dart';
 import 'package:hubli/models/chat/user.dart'; // Reusing the chat User model
@@ -25,11 +26,14 @@ class UserService {
       headers: _getHeaders(),
     );
 
+    debugPrint('API Response Status Code: ${response.statusCode}');
+    debugPrint('API Response Body: ${response.body}');
+
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
       // Assuming the API returns a list of users directly under a 'data' key or similar
-      if (data['data'] != null && data['data'] is List) {
-        return (data['data'] as List)
+      if (data['users'] != null && data['users'] is List) {
+        return (data['users'] as List)
             .map((json) => User.fromJson(json))
             .toList();
       } else {

@@ -26,13 +26,13 @@ class ChatService {
   // Fetch user's conversations
   Future<List<Conversation>> getConversations() async {
     final uri = Uri.parse('${ApiConstants.chatBaseUrl}/conversations');
-    print('DEBUG: Fetching conversations from: $uri');
-    print('DEBUG: Headers: ${_getHeaders()}');
+    // print('DEBUG: Fetching conversations from: $uri');
+    // print('DEBUG: Headers: ${_getHeaders()}');
 
     final response = await http.get(uri, headers: _getHeaders());
 
-    print('DEBUG: Response status code for getConversations: ${response.statusCode}');
-    print('DEBUG: Response body for getConversations: ${response.body}');
+    // print('DEBUG: Response status code for getConversations: ${response.statusCode}');
+    // print('DEBUG: Response body for getConversations: ${response.body}');
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
@@ -142,17 +142,18 @@ class ChatService {
           throw Exception(data['message'] ?? 'Failed to send file message');
         }
       } else {
-        throw Exception('Failed to send file message: ${response.statusCode}. Body: ${response.body}');
+        throw Exception(
+          'Failed to send file message: ${response.statusCode}. Body: ${response.body}',
+        );
       }
     } else {
       // Handle text message
-      final body = json.encode({'message': message, 'message_type': messageType});
+      final body = json.encode({
+        'message': message,
+        'message_type': messageType,
+      });
       print('DEBUG: Text message body: $body');
-      final response = await http.post(
-        uri,
-        headers: _getHeaders(),
-        body: body,
-      );
+      final response = await http.post(uri, headers: _getHeaders(), body: body);
 
       print('DEBUG: Text message response status: ${response.statusCode}');
       print('DEBUG: Text message response body: ${response.body}');
@@ -165,7 +166,9 @@ class ChatService {
           throw Exception(data['message'] ?? 'Failed to send text message');
         }
       } else {
-        throw Exception('Failed to send text message: ${response.statusCode}. Body: ${response.body}');
+        throw Exception(
+          'Failed to send text message: ${response.statusCode}. Body: ${response.body}',
+        );
       }
     }
   }

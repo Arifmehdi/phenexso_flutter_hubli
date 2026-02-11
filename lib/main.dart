@@ -14,6 +14,8 @@ import 'package:hubli/services/chat_service.dart'; // New Import
 import 'package:hubli/providers/chat_provider.dart'; // New Import
 import 'package:hubli/services/user_service.dart'; // New Import
 import 'package:hubli/providers/user_provider.dart'; // New Import
+import 'package:hubli/services/admin_user_service.dart'; // New Import
+import 'package:hubli/providers/admin_user_provider.dart'; // New Import
 
 import 'package:hubli/screens/order_confirmation_screen.dart';
 import 'package:hubli/screens/order_history_screen.dart';
@@ -50,6 +52,13 @@ void main() {
           update: (context, auth, userProvider) {
             debugPrint('UserProvider update with token: ${auth.token}');
             return UserProvider(UserService(auth.token ?? ''));
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, AdminUserProvider>(
+          create: (context) => AdminUserProvider(AdminUserService('')), // Initial AdminUserService with empty token
+          update: (context, auth, adminUserProvider) {
+            debugPrint('AdminUserProvider update with token: ${auth.token}');
+            return AdminUserProvider(AdminUserService(auth.token ?? ''));
           },
         ),
         ChangeNotifierProvider(create: (context) => CartProvider()),
