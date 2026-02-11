@@ -10,6 +10,10 @@ import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
 import 'package:hubli/providers/product_provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
+import 'package:hubli/services/chat_service.dart'; // New Import
+import 'package:hubli/providers/chat_provider.dart'; // New Import
+import 'package:hubli/services/user_service.dart'; // New Import
+import 'package:hubli/providers/user_provider.dart'; // New Import
 
 import 'package:hubli/screens/order_confirmation_screen.dart';
 import 'package:hubli/screens/order_history_screen.dart';
@@ -34,6 +38,20 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => AuthProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
+          create: (context) => ChatProvider(ChatService(''), Provider.of<AuthProvider>(context, listen: false)),
+          update: (context, auth, chat) {
+            debugPrint('ChatProvider update with token: ${auth.token}');
+            return ChatProvider(ChatService(auth.token ?? ''), auth);
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, UserProvider>(
+          create: (context) => UserProvider(UserService('')), // Initial UserService with empty token
+          update: (context, auth, userProvider) {
+            debugPrint('UserProvider update with token: ${auth.token}');
+            return UserProvider(UserService(auth.token ?? ''));
+          },
+        ),
         ChangeNotifierProvider(create: (context) => CartProvider()),
         ChangeNotifierProvider(create: (context) => OrderProvider()),
         ChangeNotifierProvider(create: (context) => ProductProvider()),

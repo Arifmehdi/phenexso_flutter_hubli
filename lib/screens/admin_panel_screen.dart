@@ -4,6 +4,10 @@ import 'package:hubli/providers/auth_provider.dart';
 import 'package:http/http.dart' as http; // Import for http requests
 import 'package:hubli/utils/api_constants.dart'; // Import API constants
 import 'package:hubli/screens/chat_screen.dart'; // Import ChatScreen
+import 'package:hubli/screens/conversation_screen.dart'; // New import for ConversationScreen
+import 'package:hubli/providers/user_provider.dart'; // New import for UserProvider
+import 'package:hubli/providers/chat_provider.dart'; // New import for ChatProvider
+import 'package:hubli/models/chat/user.dart'; // New import for User model
 import 'dart:convert'; // Import for json.decode
 
 class AdminPanelScreen extends StatefulWidget {
@@ -21,9 +25,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     const UserManagementScreen(),
     const ProductManagementScreen(),
     const OrderManagementScreen(),
-    const CategoryManagementScreen(),
-    const ChatScreen(), // New Chat Screen
-    const MoreAdminOptionsScreen(), // Moved to index 6
+    const ChatScreen(), // Now at index 4, matching BottomNavigationBar
+    const CategoryManagementScreen(), // Now at index 5
+    const MoreAdminOptionsScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -265,13 +269,92 @@ class AdminHomeScreen extends StatelessWidget {
   }
 }
 
-class UserManagementScreen extends StatelessWidget {
+class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
 
   @override
+  State<UserManagementScreen> createState() => _UserManagementScreenState();
+}
+
+class _UserManagementScreenState extends State<UserManagementScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<UserProvider>(context, listen: false).fetchAllUsers();
+    });
+  }
+
+  Future<void> _startChatWithUser(User user) async {
+    try {
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      final conversation = await chatProvider.getOrCreatePrivateConversation(user.id);
+      if (conversation != null && mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => ConversationScreen(
+              conversationId: conversation.id,
+              conversationTitle: user.name,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to start chat: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('User Management Screen', style: TextStyle(fontSize: 24)),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('User Management'),
+        automaticallyImplyLeading: false, // Don't show back button
+      ),
+      body: Consumer<UserProvider>(
+        builder: (context, userProvider, child) {
+          if (userProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (userProvider.errorMessage != null) {
+            return Center(child: Text('Error: ${userProvider.errorMessage}'));
+          }
+          if (userProvider.users.isEmpty) {
+            return const Center(child: Text('No users found.'));
+          }
+
+          return ListView.builder(
+            itemCount: userProvider.users.length,
+            itemBuilder: (context, index) {
+              final user = userProvider.users[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    child: Text(user.name.isNotEmpty ? user.name[0] : '?'),
+                  ),
+                  title: Text(user.name),
+                  subtitle: Text(user.email ?? 'No email'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.chat),
+                    onPressed: () => _startChatWithUser(user),
+                  ),
+                  onTap: () {
+                    // TODO: Implement user detail view or other actions
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Tapped on ${user.name}')),
+                    );
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
