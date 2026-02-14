@@ -7,7 +7,7 @@ import 'package:hubli/screens/conversation_screen.dart';
 import 'package:hubli/screens/search_users_screen.dart';
 import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/user_provider.dart'; // Import for fetching chat users
-import 'package:hubli/models/chat/user.dart'; // Import for chat user model
+import 'package:hubli/models/chat/user.dart' as chat_user; // Import for chat user model, aliased
 import 'package:hubli/utils/api_constants.dart'; // New import for ApiConstants
 
 class ChatScreen extends StatefulWidget {
@@ -28,7 +28,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _startChatWithUser(User user) async {
+  Future<void> _startChatWithUser(chat_user.User user) async { // Use chat_user.User
     try {
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
       final conversation = await chatProvider.getOrCreatePrivateConversation(user.id);
@@ -72,7 +72,7 @@ class _ChatScreenState extends State<ChatScreen> {
           return ListView.builder(
             itemCount: userProvider.users.length,
             itemBuilder: (context, index) {
-              final user = userProvider.users[index];
+              final user = userProvider.users[index]; // user is already chat_user.User due to UserProvider
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: ListTile(

@@ -6,6 +6,8 @@ import 'package:hubli/utils/api_constants.dart'; // Import API constants
 import 'package:hubli/screens/chat_screen.dart'; // Import ChatScreen
 import 'package:hubli/screens/seller_chat_users_screen.dart'; // New import for SellerChatUsersScreen
 import 'dart:convert'; // Import for json.decode
+import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
+import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
 
 class SellerPanelScreen extends StatefulWidget {
   const SellerPanelScreen({super.key});
@@ -139,6 +141,26 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
                 Navigator.pop(context); // Close the drawer
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Support Tapped')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Edit Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.lock),
+              title: const Text('Change Password'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const PasswordChangeScreen()),
                 );
               },
             ),

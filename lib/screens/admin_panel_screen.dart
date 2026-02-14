@@ -11,6 +11,8 @@ import 'package:hubli/models/chat/user.dart'; // Original chat User model (for c
 import 'package:hubli/providers/admin_user_provider.dart'; // New import for AdminUserProvider
 import 'package:hubli/models/user.dart'; // New import for general app User model
 import 'dart:convert'; // Import for json.decode
+import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
+import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -155,6 +157,26 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               onTap: () {
                 Navigator.pop(context);
                 setState(() { _selectedIndex = 4; }); // Categories is at index 4 in _widgetOptions
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Edit Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.lock),
+              title: const Text('Change Password'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const PasswordChangeScreen()),
+                );
               },
             ),
             const Divider(),

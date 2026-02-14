@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:hubli/utils/api_constants.dart';
+import 'package:hubli/services/user_service.dart'; // Import UserService
 
 extension StringExtension on String {
   String capitalize() {
@@ -14,6 +15,7 @@ extension StringExtension on String {
 class AuthProvider with ChangeNotifier {
   User? _user;
   String? _token;
+  late UserService _userService; // Declare UserService
 
   User? get user => _user;
   String? get token => _token;
@@ -21,26 +23,40 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _user != null;
 
   AuthProvider() {
+    _initUserService(null); // Initialize UserService with no token initially
     _loadUserFromPrefs();
+  }
+
+  // Initialize UserService after token is loaded
+  void _initUserService(String? token) {
+    _userService = UserService(token);
   }
 
   Future<void> _loadUserFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final userData = prefs.getString('userData');
     final tokenData = prefs.getString('token');
+    debugPrint('AuthProvider: _loadUserFromPrefs - userData: $userData');
+    debugPrint('AuthProvider: _loadUserFromPrefs - tokenData: $tokenData');
     if (userData != null && tokenData != null) {
       _user = User.fromJson(json.decode(userData));
       _token = tokenData;
+      _initUserService(_token); // Initialize UserService
       notifyListeners();
+    } else {
+      _initUserService(null); // Initialize UserService even if no token
     }
   }
 
   Future<void> _saveUserAndToken(String token, User user) async {
     final prefs = await SharedPreferences.getInstance();
+    debugPrint('AuthProvider: _saveUserAndToken - Saving token: $token');
+    debugPrint('AuthProvider: _saveUserAndToken - Saving userData: ${json.encode(user.toJson())}');
     await prefs.setString('token', token);
     await prefs.setString('userData', json.encode(user.toJson()));
     _user = user;
     _token = token;
+    _initUserService(_token); // Re-initialize UserService with new token
     notifyListeners();
   }
 
@@ -50,6 +66,7 @@ class AuthProvider with ChangeNotifier {
     await prefs.remove('userData');
     _user = null;
     _token = null;
+    _initUserService(null); // Clear UserService token
     notifyListeners();
   }
 
@@ -91,10 +108,11 @@ class AuthProvider with ChangeNotifier {
     return 'Unknown error from server.';
   }
 
-  Future<void> register(String name, String email, String password, String role) async {
+  Future<void> register(String name, String email, String phone, String password, String role) async {
     final Map<String, dynamic> requestBody = {
       'name': name,
       'email': email,
+      'mobile': phone,
       'password': password,
       'role': role,
     };
@@ -149,6 +167,30 @@ class AuthProvider with ChangeNotifier {
         String extractedMessage = _extractMessageFromMalformedJson(response.body);
         throw Exception('Failed to register: $extractedMessage');
       }
+    }
+  }
+
+  Future<void> updateProfile(User updatedUser) async {
+    if (_token == null) {
+      throw Exception('User not authenticated.');
+    }
+    try {
+      final newUserData = await _userService.updateUserProfile(updatedUser);
+      await _saveUserAndToken(_token!, newUserData); // Save updated user data
+    } catch (e) {
+      throw Exception('Failed to update profile: $e');
+    }
+  }
+
+  Future<void> changePassword(
+      String currentPassword, String newPassword, String confirmPassword) async {
+    if (_token == null) {
+      throw Exception('User not authenticated.');
+    }
+    try {
+      await _userService.changePassword(currentPassword, newPassword, confirmPassword);
+    } catch (e) {
+      throw Exception('Failed to change password: $e');
     }
   }
 

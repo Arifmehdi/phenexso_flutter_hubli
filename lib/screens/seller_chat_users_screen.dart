@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/chat_provider.dart';
-import 'package:hubli/models/chat/user.dart';
+import 'package:hubli/models/chat/user.dart' as chat_user; // Alias for chat User model
 import 'package:hubli/screens/conversation_screen.dart';
 import 'package:hubli/screens/search_users_screen.dart';
 import 'package:hubli/providers/user_provider.dart';
@@ -26,7 +26,7 @@ class _SellerChatUsersScreenState extends State<SellerChatUsersScreen> {
     }
   }
 
-  Future<void> _startChatWithUser(User user) async {
+  Future<void> _startChatWithUser(chat_user.User user) async { // Use chat_user.User
     try {
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
       final conversation = await chatProvider.getOrCreatePrivateConversation(user.id);

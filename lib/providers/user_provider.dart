@@ -11,7 +11,7 @@ class UserProvider with ChangeNotifier {
 
   UserProvider(this._userService);
 
-  List<User> get users => _users;
+  List<User> get users => _users; // Use hubli_user.User
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 

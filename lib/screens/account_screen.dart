@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/models/user_role.dart'; // Import UserRole
+import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
+import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -40,6 +42,30 @@ class AccountScreen extends StatelessWidget {
                 leading: const Icon(Icons.email),
                 title: Text(user?.email ?? ''),
               ),
+            ),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              child: const Text('Edit Profile'),
+            ),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const PasswordChangeScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              child: const Text('Change Password'),
             ),
             if (user != null && user.role != UserRole.user) ...[
               const SizedBox(height: 16.0),
