@@ -14,6 +14,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _selectedRole; // Added for role selection
 
   @override
   void dispose() {
@@ -25,12 +26,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   void _register() async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedRole == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a role')),
+        );
+        return;
+      }
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       try {
         await authProvider.register(
           _nameController.text,
           _emailController.text,
           _passwordController.text,
+          _selectedRole!, // Pass the selected role
         );
         if (!mounted) return; // Add mounted check here
         ScaffoldMessenger.of(context).showSnackBar(
@@ -106,6 +114,33 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 16.0),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Role',
+                  border: OutlineInputBorder(),
+                ),
+                value: _selectedRole,
+                hint: const Text('Select your role'),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedRole = newValue;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select a role';
+                  }
+                  return null;
+                },
+                items: <String>['rider', 'seller']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value.capitalize()),
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 24.0),
               ElevatedButton(
