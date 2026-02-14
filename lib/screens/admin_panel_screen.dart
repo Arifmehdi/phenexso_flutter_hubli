@@ -13,6 +13,7 @@ import 'package:hubli/models/user.dart'; // New import for general app User mode
 import 'dart:convert'; // Import for json.decode
 import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
 import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
+import 'package:hubli/screens/contact_support_screen.dart'; // Import ContactSupportScreen
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -157,6 +158,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               onTap: () {
                 Navigator.pop(context);
                 setState(() { _selectedIndex = 4; }); // Categories is at index 4 in _widgetOptions
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.support_agent),
+              title: const Text('Contact Support'),
+              onTap: () {
+                Navigator.pop(context); // Close the drawer
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const ContactSupportScreen()),
+                );
               },
             ),
             ListTile(

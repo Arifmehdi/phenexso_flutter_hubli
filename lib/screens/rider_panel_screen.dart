@@ -8,6 +8,7 @@ import 'package:hubli/screens/rider_chat_users_screen.dart'; // New import for R
 import 'dart:convert'; // Import for json.decode
 import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
 import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
+import 'package:hubli/screens/contact_support_screen.dart'; // Import ContactSupportScreen
 
 class RiderPanelScreen extends StatefulWidget {
   const RiderPanelScreen({super.key});
@@ -148,8 +149,8 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
               title: const Text('Call Support'),
               onTap: () {
                 Navigator.pop(context); // Close the drawer
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Call Support Tapped')),
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const ContactSupportScreen()),
                 );
               },
             ),

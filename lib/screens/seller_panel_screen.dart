@@ -8,6 +8,7 @@ import 'package:hubli/screens/seller_chat_users_screen.dart'; // New import for 
 import 'dart:convert'; // Import for json.decode
 import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
 import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
+import 'package:hubli/screens/contact_support_screen.dart'; // Import ContactSupportScreen
 
 class SellerPanelScreen extends StatefulWidget {
   const SellerPanelScreen({super.key});
@@ -139,8 +140,8 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
               title: const Text('Support'),
               onTap: () {
                 Navigator.pop(context); // Close the drawer
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Support Tapped')),
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const ContactSupportScreen()),
                 );
               },
             ),
