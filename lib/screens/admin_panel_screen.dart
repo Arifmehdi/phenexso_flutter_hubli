@@ -315,11 +315,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Only fetch users if they haven't been fetched yet to avoid unnecessary calls on subsequent rebuilds
-    // and if there isn't an existing error that needs to be addressed first.
     final adminUserProvider = Provider.of<AdminUserProvider>(context, listen: false);
     if (!adminUserProvider.isLoading && adminUserProvider.users.isEmpty && adminUserProvider.errorMessage == null) {
-      adminUserProvider.fetchAllUsers();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        adminUserProvider.fetchAllUsers();
+      });
     }
   }
 

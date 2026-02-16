@@ -9,6 +9,8 @@ import 'dart:convert'; // Import for json.decode
 import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
 import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
 import 'package:hubli/screens/contact_support_screen.dart'; // Import ContactSupportScreen
+import 'package:hubli/providers/seller_dashboard_provider.dart'; // New Import
+import 'package:hubli/models/seller_dashboard.dart'; // New Import
 
 class SellerPanelScreen extends StatefulWidget {
   const SellerPanelScreen({super.key});
@@ -21,7 +23,7 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
   int _selectedIndex = 0; // Manages the selected index for BottomNavigationBar
 
   final List<Widget> _widgetOptions = <Widget>[
-    const SellerHomeScreen(), // New: Seller Home screen (index 0)
+    SellerHomeScreen(), // Seller Home screen (index 0) - now a StatefulWidget
     const AddNewProductScreen(), // (index 1)
     const SellerProductListScreen(), // (index 2)
     const OrderManagementScreen(), // (index 3)
@@ -213,19 +215,115 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
   }
 }
 
-// New: Placeholder Screen for Seller Home
-class SellerHomeScreen extends StatelessWidget {
+class SellerHomeScreen extends StatefulWidget {
   const SellerHomeScreen({super.key});
 
   @override
+  State<SellerHomeScreen> createState() => _SellerHomeScreenState();
+}
+
+class _SellerHomeScreenState extends State<SellerHomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch dashboard data when the widget initializes
+    Future.microtask(() =>
+        Provider.of<SellerDashboardProvider>(context, listen: false).fetchDashboardData());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Seller Home Screen', style: TextStyle(fontSize: 24)),
+    return Consumer<SellerDashboardProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (provider.errorMessage != null) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Error: ${provider.errorMessage}',
+                style: const TextStyle(color: Colors.red, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        if (provider.dashboardData == null) {
+          return const Center(child: Text('No dashboard data available.'));
+        }
+
+        final data = provider.dashboardData!;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Seller Dashboard Overview',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                shrinkWrap: true, // Use shrinkWrap in GridView inside SingleChildScrollView
+                physics: const NeverScrollableScrollPhysics(), // Disable GridView's own scrolling
+                children: <Widget>[
+                  _buildMetricCard(context, 'Total Products', data.totalProducts.toString(), Icons.production_quantity_limits),
+                  _buildMetricCard(context, 'Total Sales Today', '\$${data.totalSalesToday.toStringAsFixed(2)}', Icons.attach_money),
+                  _buildMetricCard(context, 'Total Sales Week', '\$${data.totalSalesWeek.toStringAsFixed(2)}', Icons.money_off),
+                  _buildMetricCard(context, 'Total Sales Month', '\$${data.totalSalesMonth.toStringAsFixed(2)}', Icons.payments),
+                  _buildMetricCard(context, 'Pending Orders', data.totalOrdersPending.toString(), Icons.pending_actions),
+                  _buildMetricCard(context, 'Shipped Orders', data.totalOrdersShipped.toString(), Icons.local_shipping),
+                  _buildMetricCard(context, 'Delivered Orders', data.totalOrdersDelivered.toString(), Icons.assignment_turned_in),
+                  _buildMetricCard(context, 'New Messages', data.newMessages.toString(), Icons.message),
+                  _buildMetricCard(context, 'New Reviews', data.newReviews.toString(), Icons.star_rate),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMetricCard(BuildContext context, String title, String value, IconData icon) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Icon(icon, size: 36, color: Theme.of(context).primaryColor),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-// Placeholder Screens for Seller Panel
 class AddNewProductScreen extends StatelessWidget {
   const AddNewProductScreen({super.key});
 

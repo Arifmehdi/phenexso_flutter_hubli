@@ -22,7 +22,7 @@ class AdminUserService {
     // Assuming a general endpoint for fetching all app users
     // If this endpoint is incorrect, the user needs to provide the correct one.
     final response = await http.get(
-      Uri.parse('${ApiConstants.baseUrl}/users'),
+      Uri.parse('${ApiConstants.baseUrl}/api/users'),
       headers: _getHeaders(),
     );
 
@@ -33,12 +33,12 @@ class AdminUserService {
       final Map<String, dynamic> data = json.decode(response.body);
       // Assuming the API returns a list of users directly under a 'users' key or similar
       // The backend may return 'data' or 'items' or directly a list. Adjust as needed.
-      if (data['users'] != null && data['users'] is List) {
-        return (data['users'] as List)
+      if (data['data'] != null && data['data'] is List) {
+        return (data['data'] as List)
             .map((json) => User.fromJson(json))
             .toList();
       } else {
-        throw Exception('Invalid general user data format: Missing or invalid "users" key.');
+        throw Exception('Invalid general user data format: Missing or invalid "data" key.');
       }
     } else {
       throw Exception('Failed to load general users: ${response.statusCode}');

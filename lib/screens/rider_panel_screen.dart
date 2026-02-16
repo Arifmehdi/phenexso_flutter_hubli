@@ -9,6 +9,8 @@ import 'dart:convert'; // Import for json.decode
 import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
 import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
 import 'package:hubli/screens/contact_support_screen.dart'; // Import ContactSupportScreen
+import 'package:hubli/providers/rider_dashboard_provider.dart'; // New Import
+import 'package:hubli/models/rider_dashboard.dart'; // New Import
 
 class RiderPanelScreen extends StatefulWidget {
   const RiderPanelScreen({super.key});
@@ -21,7 +23,7 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
   int _selectedIndex = 0; // Manages the selected index for BottomNavigationBar
 
   final List<Widget> _widgetOptions = <Widget>[
-    const HomeScreen(), // New: Home screen (index 0)
+    HomeScreen(), // Home screen (index 0) - now a StatefulWidget
     const ActiveOrdersScreen(), // (index 1)
     const HistoryScreen(), // (index 2)
     const RiderChatUsersScreen(), // Chat screen (index 3)
@@ -218,19 +220,114 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
   }
 }
 
-// New: Placeholder Screen for Home
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch dashboard data when the widget initializes
+    Future.microtask(() =>
+        Provider.of<RiderDashboardProvider>(context, listen: false).fetchDashboardData());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Rider Home Screen', style: TextStyle(fontSize: 24)),
+    return Consumer<RiderDashboardProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (provider.errorMessage != null) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Error: ${provider.errorMessage}',
+                style: const TextStyle(color: Colors.red, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        if (provider.dashboardData == null) {
+          return const Center(child: Text('No dashboard data available.'));
+        }
+
+        final data = provider.dashboardData!;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Rider Dashboard Overview',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                shrinkWrap: true, // Use shrinkWrap in GridView inside SingleChildScrollView
+                physics: const NeverScrollableScrollPhysics(), // Disable GridView's own scrolling
+                children: <Widget>[
+                  _buildMetricCard(context, 'Active Deliveries', data.activeDeliveries.toString(), Icons.delivery_dining),
+                  _buildMetricCard(context, 'Total Rating', '${data.averageRating.toStringAsFixed(1)} (${data.totalReviews} reviews)', Icons.star),
+                  _buildMetricCard(context, 'Earnings Today', '\$${data.totalEarningsToday.toStringAsFixed(2)}', Icons.money),
+                  _buildMetricCard(context, 'Earnings This Week', '\$${data.totalEarningsWeek.toStringAsFixed(2)}', Icons.money_outlined),
+                  _buildMetricCard(context, 'Earnings This Month', '\$${data.totalEarningsMonth.toStringAsFixed(2)}', Icons.currency_exchange),
+                  _buildMetricCard(context, 'Completed Today', data.completedDeliveriesToday.toString(), Icons.check_circle_outline),
+                  _buildMetricCard(context, 'Completed This Week', data.completedDeliveriesWeek.toString(), Icons.playlist_add_check),
+                  _buildMetricCard(context, 'Completed This Month', data.completedDeliveriesMonth.toString(), Icons.done_all),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMetricCard(BuildContext context, String title, String value, IconData icon) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Icon(icon, size: 36, color: Theme.of(context).primaryColor),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-// Placeholder Screens for Rider Panel
 class ActiveOrdersScreen extends StatelessWidget {
   const ActiveOrdersScreen({super.key});
 

@@ -34,6 +34,10 @@ import 'package:hubli/providers/wishlist_provider.dart';
 import 'package:hubli/screens/wishlist_screen.dart'; // Add this import
 import 'package:hubli/screens/cost_calculator_screen.dart'; // Add this import
 import 'package:hubli/screens/order_tracking_screen.dart'; // Add this import // Add this import
+import 'package:hubli/services/rider_dashboard_service.dart'; // New Import for RiderDashboardService
+import 'package:hubli/providers/rider_dashboard_provider.dart'; // New Import for RiderDashboardProvider
+import 'package:hubli/services/seller_dashboard_service.dart'; // New Import for SellerDashboardService
+import 'package:hubli/providers/seller_dashboard_provider.dart'; // New Import for SellerDashboardProvider
 
 void main() {
   runApp(
@@ -59,6 +63,20 @@ void main() {
           update: (context, auth, adminUserProvider) {
             debugPrint('AdminUserProvider update with token: ${auth.token}');
             return AdminUserProvider(AdminUserService(auth.token ?? ''));
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, RiderDashboardProvider>(
+          create: (context) => RiderDashboardProvider(RiderDashboardService(null)), // Initial with null token
+          update: (context, auth, riderDashboardProvider) {
+            debugPrint('RiderDashboardProvider update with token: ${auth.token}');
+            return RiderDashboardProvider(RiderDashboardService(auth.token));
+          },
+        ),
+        ChangeNotifierProxyProvider<AuthProvider, SellerDashboardProvider>(
+          create: (context) => SellerDashboardProvider(SellerDashboardService(null)), // Initial with null token
+          update: (context, auth, sellerDashboardProvider) {
+            debugPrint('SellerDashboardProvider update with token: ${auth.token}');
+            return SellerDashboardProvider(SellerDashboardService(auth.token));
           },
         ),
         ChangeNotifierProvider(create: (context) => CartProvider()),
@@ -147,9 +165,9 @@ class MyApp extends StatelessWidget {
           case '/admin-panel':
             return MaterialPageRoute(builder: (context) => const AdminPanelScreen());
           case '/seller-panel':
-            return MaterialPageRoute(builder: (context) => const SellerPanelScreen());
+            return MaterialPageRoute(builder: (context) => SellerPanelScreen());
           case '/rider-panel':
-            return MaterialPageRoute(builder: (context) => const RiderPanelScreen());
+            return MaterialPageRoute(builder: (context) => RiderPanelScreen());
           case '/all-categories':
             return MaterialPageRoute(builder: (context) => const AllCategoriesScreen());
           case '/wishlist': // Add WishlistScreen route
