@@ -56,18 +56,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
     _scrollController.addListener(_onScroll); // Add scroll listener
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final productProvider = Provider.of<ProductProvider>(context, listen: false);
-      // Reset products before fetching if it's the initial load or category change
-      if (widget.categorySlug != null) {
-        productProvider.resetProducts();
-        productProvider.fetchProducts(
-          categorySlug: widget.categorySlug,
-          clearProducts: true,
-        );
-      } else {
-        productProvider.resetProducts();
-        productProvider.fetchProducts(clearProducts: true);
-      }
+      _searchController.clear(); // Clear search controller on init
+      _fetchInitialProducts();
 
       _pageController.addListener(() {
         setState(() {
@@ -78,6 +68,20 @@ class _ProductListScreenState extends State<ProductListScreen> {
       _startAutoSlide();
       _searchController.addListener(_filterProducts);
     });
+  }
+
+  void _fetchInitialProducts() {
+    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    if (widget.categorySlug != null) {
+      productProvider.resetProducts();
+      productProvider.fetchProducts(
+        categorySlug: widget.categorySlug,
+        clearProducts: true,
+      );
+    } else {
+      productProvider.resetProducts();
+      productProvider.fetchProducts(clearProducts: true);
+    }
   }
 
 
@@ -156,8 +160,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
             Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
           } else if (authProvider.user!.role == UserRole.rider) { // New condition for rider
             Navigator.of(context).pushReplacementNamed('/rider-panel'); // Navigate to Rider Panel
+          } else if (authProvider.user!.role == UserRole.buyer || authProvider.user!.role == UserRole.user) { // New condition for buyer and general user
+            Navigator.of(context).pushReplacementNamed('/buyer-panel'); // Navigate to Buyer Panel
           } else {
-            Navigator.of(context).pushReplacementNamed('/seller-panel'); // Navigate to Seller Panel for all other authenticated roles
+            Navigator.of(context).pushReplacementNamed('/seller-panel'); // Navigate to Seller Panel for other authenticated roles
           }
         } else {
           Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login if not authenticated

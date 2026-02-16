@@ -1,1 +1,1 @@
-enum UserRole { user, admin, seller, rider }
+enum UserRole { user, admin, seller, rider, buyer }

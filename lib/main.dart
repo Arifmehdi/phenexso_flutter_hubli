@@ -27,6 +27,8 @@ import 'package:hubli/screens/account_screen.dart';
 import 'package:hubli/screens/admin_panel_screen.dart';
 import 'package:hubli/screens/seller_panel_screen.dart';
 import 'package:hubli/screens/rider_panel_screen.dart';
+import 'package:hubli/screens/buyer_panel_screen.dart'; // New Import
+
 import 'package:hubli/providers/category_provider.dart';
 import 'package:hubli/screens/all_categories_screen.dart';
 import 'package:hubli/screens/category_products_screen.dart';
@@ -168,6 +170,8 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (context) => SellerPanelScreen());
           case '/rider-panel':
             return MaterialPageRoute(builder: (context) => RiderPanelScreen());
+          case '/buyer-panel': // New Buyer Panel route
+            return MaterialPageRoute(builder: (context) => const BuyerPanelScreen());
           case '/all-categories':
             return MaterialPageRoute(builder: (context) => const AllCategoriesScreen());
           case '/wishlist': // Add WishlistScreen route

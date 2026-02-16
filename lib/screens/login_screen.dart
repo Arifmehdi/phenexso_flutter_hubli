@@ -43,8 +43,11 @@ class _LoginScreenState extends State<LoginScreen> {
               routeName = '/rider-panel'; // Corrected route name
               break;
             case UserRole.seller:
-            case UserRole.user: // Assuming regular users go to seller panel or similar default
               routeName = '/seller-panel'; // Corrected route name
+              break;
+            case UserRole.buyer:
+            case UserRole.user: // Assuming regular users now default to the buyer experience
+              routeName = '/buyer-panel'; // New Buyer Panel route
               break;
           }
           Navigator.of(context).pushNamedAndRemoveUntil(routeName, (route) => false);

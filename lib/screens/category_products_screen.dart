@@ -25,32 +25,44 @@ class CategoryProductsScreen extends StatefulWidget {
 class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   late TextEditingController _searchController;
   List<Product> _filteredProducts = []; // To store filtered products
+  final ScrollController _scrollController = ScrollController(); // Add ScrollController
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _searchController.clear(); // Clear search controller on init
     // Fetch products when the screen initializes
     Future.delayed(Duration.zero).then((_) {
       if (!mounted) return; // Add mounted check here
       Provider.of<ProductProvider>(
         context,
         listen: false,
-      ).fetchProductsByCategorySlug(widget.categorySlug).then((_) {
+      ).fetchProducts(categorySlug: widget.categorySlug, clearProducts: true).then((_) { // Use fetchProducts directly
         if (!mounted) return; // Add mounted check here
         _filterProducts(); // Initial filtering after products are fetched
       });
     });
 
-    _searchController.addListener(
-      _filterProducts,
-    ); // Listen to search input changes
+    _searchController.addListener(_filterProducts); // Listen to search input changes
+
+    // Add listener to scroll controller for infinite scrolling
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+        // User has scrolled to the end, fetch more products
+        final productProvider = Provider.of<ProductProvider>(context, listen: false);
+        if (productProvider.hasMore && !productProvider.isFetchingMore) {
+          productProvider.fetchNextPage(categorySlug: widget.categorySlug);
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
     _searchController.removeListener(_filterProducts); // Remove listener
     _searchController.dispose();
+    _scrollController.dispose(); // Dispose the scroll controller
     super.dispose();
   }
 
@@ -135,6 +147,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           }
 
           return GridView.builder(
+            controller: _scrollController, // Attach the scroll controller
             padding: const EdgeInsets.all(10.0),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
@@ -142,8 +155,11 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
             ),
-            itemCount: productsToDisplay.length,
+            itemCount: productsToDisplay.length + (productProvider.isFetchingMore ? 1 : 0), // Add 1 for loading indicator
             itemBuilder: (ctx, i) {
+              if (i == productsToDisplay.length && productProvider.isFetchingMore) {
+                return const Center(child: CircularProgressIndicator()); // Loading indicator
+              }
               final product = productsToDisplay[i];
               return GestureDetector(
                 onTap: () {

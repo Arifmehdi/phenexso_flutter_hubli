@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hubli/models/user.dart';
+import 'package:hubli/models/user_role.dart'; // Import UserRole
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -87,7 +88,7 @@ class AuthProvider with ChangeNotifier {
       final user = User.fromJson(responseData['user']);
       print('User is_approve status: ${user.is_approve}'); // Debugging
 
-      if (user.is_approve != 1) {
+      if (user.role != UserRole.buyer && user.is_approve != 1) {
         await _clearUserAndToken();
         throw Exception('Your account is pending admin approval. Please wait.');
       }

@@ -89,7 +89,7 @@ class ProductProvider with ChangeNotifier {
   }
 
   Future<void> fetchProductsByCategorySlug(String slug) async {
-    await fetchProducts(categorySlug: slug);
+    await fetchProducts(categorySlug: slug, clearProducts: true);
   }
 
   Future<void> fetchNextPage({String? categorySlug}) async {

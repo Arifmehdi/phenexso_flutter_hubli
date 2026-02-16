@@ -18,98 +18,22 @@ class WishlistScreen extends StatefulWidget {
 }
 
 class _WishlistScreenState extends State<WishlistScreen> {
-  late TextEditingController _searchController;
-  int _selectedIndex = 4; // Wishlist might be part of account/profile, or its own tab. Setting to 4 for example, assuming it's the last one.
-  // The user asked for "home page wishlist icon click show all wishlist product"
-  // so let's set _selectedIndex to highlight the account/profile icon (index 4) if it's there
-  // or a new wishlist icon if we add one to the main bottom nav.
-  // For now, setting it to 4 assuming wishlist is accessible from 'Account' or similar.
-  // If the user meant a dedicated wishlist tab in the main nav, we'd adjust the main nav.
-
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
-    _searchController.addListener(_filterWishlist); // Listen to search input changes
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_filterWishlist);
-    _searchController.dispose();
     super.dispose();
-  }
-
-  void _onItemTapped(int index) {
-    if (index == _selectedIndex) {
-      return; // Do nothing if the current tab is re-selected
-    }
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    if (!mounted) return; // Add mounted check here
-
-    // Handle navigation based on index, similar to ProductListScreen
-    switch (index) {
-      case 0:
-        // Navigate to home only if not already on home
-        if (ModalRoute.of(context)?.settings.name != '/') {
-          Navigator.of(context).pushReplacementNamed('/');
-        }
-        break;
-      case 1:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
-        );
-        break;
-      case 2:
-        Navigator.of(context).pushReplacementNamed('/cart'); // Cart
-        break;
-      case 3:
-        Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
-        break;
-      case 4:
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        if (!mounted) return; // Re-check mounted after potentially long Provider operation
-        if (authProvider.isAuthenticated) {
-          if (authProvider.user!.role == UserRole.admin) {
-            Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
-          } else {
-            Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
-          }
-        } else {
-          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
-        }
-        break;
-    }
-  }
-  void _filterWishlist() {
-    setState(() {
-      // Rebuild will trigger the filtering logic in the Consumer
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: 'My Wishlist',
-        searchController: _searchController,
-        onSearch: _filterWishlist, // Trigger filtering on search button tap
-      ),
-      body: Consumer<WishlistProvider>(
+    return Consumer<WishlistProvider>(
         builder: (context, wishlistProvider, child) {
-          final query = _searchController.text.toLowerCase();
-          final filteredWishlist = wishlistProvider.wishlistItems.where((product) {
-            return product.name.toLowerCase().contains(query);
-          }).toList();
-
           if (wishlistProvider.wishlistItems.isEmpty) {
             return const Center(child: Text('Your wishlist is empty.'));
-          }
-          if (filteredWishlist.isEmpty && query.isNotEmpty) {
-            return const Center(child: Text('No products found matching your search.'));
           }
 
           return GridView.builder(
@@ -120,75 +44,14 @@ class _WishlistScreenState extends State<WishlistScreen> {
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
             ),
-            itemCount: filteredWishlist.length,
+            itemCount: wishlistProvider.wishlistItems.length,
             itemBuilder: (ctx, i) {
-              final product = filteredWishlist[i];
+              final product = wishlistProvider.wishlistItems[i];
               return WishlistItem(product: product);
             },
           );
         },
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        items: <BottomNavigationBarItem>[
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.assignment), // RFQ
-            label: 'RFQ',
-          ),
-          BottomNavigationBarItem(
-            icon: Consumer<CartProvider>(
-              builder: (context, cart, child) => Stack(
-                children: [
-                  const Icon(Icons.shopping_cart),
-                  if (cart.itemCount > 0)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          cart.itemCount.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            label: 'Cart',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.local_shipping), // Shipping
-            label: 'Shipping',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.person), // Account
-            label: 'Account',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed, // Ensure all items are visible
-      ),
-    );
+      );
   }
 }
 

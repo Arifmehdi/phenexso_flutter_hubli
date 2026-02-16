@@ -152,7 +152,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   }
                   return null;
                 },
-                items: <String>['rider', 'seller']
+                items: <String>['rider', 'seller', 'buyer']
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
