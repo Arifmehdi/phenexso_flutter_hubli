@@ -22,6 +22,7 @@ class ProductListScreen extends StatefulWidget {
 
 class _ProductListScreenState extends State<ProductListScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController(); // Add ScrollController
 
 
   // For auto-sliding image carousel
@@ -52,23 +53,30 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll); // Add scroll listener
 
-    // Defer all initial setup that might cause setState or rebuilds until after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Start fetching products immediately, potentially filtered by categorySlug
-      Provider.of<ProductProvider>(context, listen: false).fetchProducts(
-        categorySlug: widget.categorySlug,
-      );
+      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      // Reset products before fetching if it's the initial load or category change
+      if (widget.categorySlug != null) {
+        productProvider.resetProducts();
+        productProvider.fetchProducts(
+          categorySlug: widget.categorySlug,
+          clearProducts: true,
+        );
+      } else {
+        productProvider.resetProducts();
+        productProvider.fetchProducts(clearProducts: true);
+      }
 
-      // Listen to page changes to keep _currentPage in sync
       _pageController.addListener(() {
         setState(() {
           _currentPage = _pageController.page!.round();
         });
       });
 
-      _startAutoSlide(); // Starts a timer which calls setState
-      _searchController.addListener(_filterProducts); // Add listener for live search (calls setState)
+      _startAutoSlide();
+      _searchController.addListener(_filterProducts);
     });
   }
 
@@ -105,8 +113,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
   void dispose() {
     _pageController.dispose();
     _timer.cancel();
-    _searchController.removeListener(_filterProducts); // Remove listener
-    _searchController.dispose(); // Dispose search controller
+    _searchController.removeListener(_filterProducts);
+    _searchController.dispose();
+    _scrollController.dispose(); // Dispose the scroll controller
     super.dispose();
   }
 
@@ -191,6 +200,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
 
           return SingleChildScrollView(
+            controller: _scrollController, // Attach the scroll controller
             child: Column(
               children: [
                 // Image Slider/Carousel
@@ -201,13 +211,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       onPanEnd: (_) => _resumeAutoSlide(),
                       onPanCancel: () => _resumeAutoSlide(),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0), // Reduced vertical padding
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12.0), // Apply border radius
+                          borderRadius: BorderRadius.circular(12.0),
                           child: SizedBox(
-                            height: 180.0, // Reduced height for the slider
+                            height: 180.0,
                             child: PageView.builder(
-                              controller: _pageController, // Attach controller
+                              controller: _pageController,
                               itemCount: _sliderImages.length,
                               itemBuilder: (context, index) {
                                 return Image.asset(_sliderImages[index], fit: BoxFit.cover);
@@ -218,7 +228,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       ),
                     ),
                     Positioned(
-                      bottom: 18.0, // Adjusted to be slightly above the bottom of the slider
+                      bottom: 18.0,
                       left: 0,
                       right: 0,
                       child: Row(
@@ -227,35 +237,35 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       ),
                     ),
                   ],
-                ), // Closing bracket for the Stack (slider)
+                ),
 
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: _menuItems.expand((item) => [ // Use expand to interleave items and spacers
+                      children: _menuItems.expand((item) => [
                         Column(
                           children: [
                             SizedBox(
-                              width: 60.0, // Reduced width for the box (icon only)
-                              height: 60.0, // Make it square
+                              width: 60.0,
+                              height: 60.0,
                               child: Card(
                                 elevation: 2.0,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
                                 child: InkWell(
                                   onTap: item['onTap'],
                                   borderRadius: BorderRadius.circular(8.0),
-                                  child: Center( // Center the icon within the card
-                                    child: Icon(item['icon'], size: 28.0, color: Theme.of(context).primaryColor,), // Icon size adjustment
+                                  child: Center(
+                                    child: Icon(item['icon'], size: 28.0, color: Theme.of(context).primaryColor,),
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 4.0), // Space between box and text
+                            const SizedBox(height: 4.0),
                             SizedBox(
-                              width: 60.0, // Text width same as box width for alignment
-                              height: 28.0, // Fixed height to accommodate 2 lines of text (approx 2 * 10 + some line spacing)
+                              width: 60.0,
+                              height: 28.0,
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 2.0),
                                 child: Text(
@@ -269,66 +279,60 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(width: 8.0), // Spacing between items (reduced from 10.0)
-                      ]).toList()..removeLast(), // Remove the last SizedBox to avoid trailing space
+                        const SizedBox(width: 8.0),
+                      ]).toList()..removeLast(),
                     ),
-                  ),
-                ), // Closing bracket for the new menu section
-
-
-
-                // New Banner Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Consistent horizontal padding
-                  child: Image.asset( // Removed ClipRRect
-                    'assets/images/shop_ad.png', // Assuming this path
-                    fit: BoxFit.cover, // Cover the available space
-                    width: double.infinity, // Take full width
-                    height: 70.0, // Reduced height
                   ),
                 ),
 
-                // Deals for you Section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Image.asset(
+                    'assets/images/shop_ad.png',
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 70.0,
+                  ),
+                ),
+
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row( // New Row for title and arrow icon
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align title left, arrow right
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
                             'Deals for you',
                             style: TextStyle(
-                              fontSize: 16.0, // Reduced font size
+                              fontSize: 16.0,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.arrow_forward_ios), // Icon size is often affected by constraints
+                            icon: const Icon(Icons.arrow_forward_ios),
                             onPressed: () {
-                              // TODO: Implement navigation to a "View All Deals" screen
                               print('View All Deals tapped');
                             },
-                            iconSize: 14.0, // Further reduced icon size
-                            padding: EdgeInsets.zero, // Remove default padding
-                            constraints: const BoxConstraints(), // Remove default constraints
+                            iconSize: 14.0,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8.0),
                       SizedBox(
-                        height: 220, // Reduced height for the entire section
+                        height: 220,
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
-                            children: products.take(5).map((product) { // Using 'products'
+                            children: products.take(5).map((product) {
                               return Padding(
-                                padding: const EdgeInsets.only(right: 10.0), // Spacing between cards
+                                padding: const EdgeInsets.only(right: 10.0),
                                 child: SizedBox(
-                                  width: MediaQuery.of(context).size.width * 0.35, // Reduced width for each card (Step 11)
-                                  // Custom product display for "Deals for you"
-                                  child: GestureDetector( // Added GestureDetector for navigation
+                                  width: MediaQuery.of(context).size.width * 0.35,
+                                  child: GestureDetector(
                                     onTap: () {
                                       Navigator.of(context).pushNamed('/product-detail', arguments: product);
                                     },
@@ -339,12 +343,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           AspectRatio(
-                                            aspectRatio: 1.0, // Ensures a square aspect ratio for the image container
+                                            aspectRatio: 1.0,
                                             child: ClipRRect(
                                               borderRadius: const BorderRadius.vertical(
                                                 top: Radius.circular(8.0),
                                               ),
-                                              child: _buildProductImage(product.imageUrls), // Use _buildProductImage
+                                              child: _buildProductImage(product.imageUrls),
                                             ),
                                           ),
                                           Padding(
@@ -353,18 +357,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  '৳ ${NumberFormat.currency(locale: 'en_BD', symbol: '').format(product.price)}', // Price with '৳' symbol (Step 10)
+                                                  '৳ ${NumberFormat.currency(locale: 'en_BD', symbol: '').format(product.price)}',
                                                   style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 14.0,
-                                                    color: Color(0xFF008739), // Changed to search icon background color (Step 11, but color from current context is red)
+                                                    color: Color(0xFF008739),
                                                   ),
                                                 ),
-                                                const SizedBox(height: 2.0), // Reduced gap (Step 11)
+                                                const SizedBox(height: 2.0),
                                                 Row(
                                                   children: [
-                                                    Icon(Icons.star, color: Colors.amber, size: 14), // Reduced icon size (Step 11)
-                                                    Text('${product.rating.toStringAsFixed(1)} | 4k sold', style: TextStyle(fontSize: 12.0)), // Display rating
+                                                    Icon(Icons.star, color: Colors.amber, size: 14),
+                                                    Text('${product.rating.toStringAsFixed(1)} | 4k sold', style: TextStyle(fontSize: 12.0)),
                                                   ],
                                                 ),
                                               ],
@@ -384,24 +388,27 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   ),
                 ),
 
-
-                // Removed Expanded from here
                 GridView.builder(
-                  shrinkWrap: true, // Make GridView take only necessary space
-                  physics: const NeverScrollableScrollPhysics(), // Disable GridView's own scrolling
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(10.0),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     crossAxisSpacing: 10.0,
                     mainAxisSpacing: 10.0,
-                    childAspectRatio: 0.75, // Adjust as needed
+                    childAspectRatio: 0.75,
                   ),
-                  itemCount: currentFilteredProducts.length, // Use currentFilteredProducts
+                  itemCount: currentFilteredProducts.length,
                   itemBuilder: (context, index) {
-                    final product = currentFilteredProducts[index]; // Use currentFilteredProducts
+                    final product = currentFilteredProducts[index];
                     return ProductGridItem(product: product);
                   },
                 ),
+                if (productProvider.isFetchingMore) // Loading indicator for fetching more
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(),
+                  ),
               ],
             ),
           );
@@ -474,7 +481,22 @@ class _ProductListScreenState extends State<ProductListScreen> {
   void _filterProducts() {
     setState(() {
       // Rebuild will trigger the filtering logic in the build method.
+      // NOTE: This currently performs client-side filtering on the products
+      // that have already been loaded. For a comprehensive search across all
+      // products (including those not yet loaded via pagination),
+      // server-side filtering would be required, potentially by triggering
+      // a new `fetchProducts` call with a search query parameter.
     });
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+      // User has scrolled to the bottom, fetch more products
+      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      if (!productProvider.isLoading && !productProvider.isFetchingMore && productProvider.hasMore) {
+        productProvider.fetchNextPage(categorySlug: widget.categorySlug);
+      }
+    }
   }
 
   Widget _buildProductImage(List<String> imageUrls) {

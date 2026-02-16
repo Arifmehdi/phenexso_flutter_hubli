@@ -318,7 +318,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final adminUserProvider = Provider.of<AdminUserProvider>(context, listen: false);
     if (!adminUserProvider.isLoading && adminUserProvider.users.isEmpty && adminUserProvider.errorMessage == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        adminUserProvider.fetchAllUsers();
+        adminUserProvider.fetchAllUsers(page: 1); // Fetch the first page initially
       });
     }
   }
@@ -338,32 +338,65 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           if (adminUserProvider.errorMessage != null) {
             return Center(child: Text('Error: ${adminUserProvider.errorMessage}'));
           }
-          if (adminUserProvider.users.isEmpty) {
+          if (adminUserProvider.users.isEmpty && adminUserProvider.currentPage == 0) { // Check currentPage as well
             return const Center(child: Text('No users found.'));
           }
 
-          return ListView.builder(
-            itemCount: adminUserProvider.users.length,
-            itemBuilder: (context, index) {
-              final user = adminUserProvider.users[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    child: Text(user.name.isNotEmpty ? user.name[0] : '?'),
-                  ),
-                  title: Text(user.name),
-                  subtitle: Text('${user.email} - Role: ${user.role.name}, Admin: ${user.is_admin ? 'Yes' : 'No'}'),
-                  // Removed chat icon and functionality
-                  onTap: () {
-                    // TODO: Implement user detail view or other actions
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Tapped on ${user.name}')),
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: adminUserProvider.users.length,
+                  itemBuilder: (context, index) {
+                    final user = adminUserProvider.users[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          child: Text(user.name.isNotEmpty ? user.name[0] : '?'),
+                        ),
+                        title: Text(user.name),
+                        subtitle: Text('${user.email} - Role: ${user.role?.name ?? 'N/A'}'), // Safely access role name
+                        onTap: () {
+                          // TODO: Implement user detail view or other actions
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Tapped on ${user.name}')),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
-              );
-            },
+              ),
+              // Pagination controls
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: adminUserProvider.currentPage > 1
+                          ? () => adminUserProvider.goToPreviousPage()
+                          : null,
+                      child: const Text('Previous'),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        'Page ${adminUserProvider.currentPage} of ${adminUserProvider.lastPage}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: adminUserProvider.currentPage < adminUserProvider.lastPage
+                          ? () => adminUserProvider.goToNextPage()
+                          : null,
+                      child: const Text('Next'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           );
         },
       ),

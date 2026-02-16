@@ -18,28 +18,20 @@ class AdminUserService {
     };
   }
 
-  Future<List<User>> fetchAllUsers() async {
-    // Assuming a general endpoint for fetching all app users
-    // If this endpoint is incorrect, the user needs to provide the correct one.
+  Future<Map<String, dynamic>> fetchAllUsers({int page = 1}) async {
     final response = await http.get(
-      Uri.parse('${ApiConstants.baseUrl}/api/users'),
+      Uri.parse('${ApiConstants.baseUrl}/api/users?page=$page'),
       headers: _getHeaders(),
     );
 
-    debugPrint('AdminUserService - API Response Status Code: ${response.statusCode}');
-    debugPrint('AdminUserService - API Response Body: ${response.body}');
+    // debugPrint('AdminUserService - API Response Status Code: ${response.statusCode}');
+    // debugPrint('AdminUserService - API Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
-      // Assuming the API returns a list of users directly under a 'users' key or similar
-      // The backend may return 'data' or 'items' or directly a list. Adjust as needed.
-      if (data['data'] != null && data['data'] is List) {
-        return (data['data'] as List)
-            .map((json) => User.fromJson(json))
-            .toList();
-      } else {
-        throw Exception('Invalid general user data format: Missing or invalid "data" key.');
-      }
+      // This 'data' now contains the full Laravel pagination structure, including the 'data' key for users.
+      // The provider will extract the users and pagination metadata.
+      return data;
     } else {
       throw Exception('Failed to load general users: ${response.statusCode}');
     }
