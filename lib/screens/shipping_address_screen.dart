@@ -94,12 +94,17 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        foregroundColor:
-            Colors.black, // Ensure title and other icons are visible
+        foregroundColor: Colors.black, // Ensure title and other icons are visible
         elevation: 1, // Add a subtle shadow
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              Navigator.of(context).pushReplacementNamed('/');
+            }
+          },
         ),
         title: const Text('Shipping Details'),
       ),

@@ -5,6 +5,7 @@ import 'package:hubli/screens/admin_panel_screen.dart';
 import 'package:hubli/screens/rider_panel_screen.dart';
 import 'package:hubli/screens/seller_panel_screen.dart';
 import 'package:hubli/models/user_role.dart'; // Re-add the missing import
+import 'package:hubli/screens/forgot_password_screen.dart'; // Import ForgotPasswordScreen
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -123,6 +124,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 child: const Text('Login'),
+              ),
+              const SizedBox(height: 8.0), // Added spacing
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pushNamed(ForgotPasswordScreen.routeName);
+                },
+                child: const Text('Forgot Password?'),
               ),
               const SizedBox(height: 16.0),
               TextButton(

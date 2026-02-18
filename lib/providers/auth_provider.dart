@@ -198,4 +198,43 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     await _clearUserAndToken();
   }
+
+  Future<void> forgotPassword(String email) async {
+    print('Forgot Password Request:');
+    print('URL: ${ApiConstants.forgotPasswordEndpoint}');
+    print('Headers: {\'Content-Type\': \'application/json\', \'Accept\': \'application/json\'}');
+    print('Body: ${json.encode({'email': email})}');
+
+    final response = await http.post(
+      Uri.parse(ApiConstants.forgotPasswordEndpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: json.encode({'email': email}),
+    );
+
+    print('Forgot Password Response Status Code: ${response.statusCode}');
+    print('Forgot Password Response Headers: ${response.headers}');
+    print('Forgot Password Response Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      if (responseData['message'] == null) {
+        throw Exception('Password reset request failed: Unknown server response format.');
+      }
+      // Success message is expected from the backend
+    } else {
+      // Attempt to decode errorData even if status code is not 200
+      String errorMessage = 'Failed to send password reset link.';
+      try {
+        final errorData = json.decode(response.body);
+        errorMessage = errorData['message'] ?? errorMessage;
+      } catch (e) {
+        print('Error decoding Forgot Password error response: $e');
+        errorMessage = 'Failed to send password reset link: ${response.body}';
+      }
+      throw Exception(errorMessage);
+    }
+  }
 }

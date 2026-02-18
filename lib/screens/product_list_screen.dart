@@ -48,7 +48,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
     ];
   }
 
-  int _selectedIndex = 0; // New state variable for bottom navigation
+
 
   @override
   void initState() {
@@ -123,54 +123,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
     super.dispose();
   }
 
-  void _onItemTapped(int index) {
-    if (index == _selectedIndex) {
-      return; // Do nothing if the current tab is re-selected
-    }
-    setState(() {
-      _selectedIndex = index;
-    });
 
-    if (!mounted) return; // Ensure widget is still active before navigating
-
-    // Handle navigation based on index
-    switch (index) {
-      case 0:
-        // Navigate to home only if not already on home
-        if (ModalRoute.of(context)?.settings.name != '/') {
-          Navigator.of(context).pushReplacementNamed('/');
-        }
-        break;
-      case 1:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
-        );
-        break;
-      case 2:
-        Navigator.of(context).pushReplacementNamed('/cart'); // Cart
-        break;
-      case 3:
-        Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
-        break;
-      case 4:
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        if (!mounted) return; // Re-check mounted after potentially long Provider operation
-        if (authProvider.isAuthenticated) {
-          if (authProvider.user!.role == UserRole.admin) {
-            Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
-          } else if (authProvider.user!.role == UserRole.rider) { // New condition for rider
-            Navigator.of(context).pushReplacementNamed('/rider-panel'); // Navigate to Rider Panel
-          } else if (authProvider.user!.role == UserRole.buyer || authProvider.user!.role == UserRole.user) { // New condition for buyer and general user
-            Navigator.of(context).pushReplacementNamed('/buyer-panel'); // Navigate to Buyer Panel
-          } else {
-            Navigator.of(context).pushReplacementNamed('/seller-panel'); // Navigate to Seller Panel for other authenticated roles
-          }
-        } else {
-          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login if not authenticated
-        }
-        break;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -421,66 +374,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
         },
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        items: <BottomNavigationBarItem>[
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.assignment), // RFQ
-            label: 'RFQ',
-          ),
-          BottomNavigationBarItem(
-            icon: Consumer<CartProvider>(
-              builder: (context, cart, child) => Stack(
-                children: [
-                  const Icon(Icons.shopping_cart),
-                  if (cart.itemCount > 0)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          cart.itemCount.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            label: 'Cart',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.local_shipping), // Shipping
-            label: 'Shipping',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.person), // Account
-            label: 'Account',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed, // Ensure all items are visible
-      ),
+
     );
   }
 

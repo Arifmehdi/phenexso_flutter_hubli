@@ -28,6 +28,8 @@ import 'package:hubli/screens/admin_panel_screen.dart';
 import 'package:hubli/screens/seller_panel_screen.dart';
 import 'package:hubli/screens/rider_panel_screen.dart';
 import 'package:hubli/screens/buyer_panel_screen.dart'; // New Import
+import 'package:hubli/screens/forgot_password_screen.dart'; // Add missing import
+import 'package:hubli/screens/main_navigation_screen.dart';
 
 import 'package:hubli/providers/category_provider.dart';
 import 'package:hubli/screens/all_categories_screen.dart';
@@ -134,12 +136,11 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: '/',
+      initialRoute: MainNavigationScreen.routeName,
       onGenerateRoute: (settings) {
         switch (settings.name) {
-          case '/':
-            // This is the default home route, so no initial category filter
-            return MaterialPageRoute(builder: (context) => const ProductListScreen());
+          case MainNavigationScreen.routeName:
+            return MaterialPageRoute(builder: (context) => const MainNavigationScreen());
           case '/category-products':
             final args = settings.arguments as Map<String, String>;
             return MaterialPageRoute(
@@ -172,6 +173,8 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (context) => RiderPanelScreen());
           case '/buyer-panel': // New Buyer Panel route
             return MaterialPageRoute(builder: (context) => const BuyerPanelScreen());
+          case '/forgot-password': // New Forgot Password route
+            return MaterialPageRoute(builder: (context) => const ForgotPasswordScreen());
           case '/all-categories':
             return MaterialPageRoute(builder: (context) => const AllCategoriesScreen());
           case '/wishlist': // Add WishlistScreen route

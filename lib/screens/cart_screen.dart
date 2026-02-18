@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
-import 'package:hubli/widgets/custom_app_bar.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:hubli/models/user_role.dart'; // Import UserRole enum
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -45,7 +42,24 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
 
-    return cart.itemCount == 0
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
+        title: const Text('Your Cart'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              Navigator.of(context).pushReplacementNamed('/');
+            }
+          },
+        ),
+      ),
+      body: cart.itemCount == 0
           ? const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -149,6 +163,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
               ],
-            );
+            ),
+    );
   }
 }

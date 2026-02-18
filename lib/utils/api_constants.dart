@@ -5,4 +5,5 @@ class ApiConstants {
   static const String logoutEndpoint = '$baseUrl/api/logout'; // New logout endpoint
   static const String chatBaseUrl = '$baseUrl/api/chat'; // New chat base URL
   static const String imageUploadsBaseUrl = '$baseUrl/uploads/'; // Assuming images are here
+  static const String forgotPasswordEndpoint = '$baseUrl/api/forgot-password'; // New: Forgot Password Endpoint
 }

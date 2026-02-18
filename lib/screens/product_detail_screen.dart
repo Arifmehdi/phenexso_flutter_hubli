@@ -324,6 +324,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: () {
+                  debugPrint('Add to Cart button pressed for product: ${widget.product.name}');
                   final cart = Provider.of<CartProvider>(context, listen: false);
                   cart.addItem(widget.product);
                   if (!mounted) return; // Add mounted check here

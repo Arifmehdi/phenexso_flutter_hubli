@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/wishlist_provider.dart';
 import 'package:hubli/models/product.dart';
-import 'package:hubli/widgets/custom_app_bar.dart';
-import 'package:hubli/providers/auth_provider.dart'; // For bottom nav
-import 'package:hubli/providers/cart_provider.dart'; // For bottom nav
-import 'package:intl/intl.dart'; // For currency formatting
-import 'package:hubli/models/user_role.dart'; // Import UserRole enum
+import 'package:hubli/providers/cart_provider.dart'; // Re-add CartProvider import
+import 'package:intl/intl.dart';
 
 class WishlistScreen extends StatefulWidget {
   static const routeName = '/wishlist';

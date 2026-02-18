@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:hubli/models/user_role.dart'; // Import UserRole enum
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
