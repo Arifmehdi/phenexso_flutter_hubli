@@ -42,6 +42,7 @@ import 'package:hubli/services/rider_dashboard_service.dart'; // New Import for 
 import 'package:hubli/providers/rider_dashboard_provider.dart'; // New Import for RiderDashboardProvider
 import 'package:hubli/services/seller_dashboard_service.dart'; // New Import for SellerDashboardService
 import 'package:hubli/providers/seller_dashboard_provider.dart'; // New Import for SellerDashboardProvider
+import 'package:hubli/services/cart_service.dart'; // New Import for CartService
 
 void main() {
   runApp(
@@ -83,7 +84,14 @@ void main() {
             return SellerDashboardProvider(SellerDashboardService(auth.token));
           },
         ),
-        ChangeNotifierProvider(create: (context) => CartProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, CartProvider>(
+          create: (context) => CartProvider(CartService(null)),
+          update: (context, auth, cartProvider) {
+            debugPrint('CartProvider update with token: ${auth.token}');
+            cartProvider!.updateService(CartService(auth.token, cartProvider.guestSessionId));
+            return cartProvider;
+          },
+        ),
         ChangeNotifierProvider(create: (context) => OrderProvider()),
         ChangeNotifierProvider(create: (context) => ProductProvider()),
         ChangeNotifierProvider(create: (context) => CategoryProvider()),

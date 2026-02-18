@@ -6,4 +6,5 @@ class ApiConstants {
   static const String chatBaseUrl = '$baseUrl/api/chat'; // New chat base URL
   static const String imageUploadsBaseUrl = '$baseUrl/uploads/'; // Assuming images are here
   static const String forgotPasswordEndpoint = '$baseUrl/api/forgot-password'; // New: Forgot Password Endpoint
+  static const String cartEndpoint = '$baseUrl/api/cart'; // New: Cart Endpoint
 }

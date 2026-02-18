@@ -39,6 +39,7 @@ dependencies:
   cached_network_image: ^3.4.1
   shared_preferences: ^2.5.4 # Added for local data persistence
   share_plus: ^7.0.2 # Added for sharing functionality
+  uuid: ^4.3.3
 
 
   # The following adds the Cupertino Icons font to your application.

@@ -304,36 +304,49 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  final cart = Provider.of<CartProvider>(context, listen: false);
-                  cart.addItem(widget.product); // Add to cart before buying
-                  Navigator.of(context).pushNamed('/shipping-address');
+                onPressed: () async {
+                  try {
+                    final cart = Provider.of<CartProvider>(context, listen: false);
+                    await cart.addItem(widget.product); // Add to cart before buying
+                    if (!mounted) return;
+                    Navigator.of(context).pushNamed('/shipping-address');
+                  } catch (error) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to add to cart: $error')),
+                    );
+                  }
                 },
                 child: const Text('Buy Now'),
                 style: ElevatedButton.styleFrom(
-                  // backgroundColor: const Color(0xFF00883C), // Removed hardcoded color
-                  // foregroundColor: Colors.white, // Removed hardcoded color
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0), // Added border radius
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 8), // Add some space between buttons
+            const SizedBox(width: 8),
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: () {
+                onPressed: () async {
                   debugPrint('Add to Cart button pressed for product: ${widget.product.name}');
-                  final cart = Provider.of<CartProvider>(context, listen: false);
-                  cart.addItem(widget.product);
-                  if (!mounted) return; // Add mounted check here
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${widget.product.name} added to cart!'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
+                  try {
+                    final cart = Provider.of<CartProvider>(context, listen: false);
+                    await cart.addItem(widget.product);
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${widget.product.name} added to cart!'),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  } catch (error) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to add to cart: $error')),
+                    );
+                  }
                 },
                 icon: const Icon(Icons.add_shopping_cart),
                 label: const Text('Add to Cart'),

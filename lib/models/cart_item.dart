@@ -1,8 +1,9 @@
 import 'package:hubli/models/product.dart';
 
 class CartItem {
+  final String? id; // Database ID from 'carts' table
   final Product product;
   int quantity;
 
-  CartItem({required this.product, this.quantity = 1});
+  CartItem({this.id, required this.product, this.quantity = 1});
 }

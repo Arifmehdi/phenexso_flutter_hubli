@@ -1,9 +1,29 @@
 import 'package:flutter/foundation.dart';
 import 'package:hubli/models/cart_item.dart';
 import 'package:hubli/models/product.dart';
+import 'package:hubli/services/cart_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 class CartProvider with ChangeNotifier {
-  final Map<String, CartItem> _items = {};
+  Map<String, CartItem> _items = {};
+  CartService _cartService;
+  String? _guestSessionId;
+
+  CartProvider(this._cartService) {
+    debugPrint('CartProvider: Initialized');
+    _initGuestSession().then((_) => fetchAndSetCart());
+  }
+
+  void updateService(CartService newService) {
+    _cartService = newService;
+    // We don't necessarily need to fetch again here as the ProxyProvider 
+    // will trigger this when the token changes (e.g., after login).
+    // But we might want to refresh to get the merged cart.
+    fetchAndSetCart();
+  }
+
+  String? get guestSessionId => _guestSessionId;
 
   Map<String, CartItem> get items => {..._items};
 
@@ -19,60 +39,99 @@ class CartProvider with ChangeNotifier {
     return total;
   }
 
-  void addItem(Product product) {
-    if (_items.containsKey(product.id)) {
-      _items.update(
-        product.id,
-        (existingCartItem) => CartItem(
-          product: existingCartItem.product,
-          quantity: existingCartItem.quantity + 1,
-        ),
-      );
+  Future<void> _initGuestSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    _guestSessionId = prefs.getString('guest_session_id');
+    if (_guestSessionId == null) {
+      _guestSessionId = const Uuid().v4();
+      await prefs.setString('guest_session_id', _guestSessionId!);
+      debugPrint('CartProvider: Generated new guest session ID: $_guestSessionId');
     } else {
-      _items.putIfAbsent(
-        product.id,
-        () => CartItem(
-          product: product,
-        ),
-      );
+      debugPrint('CartProvider: Loaded existing guest session ID: $_guestSessionId');
     }
-    notifyListeners();
+    // Re-initialize the service with the loaded session ID
+    _cartService = CartService(_cartService.authToken, _guestSessionId);
   }
 
-  void increaseQuantity(String productId) {
-    if (_items.containsKey(productId)) {
-      _items.update(
-        productId,
-        (existingCartItem) => CartItem(
-          product: existingCartItem.product,
-          quantity: existingCartItem.quantity + 1,
-        ),
-      );
+  Future<void> fetchAndSetCart() async {
+    if (_cartService.authToken == null && _guestSessionId == null) {
+      debugPrint('CartProvider: Skipping fetch, no token or guest session ID yet.');
+      return;
+    }
+    try {
+      final cartItems = await _cartService.fetchCart();
+      _items.clear();
+      for (var item in cartItems) {
+        _items.putIfAbsent(item.product.id, () => item);
+      }
       notifyListeners();
+    } catch (error) {
+      debugPrint('Error fetching cart: $error');
     }
   }
 
-  void decreaseQuantity(String productId) {
+  Future<void> addItem(Product product) async {
+    try {
+      if (_items.containsKey(product.id)) {
+        final existingItem = _items[product.id]!;
+        final updatedItem = await _cartService.addToCart(product.id, existingItem.quantity + 1);
+        _items[product.id] = updatedItem;
+      } else {
+        final newItem = await _cartService.addToCart(product.id, 1);
+        _items.putIfAbsent(product.id, () => newItem);
+      }
+      notifyListeners();
+    } catch (error) {
+      debugPrint('Error adding to cart: $error');
+      rethrow;
+    }
+  }
+
+  Future<void> increaseQuantity(String productId) async {
+    if (_items.containsKey(productId)) {
+      try {
+        final existingItem = _items[productId]!;
+        final updatedItem = await _cartService.addToCart(productId, existingItem.quantity + 1);
+        _items[productId] = updatedItem;
+        notifyListeners();
+      } catch (error) {
+        debugPrint('Error increasing quantity: $error');
+      }
+    }
+  }
+
+  Future<void> decreaseQuantity(String productId) async {
     if (!_items.containsKey(productId)) {
       return;
     }
-    if (_items[productId]!.quantity > 1) {
-      _items.update(
-        productId,
-        (existingCartItem) => CartItem(
-          product: existingCartItem.product,
-          quantity: existingCartItem.quantity - 1,
-        ),
-      );
-    } else {
-      _items.remove(productId);
+    try {
+      final existingItem = _items[productId]!;
+      if (existingItem.quantity > 1) {
+        final updatedItem = await _cartService.addToCart(productId, existingItem.quantity - 1);
+        _items[productId] = updatedItem;
+      } else {
+        if (existingItem.id != null) {
+          await _cartService.removeFromCart(existingItem.id!);
+        }
+        _items.remove(productId);
+      }
+      notifyListeners();
+    } catch (error) {
+      debugPrint('Error decreasing quantity: $error');
     }
-    notifyListeners();
   }
 
-  void removeItem(String productId) {
-    _items.remove(productId);
-    notifyListeners();
+  Future<void> removeItem(String productId) async {
+    try {
+      final existingItem = _items[productId];
+      if (existingItem != null && existingItem.id != null) {
+        await _cartService.removeFromCart(existingItem.id!);
+      }
+      _items.remove(productId);
+      notifyListeners();
+    } catch (error) {
+      debugPrint('Error removing item: $error');
+    }
   }
 
   void clear() {
