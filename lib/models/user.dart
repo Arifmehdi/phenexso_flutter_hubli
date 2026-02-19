@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart'; // Import for debugPrint
 int _safeParseInt(dynamic value) {
   if (value == null) return 0;
   if (value is int) return value;
+  if (value is bool) return value ? 1 : 0; // Handle booleans
   if (value is String) {
     if (value.isEmpty) return 0;
     try {

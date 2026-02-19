@@ -12,37 +12,139 @@ class OrderHistoryScreen extends StatefulWidget {
 
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final provider = Provider.of<OrderProvider>(context, listen: false);
+      // Always fetch fresh data when entering the history screen
+      provider.fetchAndSetOrders();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final orderData = Provider.of<OrderProvider>(context);
-    return orderData.orders.isEmpty
-          ? const Center(
-              child: Text('You have no orders yet.'),
-            )
-          : ListView.builder(
-              itemCount: orderData.orders.length,
-              itemBuilder: (ctx, i) {
-                final order = orderData.orders[i];
-                return Card(
-                  margin: const EdgeInsets.all(10),
-                  child: Column(
-                    children: <Widget>[
-                      ListTile(
-                        title: Text(
-                            NumberFormat.currency(locale: 'en_BD', symbol: '৳ ').format(order.totalAmount)),
-                        subtitle: Text(
-                          DateFormat('dd/MM/yyyy hh:mm').format(order.orderDate),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Order History'),
+        automaticallyImplyLeading: false,
+      ),
+      body: Consumer<OrderProvider>(
+        builder: (context, orderData, child) {
+          if (orderData.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => orderData.fetchAndSetOrders(),
+            child: orderData.orders.isEmpty
+                ? ListView(
+                    children: [
+                      const SizedBox(height: 100),
+                      const Center(
+                        child: Column(
+                          children: [
+                            Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text('You have no orders yet.', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                          ],
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.expand_more),
-                          onPressed: () {
-                            // TODO: Implement order expansion to show products
-                          },
+                      ),
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 50),
+                        child: ElevatedButton(
+                          onPressed: () => orderData.fetchAndSetOrders(),
+                          child: const Text('Refresh Orders'),
                         ),
                       ),
                     ],
+                  )
+                : ListView.builder(
+                    itemCount: orderData.orders.length,
+                    itemBuilder: (ctx, i) {
+                      final order = orderData.orders[i];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                        child: ExpansionTile(
+                          title: Text(
+                            'Order #${order.id}',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(DateFormat('dd MMM yyyy, hh:mm a').format(order.orderDate)),
+                              Text(
+                                'Status: ${order.paymentStatus.toUpperCase()}',
+                                style: TextStyle(
+                                  color: order.paymentStatus == 'paid' ? Colors.green : Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: Text(
+                            NumberFormat.currency(locale: 'en_BD', symbol: '৳ ').format(order.grandTotal),
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                          ),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Items:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 8),
+                                  ...order.items.map((item) => Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(child: Text('${item.productName} x ${item.quantity}')),
+                                        Text('৳ ${item.totalCost.toStringAsFixed(2)}'),
+                                      ],
+                                    ),
+                                  )).toList(),
+                                  const Divider(),
+                                  _buildPriceRow('Subtotal', order.subtotal),
+                                  _buildPriceRow('Delivery Fee', order.deliveryCost),
+                                  _buildPriceRow('Grand Total', order.grandTotal, isBold: true),
+                                  const SizedBox(height: 10),
+                                  const Text('Shipping Address:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  Text(order.addressTitle),
+                                  if (order.orderNote != null && order.orderNote!.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    const Text('Note:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    Text(order.orderNote!),
+                                  ]
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            );
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPriceRow(String label, double amount, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+          Text(
+            '৳ ${amount.toStringAsFixed(2)}',
+            style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal),
+          ),
+        ],
+      ),
+    );
   }
 }

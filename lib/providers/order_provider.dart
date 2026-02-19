@@ -1,37 +1,71 @@
 import 'package:flutter/foundation.dart';
-import 'package:hubli/models/cart_item.dart';
 import 'package:hubli/models/order.dart';
+import 'package:hubli/services/order_service.dart';
 
 class OrderProvider with ChangeNotifier {
-  final List<Order> _orders = [];
+  List<Order> _orders = [];
+  final OrderService _orderService;
+  bool _isLoading = false;
+  bool _didFetchInitialData = false;
+
+  OrderProvider(this._orderService);
 
   List<Order> get orders => [..._orders];
+  bool get isLoading => _isLoading;
+  bool get didFetchInitialData => _didFetchInitialData;
 
-  void addOrder(
-    List<CartItem> cartProducts,
-    double total,
-    String fullName,
-    String addressLine1,
-    String addressLine2,
-    String city,
-    String postalCode,
-    String country,
-  ) {
-    _orders.insert(
-      0,
-      Order(
-        id: DateTime.now().toString(),
-        totalAmount: total,
-        products: cartProducts,
-        orderDate: DateTime.now(),
-        fullName: fullName,
-        addressLine1: addressLine1,
-        addressLine2: addressLine2,
-        city: city,
-        postalCode: postalCode,
-        country: country,
-      ),
-    );
+  Future<void> fetchAndSetOrders() async {
+    _isLoading = true;
     notifyListeners();
+    try {
+      final List<dynamic> fetchedData = await _orderService.fetchOrders();
+      debugPrint('OrderProvider: Mapping ${fetchedData.length} items to Order models');
+      
+      _orders = fetchedData.map((item) {
+        try {
+          return Order.fromJson(item);
+        } catch (e) {
+          debugPrint('OrderProvider: Error mapping individual order: $e. Item data: $item');
+          return null;
+        }
+      })
+      .where((order) => order != null)
+      .cast<Order>()
+      .toList();
+      
+      _didFetchInitialData = true;
+      debugPrint('OrderProvider: Final order count in provider: ${_orders.length}');
+    } catch (error) {
+      debugPrint('OrderProvider: Error fetching orders: $error');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> addOrder({
+    required String name,
+    required String mobile,
+    String? email,
+    required String addressTitle,
+    required String paymentMethod,
+    String? orderNote,
+  }) async {
+    try {
+      await _orderService.placeOrder(
+        name: name,
+        mobile: mobile,
+        email: email,
+        addressTitle: addressTitle,
+        paymentMethod: paymentMethod,
+        orderNote: orderNote,
+      );
+      
+      // Refresh the orders list
+      await fetchAndSetOrders();
+    } catch (error) {
+      debugPrint('OrderProvider: Error adding order: $error');
+      rethrow;
+    }
   }
 }

@@ -7,4 +7,5 @@ class ApiConstants {
   static const String imageUploadsBaseUrl = '$baseUrl/uploads/'; // Assuming images are here
   static const String forgotPasswordEndpoint = '$baseUrl/api/forgot-password'; // New: Forgot Password Endpoint
   static const String cartEndpoint = '$baseUrl/api/cart'; // New: Cart Endpoint
+  static const String ordersEndpoint = '$baseUrl/api/orders'; // New: Orders Endpoint
 }

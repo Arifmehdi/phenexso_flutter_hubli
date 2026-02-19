@@ -3,7 +3,7 @@ import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:hubli/models/user_role.dart'; // Import UserRole enum
+import 'package:hubli/models/user_role.dart';
 
 class ShippingAddressScreen extends StatefulWidget {
   const ShippingAddressScreen({super.key});
@@ -14,78 +14,101 @@ class ShippingAddressScreen extends StatefulWidget {
 
 class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _receiverName = '';
-  String _receiverPhoneNumber = ''; // New field
-  String _addressLine1 = '';
-  String _city = '';
-  String _postalCode = '';
-  double _contentWeight = 1.0; // New field for slider
+  
+  // Initialize immediately to prevent LateInitializationError
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
+  
+  String _paymentMethod = 'Cash on Delivery';
+  bool _isLoading = false;
+  int _selectedIndex = 3;
 
-  int _selectedIndex = 3; // Index for Shipping
+  @override
+  void initState() {
+    super.initState();
+
+    // Pre-fill fields from user profile
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = Provider.of<AuthProvider>(context, listen: false).user;
+      if (user != null) {
+        _nameController.text = user.name;
+        _mobileController.text = user.mobile ?? '';
+        _emailController.text = user.email;
+        _addressController.text = user.present_address ?? '';
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _mobileController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
-    if (index == _selectedIndex) {
-      return; // Do nothing if the current tab is re-selected
-    }
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == _selectedIndex) return;
+    setState(() { _selectedIndex = index; });
 
-    if (!mounted) return; // Add mounted check here
-
-    // Handle navigation based on index
     switch (index) {
-      case 0:
-        // Navigate to home only if not already on home
-        if (ModalRoute.of(context)?.settings.name != '/') {
-          Navigator.of(context).pushReplacementNamed('/');
-        }
-        break;
-      case 1:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
-        );
-        break;
-      case 2:
-        Navigator.of(context).pushReplacementNamed('/cart'); // Cart
-        break;
-      case 3:
-        // Already on Shipping screen
-        break;
+      case 0: Navigator.of(context).pushReplacementNamed('/'); break;
+      case 1: ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('RFQ Screen (Not Implemented)'))); break;
+      case 2: Navigator.of(context).pushReplacementNamed('/cart'); break;
+      case 3: break;
       case 4:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        if (!mounted) return; // Re-check mounted after potentially long Provider operation
         if (authProvider.isAuthenticated) {
           if (authProvider.user!.role == UserRole.admin) {
-            Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+            Navigator.of(context).pushReplacementNamed('/admin-panel');
           } else {
-            Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
+            Navigator.of(context).pushReplacementNamed('/account');
           }
         } else {
-          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
+          Navigator.of(context).pushReplacementNamed('/login');
         }
         break;
     }
   }
-  void _saveAddress(CartProvider cart, OrderProvider orders) {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
 
-      orders.addOrder(
-        cart.items.values.toList(),
-        cart.totalAmount,
-        _receiverName, // Using receiver name
-        _addressLine1,
-        _city,
-        _postalCode,
-        '', // Pass empty string for addressLine2
-        '', // Pass empty string for country
-      );
-      cart.clear();
-      if (!mounted) return; // Add mounted check here
-      Navigator.of(context).pushReplacementNamed('/orders');
+  Future<void> _placeOrder(CartProvider cart, OrderProvider orders) async {
+    if (_formKey.currentState!.validate()) {
+      setState(() { _isLoading = true; });
+
+      try {
+        await orders.addOrder(
+          name: _nameController.text,
+          mobile: _mobileController.text,
+          email: _emailController.text.isEmpty ? null : _emailController.text,
+          addressTitle: _addressController.text,
+          paymentMethod: _paymentMethod,
+          orderNote: _noteController.text.isEmpty ? null : _noteController.text,
+        );
+
+        cart.clear();
+        if (!mounted) return;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order placed successfully!')),
+        );
+        
+        Navigator.of(context).pushReplacementNamed('/orders');
+      } catch (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to place order: $error')),
+        );
+      } finally {
+        if (mounted) setState(() { _isLoading = false; });
+      }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
@@ -94,8 +117,8 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black, // Ensure title and other icons are visible
-        elevation: 1, // Add a subtle shadow
+        foregroundColor: Colors.black,
+        elevation: 1,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
@@ -106,132 +129,95 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
             }
           },
         ),
-        title: const Text('Shipping Details'),
+        title: const Text('Checkout'),
       ),
-      body: Padding(
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: ListView(
             children: <Widget>[
-              // Receiver Details
               const Text(
-                'Receiver Details',
+                'Shipping Information',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               TextFormField(
+                controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Receiver Name',
-                  border: OutlineInputBorder(), // Added border
+                  labelText: 'Full Name',
+                  border: OutlineInputBorder(),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter receiver\'s name.';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _receiverName = value!;
-                },
+                validator: (value) => (value == null || value.isEmpty) ? 'Please enter your name' : null,
               ),
               const SizedBox(height: 10),
               TextFormField(
+                controller: _mobileController,
                 decoration: const InputDecoration(
-                  labelText: 'Receiver Phone Number',
-                  border: OutlineInputBorder(), // Added border
+                  labelText: 'Phone Number',
+                  border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter receiver\'s phone number.';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _receiverPhoneNumber = value!;
-                },
+                validator: (value) => (value == null || value.isEmpty) ? 'Please enter phone number' : null,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email (Optional)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _addressController,
+                decoration: const InputDecoration(
+                  labelText: 'Full Address',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+                validator: (value) => (value == null || value.isEmpty) ? 'Please enter your address' : null,
               ),
               const SizedBox(height: 20),
-              // Delivery Address
               const Text(
-                'Delivery Address',
+                'Order Note',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               TextFormField(
+                controller: _noteController,
                 decoration: const InputDecoration(
-                  labelText: 'Enter Full Address',
-                  border: OutlineInputBorder(), // Added border
+                  labelText: 'Any special instructions?',
+                  border: OutlineInputBorder(),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your address.';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _addressLine1 = value!;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'City',
-                  border: OutlineInputBorder(), // Added border
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your city.';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _city = value!;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Postal Code',
-                  border: OutlineInputBorder(), // Added border
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your postal code.';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _postalCode = value!;
-                },
+                maxLines: 2,
               ),
               const SizedBox(height: 20),
-              // Content Weight Slider
-              Text(
-                'Content Weight: ${_contentWeight.toStringAsFixed(1)} kg',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              const Text(
+                'Payment Method',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: _paymentMethod,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
                 ),
+                items: ['Cash on Delivery', 'bKash', 'Nagad']
+                    .map((method) => DropdownMenuItem(value: method, child: Text(method)))
+                    .toList(),
+                onChanged: (value) => setState(() => _paymentMethod = value!),
               ),
-              Slider(
-                value: _contentWeight,
-                min: 0.1,
-                max: 100.0,
-                divisions: 1000,
-                label: _contentWeight.toStringAsFixed(1),
-                onChanged: (double value) {
-                  setState(() {
-                    _contentWeight = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: () => _saveAddress(cart, orders),
-                child: const Text('Confirm'), // Changed button text
+                onPressed: () => _placeOrder(cart, orders),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: Text('Place Order (Total: ৳ ${cart.totalAmount.toStringAsFixed(2)})'),
               ),
             ],
           ),
@@ -241,28 +227,16 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
         backgroundColor: Colors.white,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment), // RFQ
-            label: 'RFQ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Cart',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.local_shipping), // Shipping
-            label: 'Shipping',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person), // Account
-            label: 'Account',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'RFQ'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Cart'),
+          BottomNavigationBarItem(icon: Icon(Icons.local_shipping), label: 'Shipping'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed, // Ensure all items are visible
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }

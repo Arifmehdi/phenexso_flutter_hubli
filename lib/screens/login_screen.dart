@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
               break;
             case UserRole.buyer:
             case UserRole.user: // Assuming regular users now default to the buyer experience
-              routeName = '/buyer-panel'; // New Buyer Panel route
+              routeName = '/'; // Navigate to root to use the role-aware bar in MainNavigationScreen
               break;
           }
           Navigator.of(context).pushNamedAndRemoveUntil(routeName, (route) => false);

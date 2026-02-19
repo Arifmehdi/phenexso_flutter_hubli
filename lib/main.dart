@@ -43,6 +43,7 @@ import 'package:hubli/providers/rider_dashboard_provider.dart'; // New Import fo
 import 'package:hubli/services/seller_dashboard_service.dart'; // New Import for SellerDashboardService
 import 'package:hubli/providers/seller_dashboard_provider.dart'; // New Import for SellerDashboardProvider
 import 'package:hubli/services/cart_service.dart'; // New Import for CartService
+import 'package:hubli/services/order_service.dart'; // New Import for OrderService
 
 void main() {
   runApp(
@@ -92,7 +93,14 @@ void main() {
             return cartProvider;
           },
         ),
-        ChangeNotifierProvider(create: (context) => OrderProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, OrderProvider>(
+          create: (context) => OrderProvider(OrderService(null)),
+          update: (context, auth, orderProvider) {
+            // Get guest session ID from CartProvider
+            final cartProvider = Provider.of<CartProvider>(context, listen: false);
+            return OrderProvider(OrderService(auth.token, cartProvider.guestSessionId));
+          },
+        ),
         ChangeNotifierProvider(create: (context) => ProductProvider()),
         ChangeNotifierProvider(create: (context) => CategoryProvider()),
         ChangeNotifierProvider(create: (context) => WishlistProvider()), // Add WishlistProvider

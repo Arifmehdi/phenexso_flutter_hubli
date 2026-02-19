@@ -27,7 +27,12 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<WishlistProvider>(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Wishlist'),
+        automaticallyImplyLeading: false,
+      ),
+      body: Consumer<WishlistProvider>(
         builder: (context, wishlistProvider, child) {
           if (wishlistProvider.wishlistItems.isEmpty) {
             return const Center(child: Text('Your wishlist is empty.'));
@@ -48,7 +53,8 @@ class _WishlistScreenState extends State<WishlistScreen> {
             },
           );
         },
-      );
+      ),
+    );
   }
 }
 

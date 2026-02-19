@@ -83,14 +83,19 @@ class AuthProvider with ChangeNotifier {
 
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
-      print('Login Response Data: $responseData'); // Debugging
+      final rawUser = responseData['user'];
+      print('Login: Raw user data: $rawUser'); // Debugging raw data
+      
       final token = responseData['token'];
-      final user = User.fromJson(responseData['user']);
-      print('User is_approve status: ${user.is_approve}'); // Debugging
+      final user = User.fromJson(rawUser);
+      print('Login: Parsed User role: ${user.role}, is_approve: ${user.is_approve}'); // Debugging parsed data
 
-      if (user.role != UserRole.buyer && user.is_approve != 1) {
+      // Logic: Only buyers are auto-approved. 
+      // Admins, Riders, and Sellers must have is_approve == 1
+      if (user.role != UserRole.buyer && user.role != UserRole.user && user.is_approve != 1) {
+        print('Login: Approval check failed for role ${user.role} with is_approve ${user.is_approve}');
         await _clearUserAndToken();
-        throw Exception('Your account is pending admin approval. Please wait.');
+        throw Exception('Your ${user.role.toString().split('.').last.capitalize()} account is pending admin approval. Please wait.');
       }
       await _saveUserAndToken(token, user);
     } else {

@@ -77,41 +77,8 @@ class _CartScreenState extends State<CartScreen> {
               children: [
                 Expanded(
                   child: ListView.builder(
-                    itemCount: cart.itemCount + 1, // Add 1 for the total/order card
+                    itemCount: cart.itemCount,
                     itemBuilder: (ctx, i) {
-                      if (i == cart.itemCount) {
-                        return Card(
-                          margin: const EdgeInsets.all(15),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                const Text(
-                                  'Total',
-                                  style: TextStyle(fontSize: 20),
-                                ),
-                                const Spacer(),
-                                Chip(
-                                  label: Text(
-                                    NumberFormat.currency(locale: 'en_BD', symbol: '৳ ').format(cart.totalAmount),
-                                    style: TextStyle(
-                                      color: Theme.of(context).primaryTextTheme.titleLarge?.color,
-                                    ),
-                                  ),
-                                  backgroundColor: Theme.of(context).primaryColor,
-                                ),
-                                TextButton(
-                                  child: const Text('ORDER NOW'),
-                                  onPressed: () {
-                                    Navigator.of(context).pushNamed('/order-confirmation');
-                                  },
-                                )
-                              ],
-                            ),
-                          ),
-                        );
-                      }
                       final cartItem = cart.items.values.toList()[i];
                       return GestureDetector(
                         onTap: () {
@@ -131,31 +98,32 @@ class _CartScreenState extends State<CartScreen> {
                                   child: _buildProductImage(cartItem.product.imageUrls),
                                 ),
                               ),
-                                                          title: Text(cartItem.product.name),
-                                                          subtitle: Text(
-                                                              'Price: \$${cartItem.product.price.toStringAsFixed(2)}'),
-                                                          trailing: Row(
-                                                            mainAxisSize: MainAxisSize.min,
-                                                            children: <Widget>[
-                                                              IconButton(
-                                                                icon: const Icon(Icons.remove),
-                                                                onPressed: () {
-                                                                  Provider.of<CartProvider>(context,
-                                                                          listen: false)
-                                                                      .decreaseQuantity(cartItem.product.id);
-                                                                },
-                                                              ),
-                                                              Text('${cartItem.quantity}'),
-                                                              IconButton(
-                                                                icon: const Icon(Icons.add),
-                                                                onPressed: () {
-                                                                  Provider.of<CartProvider>(context,
-                                                                          listen: false)
-                                                                      .increaseQuantity(cartItem.product.id);
-                                                                },
-                                                              ),
-                                                            ],
-                                                          ),                            ),
+                              title: Text(cartItem.product.name),
+                              subtitle: Text(
+                                  'Price: ৳${cartItem.product.price.toStringAsFixed(2)}'),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  IconButton(
+                                    icon: const Icon(Icons.remove),
+                                    onPressed: () {
+                                      Provider.of<CartProvider>(context,
+                                              listen: false)
+                                          .decreaseQuantity(cartItem.product.id);
+                                    },
+                                  ),
+                                  Text('${cartItem.quantity}'),
+                                  IconButton(
+                                    icon: const Icon(Icons.add),
+                                    onPressed: () {
+                                      Provider.of<CartProvider>(context,
+                                              listen: false)
+                                          .increaseQuantity(cartItem.product.id);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       );
@@ -163,6 +131,58 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
               ],
+            ),
+      bottomNavigationBar: cart.itemCount == 0 
+          ? null 
+          : Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    offset: const Offset(0, -4),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Total Amount', style: TextStyle(color: Colors.grey)),
+                        Text(
+                          NumberFormat.currency(locale: 'en_BD', symbol: '৳ ').format(cart.totalAmount),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pushNamed('/shipping-address');
+                        },
+                        child: const Text(
+                          'PROCEED TO CHECKOUT',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
     );
   }
