@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/product.dart'; // Adjust the import path as necessary
+import '../utils/api_constants.dart';
 
 class ProductProvider with ChangeNotifier {
   List<Product> _products = [];
@@ -42,9 +43,9 @@ class ProductProvider with ChangeNotifier {
     try {
       String url;
       if (categorySlug != null) {
-        url = 'https://hublibd.com/api/products/by-slug/$categorySlug';
+        url = '${ApiConstants.baseUrl}/api/products/by-slug/$categorySlug';
       } else {
-        url = 'https://hublibd.com/api/products';
+        url = '${ApiConstants.baseUrl}/api/products';
       }
 
       // Add pagination parameters

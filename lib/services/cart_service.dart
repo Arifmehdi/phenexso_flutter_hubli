@@ -113,4 +113,27 @@ class CartService {
       throw Exception('Failed to remove from cart: ${response.statusCode}');
     }
   }
+
+  Future<void> mergeCart() async {
+    if (_authToken == null || _guestSessionId == null) {
+      return;
+    }
+
+    debugPrint('CartService: Merging guest cart ($_guestSessionId) with user account');
+
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.cartEndpoint}/merge'),
+        headers: _getHeaders(),
+        body: json.encode({'session_id': _guestSessionId}),
+      );
+
+      debugPrint('CartService: Merge response status: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        debugPrint('CartService: Merge failed but ignoring to allow user to continue: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('CartService: Error merging cart: $e');
+    }
+  }
 }

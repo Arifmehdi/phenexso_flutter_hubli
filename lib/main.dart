@@ -35,15 +35,15 @@ import 'package:hubli/providers/category_provider.dart';
 import 'package:hubli/screens/all_categories_screen.dart';
 import 'package:hubli/screens/category_products_screen.dart';
 import 'package:hubli/providers/wishlist_provider.dart';
-import 'package:hubli/screens/wishlist_screen.dart'; // Add this import
-import 'package:hubli/screens/cost_calculator_screen.dart'; // Add this import
-import 'package:hubli/screens/order_tracking_screen.dart'; // Add this import // Add this import
-import 'package:hubli/services/rider_dashboard_service.dart'; // New Import for RiderDashboardService
-import 'package:hubli/providers/rider_dashboard_provider.dart'; // New Import for RiderDashboardProvider
-import 'package:hubli/services/seller_dashboard_service.dart'; // New Import for SellerDashboardService
-import 'package:hubli/providers/seller_dashboard_provider.dart'; // New Import for SellerDashboardProvider
-import 'package:hubli/services/cart_service.dart'; // New Import for CartService
-import 'package:hubli/services/order_service.dart'; // New Import for OrderService
+import 'package:hubli/screens/wishlist_screen.dart';
+import 'package:hubli/screens/cost_calculator_screen.dart';
+import 'package:hubli/screens/order_tracking_screen.dart';
+import 'package:hubli/services/rider_dashboard_service.dart';
+import 'package:hubli/providers/rider_dashboard_provider.dart';
+import 'package:hubli/services/seller_dashboard_service.dart';
+import 'package:hubli/providers/seller_dashboard_provider.dart';
+import 'package:hubli/services/cart_service.dart';
+import 'package:hubli/services/order_service.dart';
 import 'package:hubli/services/seller_product_service.dart';
 import 'package:hubli/providers/seller_product_provider.dart';
 
@@ -74,17 +74,17 @@ void main() {
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, RiderDashboardProvider>(
-          create: (context) => RiderDashboardProvider(RiderDashboardService(null)), // Initial with null token
+          create: (context) => RiderDashboardProvider(RiderDashboardService(null)),
           update: (context, auth, riderDashboardProvider) {
-            debugPrint('RiderDashboardProvider update with token: ${auth.token}');
-            return RiderDashboardProvider(RiderDashboardService(auth.token));
+            riderDashboardProvider!.updateService(RiderDashboardService(auth.token));
+            return riderDashboardProvider;
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, SellerDashboardProvider>(
-          create: (context) => SellerDashboardProvider(SellerDashboardService(null)), // Initial with null token
+          create: (context) => SellerDashboardProvider(SellerDashboardService(null)),
           update: (context, auth, sellerDashboardProvider) {
-            debugPrint('SellerDashboardProvider update with token: ${auth.token}');
-            return SellerDashboardProvider(SellerDashboardService(auth.token));
+            sellerDashboardProvider!.updateService(SellerDashboardService(auth.token));
+            return sellerDashboardProvider;
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, SellerProductProvider>(

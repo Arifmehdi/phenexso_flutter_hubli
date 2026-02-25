@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:hubli/models/rider_dashboard.dart';
 import 'package:hubli/services/rider_dashboard_service.dart';
-import 'package:hubli/providers/auth_provider.dart'; // Import AuthProvider to get the token
 
 class RiderDashboardProvider with ChangeNotifier {
   RiderDashboard? _dashboardData;
   bool _isLoading = false;
   String? _errorMessage;
-  final RiderDashboardService _riderDashboardService;
+  RiderDashboardService _riderDashboardService;
 
   RiderDashboard? get dashboardData => _dashboardData;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  RiderDashboardProvider(this._riderDashboardService); // Constructor to inject the service
+  RiderDashboardProvider(this._riderDashboardService);
+
+  void updateService(RiderDashboardService newService) {
+    _riderDashboardService = newService;
+  }
 
   Future<void> fetchDashboardData() async {
     _isLoading = true;
@@ -22,10 +25,9 @@ class RiderDashboardProvider with ChangeNotifier {
 
     try {
       _dashboardData = await _riderDashboardService.fetchRiderDashboardData();
-      // debugPrint('Fetched Rider Dashboard Data: ${_dashboardData?.toJson()}'); // Debug print
     } catch (e) {
       _errorMessage = e.toString();
-      debugPrint('Error fetching rider dashboard data: $_errorMessage'); // Debug print
+      debugPrint('Error fetching rider dashboard data: $_errorMessage');
     } finally {
       _isLoading = false;
       notifyListeners();

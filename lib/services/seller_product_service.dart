@@ -40,10 +40,12 @@ class SellerProductService {
 
   Future<void> addProduct({
     required String nameEn,
+    required String slug,
     required double price,
     required int stock,
     required String categoryId,
     required String descriptionEn,
+    required String userId, // Add userId to parameters
     File? image,
   }) async {
     var request = http.MultipartRequest('POST', Uri.parse(ApiConstants.productsEndpoint));
@@ -51,14 +53,16 @@ class SellerProductService {
     request.headers.addAll(_getHeaders());
     
     request.fields['name_en'] = nameEn;
-    request.fields['name_bn'] = nameEn; // Fallback to English
+    request.fields['name_bn'] = nameEn; 
+    request.fields['slug'] = slug; // Use passed slug
     request.fields['price'] = price.toString();
     request.fields['stock'] = stock.toString();
     request.fields['category_id'] = categoryId;
     request.fields['description_en'] = descriptionEn;
-    request.fields['description_bn'] = descriptionEn; // Fallback to English
+    request.fields['description_bn'] = descriptionEn;
+    request.fields['addedby_id'] = userId; // Set as login user
+    request.fields['seller_id'] = userId;  // Set as login user
     
-    // Add other default fields if needed by Laravel (e.g., active, feature)
     request.fields['active'] = '1';
 
     if (image != null) {

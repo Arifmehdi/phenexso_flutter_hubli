@@ -9,6 +9,7 @@ class CartProvider with ChangeNotifier {
   Map<String, CartItem> _items = {};
   CartService _cartService;
   String? _guestSessionId;
+  String? _previousToken;
 
   CartProvider(this._cartService) {
     debugPrint('CartProvider: Initialized');
@@ -16,11 +17,28 @@ class CartProvider with ChangeNotifier {
   }
 
   void updateService(CartService newService) {
+    final newToken = newService.authToken;
+    final guestId = _guestSessionId;
+
+    // Check if user just logged in (token changed from null/empty to something)
+    bool justLoggedIn = (newToken != null && newToken.isNotEmpty) && 
+                        (_previousToken == null || _previousToken!.isEmpty);
+
     _cartService = newService;
-    // We don't necessarily need to fetch again here as the ProxyProvider 
-    // will trigger this when the token changes (e.g., after login).
-    // But we might want to refresh to get the merged cart.
-    fetchAndSetCart();
+    _previousToken = newToken;
+
+    if (justLoggedIn && guestId != null) {
+      debugPrint('CartProvider: User just logged in, merging cart...');
+      // Trigger merge without awaiting it to avoid blocking the update cycle
+      _cartService.mergeCart().then((_) {
+         fetchAndSetCart();
+      }).catchError((e) {
+         debugPrint('CartProvider: Error during background merge: $e');
+         fetchAndSetCart();
+      });
+    } else {
+      fetchAndSetCart();
+    }
   }
 
   String? get guestSessionId => _guestSessionId;

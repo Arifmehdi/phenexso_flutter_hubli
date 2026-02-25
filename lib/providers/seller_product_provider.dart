@@ -37,10 +37,12 @@ class SellerProductProvider with ChangeNotifier {
 
   Future<void> addProduct({
     required String nameEn,
+    required String slug,
     required double price,
     required int stock,
     required String categoryId,
     required String descriptionEn,
+    required String userId,
     File? image,
   }) async {
     _isLoading = true;
@@ -50,10 +52,12 @@ class SellerProductProvider with ChangeNotifier {
     try {
       await _service.addProduct(
         nameEn: nameEn,
+        slug: slug,
         price: price,
         stock: stock,
         categoryId: categoryId,
         descriptionEn: descriptionEn,
+        userId: userId,
         image: image,
       );
       // After success, refresh the list

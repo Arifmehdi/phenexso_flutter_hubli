@@ -157,6 +157,7 @@ class AddNewProductScreen extends StatefulWidget {
 class _AddNewProductScreenState extends State<AddNewProductScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameEnController = TextEditingController();
+  final _slugController = TextEditingController(); // Added slug controller
   final _priceController = TextEditingController();
   final _stockController = TextEditingController();
   final _descEnController = TextEditingController();
@@ -166,7 +167,29 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
   @override
   void initState() {
     super.initState();
+    _nameEnController.addListener(_onNameChanged); // Listen for name changes
     Future.microtask(() => Provider.of<CategoryProvider>(context, listen: false).fetchCategories());
+  }
+
+  @override
+  void dispose() {
+    _nameEnController.removeListener(_onNameChanged);
+    _nameEnController.dispose();
+    _slugController.dispose();
+    _priceController.dispose();
+    _stockController.dispose();
+    _descEnController.dispose();
+    super.dispose();
+  }
+
+  void _onNameChanged() {
+    // Generate slug from name automatically
+    String name = _nameEnController.text;
+    String slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    if (slug.endsWith('-')) slug = slug.substring(0, slug.length - 1);
+    
+    // Update controller without triggering a full rebuild unless necessary
+    _slugController.text = slug;
   }
 
   Future<void> _pickImage() async {
@@ -182,12 +205,17 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
   void _submit(SellerProductProvider provider) async {
     if (_formKey.currentState!.validate() && _selectedCategoryId != null) {
       try {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final userId = authProvider.user?.id.toString() ?? '0';
+
         await provider.addProduct(
           nameEn: _nameEnController.text,
+          slug: _slugController.text, // Pass the slug
           price: double.parse(_priceController.text),
           stock: int.parse(_stockController.text),
           categoryId: _selectedCategoryId!,
           descriptionEn: _descEnController.text,
+          userId: userId,
           image: _image,
         );
         if (!mounted) return;
@@ -215,7 +243,18 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
               children: [
                 const Text('Add New Product', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
-                TextFormField(controller: _nameEnController, decoration: const InputDecoration(labelText: 'Product Name', border: OutlineInputBorder()), validator: (v) => v!.isEmpty ? 'Required' : null),
+                TextFormField(controller: _nameEnController, decoration: const InputDecoration(labelText: 'Product Name', border: OutlineInputBorder(), hintText: 'e.g. Fresh Red Tomato'), validator: (v) => v!.isEmpty ? 'Required' : null),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _slugController, 
+                  decoration: const InputDecoration(
+                    labelText: 'Product Slug (URL)', 
+                    border: OutlineInputBorder(),
+                    helperText: 'Auto-generated URL identifier',
+                    prefixIcon: Icon(Icons.link, size: 20),
+                  ),
+                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
