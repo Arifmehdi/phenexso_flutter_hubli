@@ -1,11 +1,11 @@
-// lib/screens/seller_chat_users_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'package:hubli/providers/chat_provider.dart';
-import 'package:hubli/models/chat/user.dart' as chat_user; // Alias for chat User model
+import 'package:hubli/providers/user_provider.dart';
+import 'package:hubli/models/chat/user.dart' as chat_user;
 import 'package:hubli/screens/conversation_screen.dart';
 import 'package:hubli/screens/search_users_screen.dart';
-import 'package:hubli/providers/user_provider.dart';
 import 'package:hubli/utils/api_constants.dart';
 
 class SellerChatUsersScreen extends StatefulWidget {
@@ -19,18 +19,18 @@ class _SellerChatUsersScreenState extends State<SellerChatUsersScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Fetch chat users for the user list
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (!userProvider.isLoading && userProvider.users.isEmpty && userProvider.errorMessage == null) {
+    if (!userProvider.isLoading && userProvider.users.isEmpty) {
       userProvider.fetchAllUsers();
     }
   }
 
-  Future<void> _startChatWithUser(chat_user.User user) async { // Use chat_user.User
+  Future<void> _startChatWithUser(chat_user.User user) async {
     try {
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
       final conversation = await chatProvider.getOrCreatePrivateConversation(user.id);
       if (conversation != null && mounted) {
+        chatProvider.setCurrentConversation(conversation);
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => ConversationScreen(
@@ -52,19 +52,16 @@ class _SellerChatUsersScreenState extends State<SellerChatUsersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Seller Chats'), // Custom title for Seller Panel
-      ),
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
           if (userProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
           if (userProvider.errorMessage != null) {
-            return Center(child: Text('Error loading users: ${userProvider.errorMessage}'));
+            return Center(child: Text('Error: ${userProvider.errorMessage}'));
           }
           if (userProvider.users.isEmpty) {
-            return const Center(child: Text('No chat users found.'));
+            return const Center(child: Text('No users found.'));
           }
 
           return ListView.builder(

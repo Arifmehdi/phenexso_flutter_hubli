@@ -326,10 +326,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Management'),
-        automaticallyImplyLeading: false, // Don't show back button
-      ),
       body: Consumer<AdminUserProvider>(
         builder: (context, adminUserProvider, child) {
           if (adminUserProvider.isLoading) {

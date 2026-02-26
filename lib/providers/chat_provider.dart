@@ -63,8 +63,16 @@ class ChatProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void clearMessages() {
+    _currentMessages = [];
+    _currentConversation = null;
+    _pollingTimer?.cancel();
+    notifyListeners();
+  }
+
   // fetchMessages now fetches messages via HTTP and sets up polling
   Future<void> fetchMessages(int conversationId) async {
+    _currentMessages = []; // Clear existing messages immediately
     _setLoadingMessages(true);
     _setErrorMessage(null);
     _pollingTimer?.cancel(); // Cancel any existing timer

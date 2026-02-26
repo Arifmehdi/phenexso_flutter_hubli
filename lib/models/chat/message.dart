@@ -54,7 +54,7 @@ class Message {
       isRead: json['is_read'] == 1, // Assuming 0 or 1 from API
       fileUrl: json['file_url'],
       thumbnailUrl: json['thumbnail_url'],
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: DateTime.parse(json['created_at']).toLocal(),
       sender: json['sender'] != null ? User.fromJson(json['sender']) : null,
       reads: json['reads'] != null
           ? (json['reads'] as List).map((i) => Read.fromJson(i)).toList()

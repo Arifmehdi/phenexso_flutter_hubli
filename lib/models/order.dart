@@ -69,7 +69,7 @@ class Order {
     // Safe date parsing
     DateTime parsedDate;
     try {
-      parsedDate = DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String());
+      parsedDate = DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()).toLocal();
     } catch (e) {
       debugPrint('Order mapping: Invalid date format ${json['created_at']}');
       parsedDate = DateTime.now();

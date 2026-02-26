@@ -84,7 +84,7 @@ class ChatBubble extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  DateFormat('hh:mm a').format(message.createdAt),
+                  _formatMessageTime(message.createdAt),
                   style: TextStyle(
                     fontSize: 10.0,
                     color: isMe ? Colors.white70 : Colors.black54,
@@ -104,5 +104,25 @@ class ChatBubble extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatMessageTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+    String datePart;
+    if (messageDate == today) {
+      datePart = ''; // No date for today, just time
+    } else if (messageDate == yesterday) {
+      datePart = 'Yesterday, ';
+    } else if (now.difference(messageDate).inDays < 7) {
+      datePart = '${DateFormat('EEEE').format(dateTime)}, '; // Day of the week
+    } else {
+      datePart = '${DateFormat('MMM d, y').format(dateTime)}, '; // Full date
+    }
+
+    return '$datePart${DateFormat('hh:mm a').format(dateTime)}';
   }
 }

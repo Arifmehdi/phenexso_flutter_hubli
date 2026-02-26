@@ -1,14 +1,12 @@
-// lib/screens/chat_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'package:hubli/providers/chat_provider.dart';
-import 'package:hubli/models/chat/conversation.dart';
+import 'package:hubli/providers/user_provider.dart';
+import 'package:hubli/models/chat/user.dart' as chat_user;
 import 'package:hubli/screens/conversation_screen.dart';
 import 'package:hubli/screens/search_users_screen.dart';
-import 'package:hubli/providers/auth_provider.dart';
-import 'package:hubli/providers/user_provider.dart'; // Import for fetching chat users
-import 'package:hubli/models/chat/user.dart' as chat_user; // Import for chat user model, aliased
-import 'package:hubli/utils/api_constants.dart'; // New import for ApiConstants
+import 'package:hubli/utils/api_constants.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -21,18 +19,18 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Fetch chat users for the user list
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (!userProvider.isLoading && userProvider.users.isEmpty && userProvider.errorMessage == null) {
+    if (!userProvider.isLoading && userProvider.users.isEmpty) {
       userProvider.fetchAllUsers();
     }
   }
 
-  Future<void> _startChatWithUser(chat_user.User user) async { // Use chat_user.User
+  Future<void> _startChatWithUser(chat_user.User user) async {
     try {
       final chatProvider = Provider.of<ChatProvider>(context, listen: false);
       final conversation = await chatProvider.getOrCreatePrivateConversation(user.id);
       if (conversation != null && mounted) {
+        chatProvider.setCurrentConversation(conversation);
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => ConversationScreen(
@@ -54,25 +52,22 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Chat Users'), // Changed title to reflect content
-      ),
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
           if (userProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
           if (userProvider.errorMessage != null) {
-            return Center(child: Text('Error loading users: ${userProvider.errorMessage}'));
+            return Center(child: Text('Error: ${userProvider.errorMessage}'));
           }
           if (userProvider.users.isEmpty) {
-            return const Center(child: Text('No chat users found.'));
+            return const Center(child: Text('No users found.'));
           }
 
           return ListView.builder(
             itemCount: userProvider.users.length,
             itemBuilder: (context, index) {
-              final user = userProvider.users[index]; // user is already chat_user.User due to UserProvider
+              final user = userProvider.users[index];
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: ListTile(

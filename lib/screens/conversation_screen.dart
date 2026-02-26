@@ -7,6 +7,7 @@ import 'package:hubli/widgets/chat/chat_bubble.dart';
 import 'package:hubli/widgets/chat/message_input.dart';
 import 'package:image_picker/image_picker.dart'; // Import ImagePicker
 import 'dart:io'; // Import for File
+import 'package:intl/intl.dart'; // Import for DateFormat
 
 class ConversationScreen extends StatefulWidget {
   final int conversationId;
@@ -102,9 +103,26 @@ class _ConversationScreenState extends State<ConversationScreen> {
                   controller: _scrollController, // Attach controller
                   itemCount: chatProvider.currentMessages.length,
                   itemBuilder: (context, index) {
-                    final message = chatProvider.currentMessages[
-                        chatProvider.currentMessages.length - 1 - index]; // Reverse order
-                    return ChatBubble(message: message);
+                    final reversedIndex = chatProvider.currentMessages.length - 1 - index;
+                    final message = chatProvider.currentMessages[reversedIndex];
+                    
+                    // Logic to show date separator
+                    bool showDateSeparator = false;
+                    if (reversedIndex == 0) {
+                      showDateSeparator = true;
+                    } else {
+                      final prevMessage = chatProvider.currentMessages[reversedIndex - 1];
+                      if (!_isSameDay(message.createdAt, prevMessage.createdAt)) {
+                        showDateSeparator = true;
+                      }
+                    }
+
+                    return Column(
+                      children: [
+                        if (showDateSeparator) _buildDateSeparator(message.createdAt),
+                        ChatBubble(message: message),
+                      ],
+                    );
                   },
                 );
               },
@@ -127,6 +145,47 @@ class _ConversationScreenState extends State<ConversationScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
+
+  Widget _buildDateSeparator(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final date = DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+    String text;
+    if (date == today) {
+      text = 'Today';
+    } else if (date == yesterday) {
+      text = 'Yesterday';
+    } else if (now.difference(date).inDays < 7) {
+      text = DateFormat('EEEE').format(dateTime); // Day of week
+    } else {
+      text = DateFormat('MMMM d, y').format(dateTime);
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey[50],
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12.0,
+          fontWeight: FontWeight.bold,
+          color: Colors.blueGrey[700],
+        ),
       ),
     );
   }
