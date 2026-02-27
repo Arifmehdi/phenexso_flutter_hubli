@@ -70,4 +70,41 @@ class SellerProductProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> updateProduct({
+    required String productId,
+    required String nameEn,
+    required String slug,
+    required double price,
+    required int stock,
+    required String categoryId,
+    required String descriptionEn,
+    required String userId,
+    File? image,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _service.updateProduct(
+        productId: productId,
+        nameEn: nameEn,
+        slug: slug,
+        price: price,
+        stock: stock,
+        categoryId: categoryId,
+        descriptionEn: descriptionEn,
+        userId: userId,
+        image: image,
+      );
+      await fetchSellerProducts();
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

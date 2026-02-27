@@ -12,6 +12,8 @@ import 'package:hubli/screens/contact_support_screen.dart';
 import 'package:hubli/providers/seller_dashboard_provider.dart';
 import 'package:hubli/providers/seller_product_provider.dart';
 import 'package:hubli/providers/category_provider.dart';
+import 'package:hubli/providers/order_provider.dart';
+import 'package:hubli/models/product.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
@@ -24,10 +26,19 @@ class SellerPanelScreen extends StatefulWidget {
 
 class _SellerPanelScreenState extends State<SellerPanelScreen> {
   int _selectedIndex = 0;
+  Product? _editingProduct;
 
   void _changeTab(int index) {
     setState(() {
       _selectedIndex = index;
+      if (index != 1) _editingProduct = null; // Clear edit state if not on Add/Edit tab
+    });
+  }
+
+  void _startEditing(Product product) {
+    setState(() {
+      _editingProduct = product;
+      _selectedIndex = 1; // Switch to Add/Edit tab
     });
   }
 
@@ -37,24 +48,27 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
     } else {
       setState(() {
         _selectedIndex = index;
+        if (index != 1) _editingProduct = null;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // We define _widgetOptions inside build to capture 'this' or pass callbacks
     final List<Widget> widgetOptions = <Widget>[
       const SellerHomeScreen(),
-      AddNewProductScreen(onSuccess: () => _changeTab(2)), // Switch to list on success
-      const SellerProductListScreen(),
+      AddEditProductScreen(
+        product: _editingProduct,
+        onSuccess: () => _changeTab(2),
+      ),
+      SellerProductListScreen(onEdit: _startEditing),
       const OrderManagementScreen(),
       const SellerChatUsersScreen(),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Seller Panel'),
+        title: Text(_selectedIndex == 1 && _editingProduct != null ? 'Edit Product' : 'Seller Panel'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
@@ -146,18 +160,19 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
   }
 }
 
-class AddNewProductScreen extends StatefulWidget {
+class AddEditProductScreen extends StatefulWidget {
+  final Product? product;
   final VoidCallback onSuccess;
-  const AddNewProductScreen({super.key, required this.onSuccess});
+  const AddEditProductScreen({super.key, this.product, required this.onSuccess});
 
   @override
-  State<AddNewProductScreen> createState() => _AddNewProductScreenState();
+  State<AddEditProductScreen> createState() => _AddEditProductScreenState();
 }
 
-class _AddNewProductScreenState extends State<AddNewProductScreen> {
+class _AddEditProductScreenState extends State<AddEditProductScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameEnController = TextEditingController();
-  final _slugController = TextEditingController(); // Added slug controller
+  final _slugController = TextEditingController();
   final _priceController = TextEditingController();
   final _stockController = TextEditingController();
   final _descEnController = TextEditingController();
@@ -167,8 +182,36 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
   @override
   void initState() {
     super.initState();
-    _nameEnController.addListener(_onNameChanged); // Listen for name changes
+    _nameEnController.addListener(_onNameChanged);
+    _initFields();
     Future.microtask(() => Provider.of<CategoryProvider>(context, listen: false).fetchCategories());
+  }
+
+  void _initFields() {
+    if (widget.product != null) {
+      _nameEnController.text = widget.product!.name;
+      _priceController.text = widget.product!.price.toString();
+      _stockController.text = widget.product!.stock.toString();
+      _descEnController.text = widget.product!.description;
+      // Slug logic: if the product has a slug from API, we'd use it, otherwise generate
+      _onNameChanged();
+    } else {
+      _nameEnController.clear();
+      _priceController.clear();
+      _stockController.clear();
+      _descEnController.clear();
+      _slugController.clear();
+      _selectedCategoryId = null;
+      _image = null;
+    }
+  }
+
+  @override
+  void didUpdateWidget(AddEditProductScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.product != widget.product) {
+      _initFields();
+    }
   }
 
   @override
@@ -183,12 +226,9 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
   }
 
   void _onNameChanged() {
-    // Generate slug from name automatically
     String name = _nameEnController.text;
     String slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
     if (slug.endsWith('-')) slug = slug.substring(0, slug.length - 1);
-    
-    // Update controller without triggering a full rebuild unless necessary
     _slugController.text = slug;
   }
 
@@ -208,18 +248,35 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final userId = authProvider.user?.id.toString() ?? '0';
 
-        await provider.addProduct(
-          nameEn: _nameEnController.text,
-          slug: _slugController.text, // Pass the slug
-          price: double.parse(_priceController.text),
-          stock: int.parse(_stockController.text),
-          categoryId: _selectedCategoryId!,
-          descriptionEn: _descEnController.text,
-          userId: userId,
-          image: _image,
-        );
+        if (widget.product == null) {
+          await provider.addProduct(
+            nameEn: _nameEnController.text,
+            slug: _slugController.text,
+            price: double.parse(_priceController.text),
+            stock: int.parse(_stockController.text),
+            categoryId: _selectedCategoryId!,
+            descriptionEn: _descEnController.text,
+            userId: userId,
+            image: _image,
+          );
+        } else {
+          await provider.updateProduct(
+            productId: widget.product!.id,
+            nameEn: _nameEnController.text,
+            slug: _slugController.text,
+            price: double.parse(_priceController.text),
+            stock: int.parse(_stockController.text),
+            categoryId: _selectedCategoryId!,
+            descriptionEn: _descEnController.text,
+            userId: userId,
+            image: _image,
+          );
+        }
+        
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product added successfully!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.product == null ? 'Product added successfully!' : 'Product updated successfully!'))
+        );
         widget.onSuccess();
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -241,18 +298,14 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
             key: _formKey,
             child: Column(
               children: [
-                const Text('Add New Product', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text(widget.product == null ? 'Add New Product' : 'Edit Product', 
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
-                TextFormField(controller: _nameEnController, decoration: const InputDecoration(labelText: 'Product Name', border: OutlineInputBorder(), hintText: 'e.g. Fresh Red Tomato'), validator: (v) => v!.isEmpty ? 'Required' : null),
+                TextFormField(controller: _nameEnController, decoration: const InputDecoration(labelText: 'Product Name', border: OutlineInputBorder()), validator: (v) => v!.isEmpty ? 'Required' : null),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _slugController, 
-                  decoration: const InputDecoration(
-                    labelText: 'Product Slug (URL)', 
-                    border: OutlineInputBorder(),
-                    helperText: 'Auto-generated URL identifier',
-                    prefixIcon: Icon(Icons.link, size: 20),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Product Slug (URL)', border: OutlineInputBorder()),
                   validator: (v) => v!.isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 10),
@@ -265,6 +318,7 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
+                  value: _selectedCategoryId,
                   decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
                   items: categories.map((c) => DropdownMenuItem(value: c.id.toString(), child: Text(c.name))).toList(),
                   onChanged: (v) => setState(() => _selectedCategoryId = v),
@@ -279,7 +333,9 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
                     width: double.infinity,
                     decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(8)),
                     child: _image == null 
-                      ? const Center(child: Icon(Icons.add_a_photo, size: 50, color: Colors.grey))
+                      ? (widget.product != null && widget.product!.imageUrls.isNotEmpty && !widget.product!.imageUrls[0].contains('placeholder')
+                          ? Image.network(widget.product!.imageUrls[0], fit: BoxFit.cover)
+                          : const Center(child: Icon(Icons.add_a_photo, size: 50, color: Colors.grey)))
                       : Image.file(_image!, fit: BoxFit.cover),
                   ),
                 ),
@@ -290,7 +346,7 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
                   ElevatedButton(
                     onPressed: () => _submit(sellerProductProvider),
                     style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                    child: const Text('SUBMIT PRODUCT'),
+                    child: Text(widget.product == null ? 'SUBMIT PRODUCT' : 'UPDATE PRODUCT'),
                   ),
               ],
             ),
@@ -302,7 +358,8 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
 }
 
 class SellerProductListScreen extends StatefulWidget {
-  const SellerProductListScreen({super.key});
+  final Function(Product) onEdit;
+  const SellerProductListScreen({super.key, required this.onEdit});
 
   @override
   State<SellerProductListScreen> createState() => _SellerProductListScreenState();
@@ -330,12 +387,15 @@ class _SellerProductListScreenState extends State<SellerProductListScreen> {
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
               child: ListTile(
-                leading: product.imageUrls.isNotEmpty 
+                leading: product.imageUrls.isNotEmpty && !product.imageUrls[0].contains('placeholder')
                   ? Image.network(product.imageUrls[0], width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.image))
                   : const Icon(Icons.image),
                 title: Text(product.name),
                 subtitle: Text('Price: ৳${product.price.toStringAsFixed(2)} | Stock: ${product.stock}'),
-                trailing: const Icon(Icons.edit),
+                trailing: IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => widget.onEdit(product),
+                ),
               ),
             );
           },
@@ -345,20 +405,116 @@ class _SellerProductListScreenState extends State<SellerProductListScreen> {
   }
 }
 
-class OrderManagementScreen extends StatelessWidget {
+class OrderManagementScreen extends StatefulWidget {
   const OrderManagementScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Manage Orders', style: TextStyle(fontSize: 24)));
-  }
+  State<OrderManagementScreen> createState() => _OrderManagementScreenState();
 }
 
-class MoreSellerOptionsScreen extends StatelessWidget {
-  const MoreSellerOptionsScreen({super.key});
+class _OrderManagementScreenState extends State<OrderManagementScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() =>
+        Provider.of<OrderProvider>(context, listen: false).fetchAndSetSellerOrders());
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('More Seller Options', style: TextStyle(fontSize: 24)));
+    return Consumer<OrderProvider>(
+      builder: (context, orderProvider, child) {
+        if (orderProvider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return RefreshIndicator(
+          onRefresh: () => orderProvider.fetchAndSetSellerOrders(),
+          child: orderProvider.sellerOrders.isEmpty
+              ? ListView(
+                  children: const [
+                    SizedBox(height: 100),
+                    Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text('No orders found for your products.', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : ListView.builder(
+                  itemCount: orderProvider.sellerOrders.length,
+                  itemBuilder: (context, index) {
+                    final order = orderProvider.sellerOrders[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                      child: ExpansionTile(
+                        title: Text(
+                          'Order #${order.id}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(DateFormat('dd MMM yyyy, hh:mm a').format(order.orderDate)),
+                            Text(
+                              'Status: ${order.paymentStatus.toUpperCase()}',
+                              style: TextStyle(
+                                color: order.paymentStatus == 'paid' ? Colors.green : Colors.orange,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: Text(
+                          '৳${order.grandTotal.toStringAsFixed(2)}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                        ),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Items:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 8),
+                                ...order.items.map((item) => Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(child: Text('${item.productName} x ${item.quantity}')),
+                                      Text('৳${item.totalCost.toStringAsFixed(2)}'),
+                                    ],
+                                  ),
+                                )).toList(),
+                                const Divider(),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Grand Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    Text('৳${order.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                const Text('Shipping Address:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text(order.addressTitle),
+                                Text('Customer: ${order.name}'),
+                                Text('Mobile: ${order.mobile}'),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        );
+      },
+    );
   }
 }

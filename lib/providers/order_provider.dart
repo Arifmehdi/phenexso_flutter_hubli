@@ -4,6 +4,7 @@ import 'package:hubli/services/order_service.dart';
 
 class OrderProvider with ChangeNotifier {
   List<Order> _orders = [];
+  List<Order> _sellerOrders = [];
   final OrderService _orderService;
   bool _isLoading = false;
   bool _didFetchInitialData = false;
@@ -11,6 +12,7 @@ class OrderProvider with ChangeNotifier {
   OrderProvider(this._orderService);
 
   List<Order> get orders => [..._orders];
+  List<Order> get sellerOrders => [..._sellerOrders];
   bool get isLoading => _isLoading;
   bool get didFetchInitialData => _didFetchInitialData;
 
@@ -66,6 +68,30 @@ class OrderProvider with ChangeNotifier {
     } catch (error) {
       debugPrint('OrderProvider: Error adding order: $error');
       rethrow;
+    }
+  }
+
+  Future<void> fetchAndSetSellerOrders() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final List<dynamic> fetchedData = await _orderService.fetchSellerOrders();
+      _sellerOrders = fetchedData.map((item) {
+        try {
+          return Order.fromJson(item);
+        } catch (e) {
+          debugPrint('OrderProvider: Error mapping individual seller order: $e');
+          return null;
+        }
+      })
+      .where((order) => order != null)
+      .cast<Order>()
+      .toList();
+    } catch (error) {
+      debugPrint('OrderProvider: Error fetching seller orders: $error');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 }

@@ -23,9 +23,8 @@ class SellerProductService {
   }
 
   Future<List<Product>> fetchSellerProducts() async {
-    // Assuming the backend filters by seller_id automatically when authenticated
     final response = await http.get(
-      Uri.parse(ApiConstants.productsEndpoint),
+      Uri.parse(ApiConstants.sellerProductsEndpoint),
       headers: _getHeaders(),
     );
 
@@ -78,6 +77,52 @@ class SellerProductService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       final errorData = json.decode(response.body);
       throw Exception(errorData['message'] ?? 'Failed to add product');
+    }
+  }
+
+  Future<void> updateProduct({
+    required String productId,
+    required String nameEn,
+    required String slug,
+    required double price,
+    required int stock,
+    required String categoryId,
+    required String descriptionEn,
+    required String userId,
+    File? image,
+  }) async {
+    // Using POST with _method=PATCH for multipart/form-data compatibility with Laravel
+    var request = http.MultipartRequest('POST', Uri.parse('${ApiConstants.sellerProductsEndpoint}/$productId'));
+    
+    request.headers.addAll(_getHeaders());
+    request.fields['_method'] = 'PATCH'; // Match the specified Laravel route method
+    
+    request.fields['name_en'] = nameEn;
+    request.fields['name_bn'] = nameEn; 
+    request.fields['slug'] = slug;
+    request.fields['price'] = price.toString();
+    request.fields['stock'] = stock.toString();
+    request.fields['category_id'] = categoryId;
+    request.fields['description_en'] = descriptionEn;
+    request.fields['description_bn'] = descriptionEn;
+    request.fields['addedby_id'] = userId;
+    request.fields['seller_id'] = userId;
+    
+    request.fields['active'] = '1';
+
+    if (image != null) {
+      request.files.add(await http.MultipartFile.fromPath('featured_image', image.path));
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    debugPrint('Update Product Status: ${response.statusCode}');
+    debugPrint('Update Product Body: ${response.body}');
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'Failed to update product');
     }
   }
 }

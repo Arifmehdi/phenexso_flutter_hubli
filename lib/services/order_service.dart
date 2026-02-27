@@ -90,4 +90,28 @@ class OrderService {
       rethrow;
     }
   }
+
+  Future<List<dynamic>> fetchSellerOrders() async {
+    debugPrint('OrderService: Fetching seller orders from ${ApiConstants.sellerOrdersEndpoint}');
+    
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConstants.sellerOrdersEndpoint),
+        headers: _getHeaders(),
+      );
+
+      debugPrint('OrderService: Fetch seller orders response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final List<dynamic> orders = data['data'] ?? [];
+        return orders;
+      } else {
+        throw Exception('Failed to fetch seller orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('OrderService: Exception during fetchSellerOrders: $e');
+      rethrow;
+    }
+  }
 }
