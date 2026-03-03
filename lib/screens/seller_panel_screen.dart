@@ -25,7 +25,7 @@ class SellerPanelScreen extends StatefulWidget {
 }
 
 class _SellerPanelScreenState extends State<SellerPanelScreen> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 5; // Initialized to 5 (Account/Dashboard)
   Product? _editingProduct;
 
   void _changeTab(int index) {
@@ -38,12 +38,12 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
   void _startEditing(Product product) {
     setState(() {
       _editingProduct = product;
-      _selectedIndex = 1; // Switch to Add/Edit tab
+      _selectedIndex = 2; // Switch to Products tab
     });
   }
 
   void _onItemTapped(int index) {
-    if (index == 0 && _selectedIndex == 0) {
+    if (index == 0) {
       Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
     } else {
       setState(() {
@@ -56,7 +56,7 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> widgetOptions = <Widget>[
-      const SellerHomeScreen(),
+      const SizedBox.shrink(),
       AddEditProductScreen(
         product: _editingProduct,
         onSuccess: () => _changeTab(2),
@@ -64,17 +64,28 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
       SellerProductListScreen(onEdit: _startEditing),
       const OrderManagementScreen(),
       const SellerChatUsersScreen(),
+      const SellerHomeScreen(),
     ];
 
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(_selectedIndex == 1 && _editingProduct != null ? 'Edit Product' : 'Seller Panel'),
+        title: Text(_selectedIndex == 1 && _editingProduct != null 
+            ? 'Edit Product' 
+            : (_selectedIndex == 5 ? 'Seller Dashboard' : 'Seller Panel')),
+        elevation: 0,
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
             onPressed: () {},
           ),
         ],
+      ),
+      drawer: SellerDrawer(
+        selectedIndex: _selectedIndex,
+        onTabChange: _changeTab,
       ),
       body: widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
@@ -84,6 +95,7 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Products'),
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Orders'),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).primaryColor,
@@ -95,8 +107,167 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
   }
 }
 
+class SellerDrawer extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onTabChange;
+
+  const SellerDrawer({
+    super.key,
+    required this.selectedIndex,
+    required this.onTabChange,
+  });
+
+  Future<void> _logout(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConstants.logoutEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authProvider.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await authProvider.logout();
+        if (!context.mounted) return;
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      } else {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Logout failed')),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred during logout: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    authProvider.user?.name[0].toUpperCase() ?? 'S',
+                    style: TextStyle(fontSize: 24, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  authProvider.user?.name ?? 'Seller',
+                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  authProvider.user?.email ?? '',
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.dashboard),
+            title: const Text('Dashboard'),
+            selected: selectedIndex == 5 || selectedIndex == 0,
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(5);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.add_box),
+            title: const Text('Add Product'),
+            selected: selectedIndex == 1,
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(1);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.list),
+            title: const Text('My Products'),
+            selected: selectedIndex == 2,
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(2);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.receipt),
+            title: const Text('Orders'),
+            selected: selectedIndex == 3,
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(3);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.chat),
+            title: const Text('Chat'),
+            selected: selectedIndex == 4,
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(4);
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Edit Profile'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileEditScreen()));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.lock),
+            title: const Text('Change Password'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PasswordChangeScreen()));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.support_agent),
+            title: const Text('Contact Support'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ContactSupportScreen()));
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              Navigator.pop(context);
+              _logout(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class SellerHomeScreen extends StatefulWidget {
-  const SellerHomeScreen({super.key});
+  final bool isEmbedded;
+  const SellerHomeScreen({super.key, this.isEmbedded = false});
 
   @override
   State<SellerHomeScreen> createState() => _SellerHomeScreenState();
@@ -112,6 +283,8 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<AuthProvider>(context).user;
+    
     return Consumer<SellerDashboardProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading) return const Center(child: CircularProgressIndicator());
@@ -119,17 +292,89 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
         if (provider.dashboardData == null) return const Center(child: Text('No data'));
 
         final data = provider.dashboardData!;
-        return GridView.count(
-          padding: const EdgeInsets.all(16),
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          children: <Widget>[
-            _buildMetricCard(context, 'Total Products', data.totalProducts.toString(), Icons.production_quantity_limits),
-            _buildMetricCard(context, 'Sales Today', '৳${data.totalSalesToday.toStringAsFixed(2)}', Icons.attach_money),
-            _buildMetricCard(context, 'Pending', data.totalOrdersPending.toString(), Icons.pending_actions),
-            _buildMetricCard(context, 'Shipped', data.totalOrdersShipped.toString(), Icons.local_shipping),
+        final content = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!widget.isEmbedded) ...[
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 35,
+                      backgroundColor: Theme.of(context).primaryColor,
+                      child: Text(
+                        user?.name[0].toUpperCase() ?? 'S',
+                        style: const TextStyle(fontSize: 30, color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.name ?? 'Seller Name',
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            user?.email ?? 'seller@example.com',
+                            style: const TextStyle(color: Colors.grey),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'Seller Account',
+                              style: TextStyle(fontSize: 12, color: Colors.orange),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+            const Text(
+              'Dashboard Overview',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: <Widget>[
+                _buildMetricCard(context, 'Total Products', data.totalProducts.toString(), Icons.production_quantity_limits),
+                _buildMetricCard(context, 'Sales Today', '৳${data.totalSalesToday.toStringAsFixed(2)}', Icons.attach_money),
+                _buildMetricCard(context, 'Pending', data.totalOrdersPending.toString(), Icons.pending_actions),
+                _buildMetricCard(context, 'Shipped', data.totalOrdersShipped.toString(), Icons.local_shipping),
+              ],
+            ),
           ],
+        );
+
+        if (widget.isEmbedded) {
+          return content;
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: content,
         );
       },
     );
@@ -193,7 +438,6 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       _priceController.text = widget.product!.price.toString();
       _stockController.text = widget.product!.stock.toString();
       _descEnController.text = widget.product!.description;
-      // Slug logic: if the product has a slug from API, we'd use it, otherwise generate
       _onNameChanged();
     } else {
       _nameEnController.clear();

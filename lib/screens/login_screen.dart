@@ -38,17 +38,17 @@ class _LoginScreenState extends State<LoginScreen> {
           String routeName;
           switch (authProvider.user!.role) {
             case UserRole.admin:
-              routeName = '/admin-panel'; // Corrected route name
+              routeName = '/admin-panel';
               break;
             case UserRole.rider:
-              routeName = '/rider-panel'; // Corrected route name
+              routeName = '/rider-panel';
               break;
             case UserRole.seller:
-              routeName = '/seller-panel'; // Corrected route name
+              routeName = '/seller-panel';
               break;
             case UserRole.buyer:
-            case UserRole.user: // Assuming regular users now default to the buyer experience
-              routeName = '/'; // Navigate to root to use the role-aware bar in MainNavigationScreen
+            case UserRole.user:
+              routeName = '/'; // Navigate to root for buyers
               break;
           }
           Navigator.of(context).pushNamedAndRemoveUntil(routeName, (route) => false);

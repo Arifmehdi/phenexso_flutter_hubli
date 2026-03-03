@@ -11,6 +11,7 @@ import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordCh
 import 'package:hubli/screens/contact_support_screen.dart'; // Import ContactSupportScreen
 import 'package:hubli/providers/rider_dashboard_provider.dart'; // New Import
 import 'package:hubli/models/rider_dashboard.dart'; // New Import
+import 'package:hubli/widgets/user_header.dart'; // Common UserHeader widget
 
 class RiderPanelScreen extends StatefulWidget {
   const RiderPanelScreen({super.key});
@@ -20,14 +21,14 @@ class RiderPanelScreen extends StatefulWidget {
 }
 
 class _RiderPanelScreenState extends State<RiderPanelScreen> {
-  int _selectedIndex = 0; // Manages the selected index for BottomNavigationBar
+  int _selectedIndex = 4; // Initialized to Account (index 4)
 
   final List<Widget> _widgetOptions = <Widget>[
-    HomeScreen(), // Home screen (index 0) - now a StatefulWidget
+    const SizedBox.shrink(), // Index 0 is Home (navigates away)
     const ActiveOrdersScreen(), // (index 1)
     const HistoryScreen(), // (index 2)
     const RiderChatUsersScreen(), // Chat screen (index 3)
-    const MoreScreen(), // More options (index 4)
+    const RiderDashboardHome(), // Dashboard (index 4)
   ];
 
   void _onItemTapped(int index) {
@@ -40,55 +41,6 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
     }
   }
 
-  // New: Logout functionality
-  Future<void> _logout() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    try {
-      debugPrint('Attempting to logout from: ${ApiConstants.logoutEndpoint}');
-      debugPrint('Auth Token: ${authProvider.token}');
-
-      final response = await http.post(
-        Uri.parse(ApiConstants.logoutEndpoint),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${authProvider.token}', // Include token if your API requires it
-        },
-      );
-
-      debugPrint('Logout Response Status Code: ${response.statusCode}');
-      debugPrint('Logout Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        // Clear user data and navigate to login
-        await authProvider.logout(); // This clears local data and notifies listeners
-        if (!mounted) return;
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-      } else {
-        if (!mounted) return;
-        // Attempt to decode errorData only if response body is not empty
-        String errorMessage = 'Logout failed';
-        if (response.body.isNotEmpty) {
-          try {
-            final errorData = json.decode(response.body); // Assuming API returns JSON error
-            errorMessage = errorData['message'] ?? 'Logout failed';
-          } catch (e) {
-            debugPrint('Error decoding logout response body: $e');
-            errorMessage = 'Logout failed: Could not parse server response.';
-          }
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      debugPrint('Caught exception during logout: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred during logout: $e')),
-      );
-    }
-  }
-
   @override
   void dispose() {
     super.dispose();
@@ -98,7 +50,13 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rider Panel'),
+        title: Text(_selectedIndex == 4 ? 'Rider Dashboard' : 'Rider Panel'),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
@@ -110,87 +68,11 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
-              ),
-              child: const Text(
-                'Rider Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.star),
-              title: const Text('Ratings'),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Ratings Tapped')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.money),
-              title: const Text('Earnings'),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Earnings Tapped')),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.support_agent),
-              title: const Text('Call Support'),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ContactSupportScreen()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Edit Profile'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.lock),
-              title: const Text('Change Password'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const PasswordChangeScreen()),
-                );
-              },
-            ),
-            // New: Logout button
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Logout'),
-              onTap: () async {
-                Navigator.pop(context); // Close the drawer before logging out
-                await _logout();
-              },
-            ),
-          ],
-        ),
+      drawer: RiderDrawer(
+        selectedIndex: _selectedIndex,
+        onTabChange: _onItemTapped,
       ),
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
-      ),
+      body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           // New: Home item
@@ -210,24 +92,207 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
             icon: Icon(Icons.chat), // New Chat item
             label: 'Chat',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person), // Account item
+            label: 'Account',
+          ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey, // Ensure unselected items are visible
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class RiderDrawer extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onTabChange;
+
+  const RiderDrawer({
+    super.key,
+    required this.selectedIndex,
+    required this.onTabChange,
+  });
+
+  // New: Logout functionality
+  Future<void> _logout(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConstants.logoutEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authProvider.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await authProvider.logout();
+        if (!context.mounted) return;
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      } else {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Logout failed')),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred during logout: $e')),
+      );
+    }
+  }
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    authProvider.user?.name[0].toUpperCase() ?? 'R',
+                    style: TextStyle(fontSize: 24, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  authProvider.user?.name ?? 'Rider',
+                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  authProvider.user?.email ?? '',
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.dashboard),
+            title: const Text('Dashboard'),
+            selected: selectedIndex == 4,
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(4);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.delivery_dining),
+            title: const Text('Active Orders'),
+            selected: selectedIndex == 1,
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(1);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.history),
+            title: const Text('Order History'),
+            selected: selectedIndex == 2,
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(2);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.chat),
+            title: const Text('Chat'),
+            selected: selectedIndex == 3,
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(3);
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.star),
+            title: const Text('Ratings'),
+            onTap: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Ratings Tapped')),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.money),
+            title: const Text('Earnings'),
+            onTap: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Earnings Tapped')),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.support_agent),
+            title: const Text('Call Support'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ContactSupportScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Edit Profile'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.lock),
+            title: const Text('Change Password'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const PasswordChangeScreen()),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            onTap: () async {
+              Navigator.pop(context);
+              await _logout(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class RiderDashboardHome extends StatefulWidget {
+  final bool isEmbedded;
+  const RiderDashboardHome({super.key, this.isEmbedded = false});
+
+  @override
+  State<RiderDashboardHome> createState() => _RiderDashboardHomeState();
+}
+
+class _RiderDashboardHomeState extends State<RiderDashboardHome> {
   @override
   void initState() {
     super.initState();
@@ -263,35 +328,45 @@ class _HomeScreenState extends State<HomeScreen> {
 
         final data = provider.dashboardData!;
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        final content = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!widget.isEmbedded) ...[
+              const UserHeader(),
+              const SizedBox(height: 24),
               const Text(
                 'Rider Dashboard Overview',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 20),
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true, // Use shrinkWrap in GridView inside SingleChildScrollView
-                physics: const NeverScrollableScrollPhysics(), // Disable GridView's own scrolling
-                children: <Widget>[
-                  _buildMetricCard(context, 'Active Deliveries', data.activeDeliveries.toString(), Icons.delivery_dining),
-                  _buildMetricCard(context, 'Total Rating', '${data.averageRating.toStringAsFixed(1)} (${data.totalReviews} reviews)', Icons.star),
-                  _buildMetricCard(context, 'Earnings Today', '\$${data.totalEarningsToday.toStringAsFixed(2)}', Icons.money),
-                  _buildMetricCard(context, 'Earnings This Week', '\$${data.totalEarningsWeek.toStringAsFixed(2)}', Icons.money_outlined),
-                  _buildMetricCard(context, 'Earnings This Month', '\$${data.totalEarningsMonth.toStringAsFixed(2)}', Icons.currency_exchange),
-                  _buildMetricCard(context, 'Completed Today', data.completedDeliveriesToday.toString(), Icons.check_circle_outline),
-                  _buildMetricCard(context, 'Completed This Week', data.completedDeliveriesWeek.toString(), Icons.playlist_add_check),
-                  _buildMetricCard(context, 'Completed This Month', data.completedDeliveriesMonth.toString(), Icons.done_all),
-                ],
-              ),
+              const SizedBox(height: 16),
             ],
-          ),
+            GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              shrinkWrap: true, // Use shrinkWrap in GridView inside SingleChildScrollView
+              physics: const NeverScrollableScrollPhysics(), // Disable GridView's own scrolling
+              children: <Widget>[
+                _buildMetricCard(context, 'Active Deliveries', data.activeDeliveries.toString(), Icons.delivery_dining),
+                _buildMetricCard(context, 'Total Rating', '${data.averageRating.toStringAsFixed(1)} (${data.totalReviews} reviews)', Icons.star),
+                _buildMetricCard(context, 'Earnings Today', '\$${data.totalEarningsToday.toStringAsFixed(2)}', Icons.money),
+                _buildMetricCard(context, 'Earnings This Week', '\$${data.totalEarningsWeek.toStringAsFixed(2)}', Icons.money_outlined),
+                _buildMetricCard(context, 'Earnings This Month', '\$${data.totalEarningsMonth.toStringAsFixed(2)}', Icons.currency_exchange),
+                _buildMetricCard(context, 'Completed Today', data.completedDeliveriesToday.toString(), Icons.check_circle_outline),
+                _buildMetricCard(context, 'Completed This Week', data.completedDeliveriesWeek.toString(), Icons.playlist_add_check),
+                _buildMetricCard(context, 'Completed This Month', data.completedDeliveriesMonth.toString(), Icons.done_all),
+              ],
+            ),
+          ],
+        );
+
+        if (widget.isEmbedded) {
+          return content;
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: content,
         );
       },
     );
@@ -317,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),

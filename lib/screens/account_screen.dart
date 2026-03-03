@@ -4,6 +4,7 @@ import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/models/user_role.dart'; // Import UserRole
 import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
 import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
+import 'package:hubli/screens/rider_panel_screen.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -12,13 +13,25 @@ class AccountScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
+    final bool isRider = user != null && user.role == UserRole.rider;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Account'),
-        automaticallyImplyLeading: false,
+        automaticallyImplyLeading: !isRider,
+        leading: isRider
+            ? Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                ),
+              )
+            : null,
       ),
-      body: Padding(
+      drawer: isRider 
+          ? const RiderDrawer(selectedIndex: 4, onTabChange: _handleTabChange) 
+          : null,
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,74 +56,82 @@ class AccountScreen extends StatelessWidget {
                 title: Text(user?.email ?? ''),
               ),
             ),
-            const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: const Text('Edit Profile'),
-            ),
-            const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const PasswordChangeScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: const Text('Change Password'),
-            ),
-            if (user != null && user.role != UserRole.user) ...[
+            if (isRider) ...[
+              const SizedBox(height: 16.0),
+              const RiderDashboardHome(isEmbedded: true),
+            ] else ...[
               const SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: () {
-                  String route = '';
-                  switch (user.role) {
-                    case UserRole.admin:
-                      route = '/admin-panel';
-                      break;
-                    case UserRole.seller:
-                      route = '/seller-panel';
-                      break;
-                    case UserRole.rider:
-                      route = '/rider-panel';
-                      break;
-                    default:
-                      break;
-                  }
-                  if (route.isNotEmpty) {
-                    Navigator.of(context).pushNamed(route);
-                  }
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),
                 ),
-                child: Text('Go to ${user.role.toString().split('.').last} Panel'),
+                child: const Text('Edit Profile'),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const PasswordChangeScreen()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: const Text('Change Password'),
+              ),
+              if (user != null && user.role != UserRole.user) ...[
+                const SizedBox(height: 16.0),
+                ElevatedButton(
+                  onPressed: () {
+                    String route = '';
+                    switch (user.role) {
+                      case UserRole.admin:
+                        route = '/admin-panel';
+                        break;
+                      case UserRole.seller:
+                        route = '/seller-panel';
+                        break;
+                      case UserRole.rider:
+                        route = '/rider-panel';
+                        break;
+                      default:
+                        break;
+                    }
+                    if (route.isNotEmpty) {
+                      Navigator.of(context).pushNamed(route);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  child: Text('Go to ${user.role.toString().split('.').last} Panel'),
+                ),
+              ],
+              const SizedBox(height: 32.0),
+              ElevatedButton(
+                onPressed: () {
+                  authProvider.logout();
+                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('Logout'),
               ),
             ],
-            const Spacer(),
-            ElevatedButton(
-              onPressed: () {
-                authProvider.logout();
-                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: const Text('Logout'),
-            ),
           ],
         ),
       ),
     );
   }
+
+  static void _handleTabChange(int index) {
+    // Handle tab change if needed in this context
+  }
 }
-
-

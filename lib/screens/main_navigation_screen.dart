@@ -8,10 +8,10 @@ import 'dart:convert';
 import 'package:hubli/utils/api_constants.dart';
 
 import 'package:hubli/screens/product_list_screen.dart';
+import 'package:hubli/screens/rider_panel_screen.dart';
 import 'package:hubli/screens/cart_screen.dart';
 import 'package:hubli/screens/admin_panel_screen.dart';
 import 'package:hubli/screens/seller_panel_screen.dart';
-import 'package:hubli/screens/rider_panel_screen.dart';
 import 'package:hubli/screens/buyer_panel_screen.dart';
 import 'package:hubli/screens/login_screen.dart';
 import 'package:hubli/screens/order_history_screen.dart';
@@ -19,6 +19,7 @@ import 'package:hubli/screens/wishlist_screen.dart';
 import 'package:hubli/screens/profile_edit_screen.dart';
 import 'package:hubli/screens/password_change_screen.dart';
 import 'package:hubli/screens/contact_support_screen.dart';
+import 'package:hubli/widgets/user_header.dart';
 
 // Placeholder screens for other bottom nav items
 class RfqScreen extends StatelessWidget {
@@ -99,110 +100,72 @@ class RoleDashboardLauncher extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user!;
+    final bool isRider = user.role == UserRole.rider;
+    final bool isSeller = user.role == UserRole.seller;
     final String roleName = user.role.toString().split('.').last.toUpperCase();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Account'),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
       ),
+      drawer: isRider 
+          ? const RiderDrawer(selectedIndex: 4, onTabChange: _dummyTabChange) 
+          : (isSeller 
+              ? SellerDrawer(selectedIndex: 5, onTabChange: (_) {}) 
+              : (user.role == UserRole.admin 
+                  ? AdminDrawer(selectedIndex: 5, onTabChange: (_) {}) 
+                  : null)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           const UserHeader(),
           const SizedBox(height: 30),
-          Card(
-            color: Theme.of(context).primaryColor,
-            child: ListTile(
-              leading: const Icon(Icons.dashboard, color: Colors.white),
-              title: Text('Go to $roleName Dashboard', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
-              onTap: () {
-                String route = '/';
-                if (user.role == UserRole.admin) route = '/admin-panel';
-                else if (user.role == UserRole.seller) route = '/seller-panel';
-                else if (user.role == UserRole.rider) route = '/rider-panel';
-                
-                Navigator.of(context).pushNamed(route);
-              },
+          if (isRider)
+            const RiderDashboardHome(isEmbedded: true)
+          else if (isSeller)
+            const SellerHomeScreen(isEmbedded: true)
+          else if (user.role == UserRole.admin)
+            const AdminHomeScreen(isEmbedded: true)
+          else ...[
+            Card(
+              color: Theme.of(context).primaryColor,
+              child: ListTile(
+                leading: const Icon(Icons.dashboard, color: Colors.white),
+                title: Text('Go to $roleName Dashboard', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                onTap: () {
+                  String route = '/';
+                  if (user.role == UserRole.admin) route = '/admin-panel';
+                  else if (user.role == UserRole.seller) route = '/seller-panel';
+                  else if (user.role == UserRole.rider) route = '/rider-panel';
+                  
+                  Navigator.of(context).pushNamed(route);
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Logout', style: TextStyle(color: Colors.red)),
-            onTap: () => authProvider.logout(),
-          ),
+            const SizedBox(height: 20),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              onTap: () => authProvider.logout(),
+            ),
+          ],
         ],
       ),
     );
   }
-}
 
-class UserHeader extends StatelessWidget {
-  const UserHeader({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<AuthProvider>(context).user;
-    final String roleName = user?.role.toString().split('.').last.capitalize() ?? 'User';
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 35,
-            backgroundColor: Theme.of(context).primaryColor,
-            child: Text(
-              user?.name[0].toUpperCase() ?? 'U',
-              style: const TextStyle(fontSize: 30, color: Colors.white),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user?.name ?? 'User Name',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  user?.email ?? 'user@example.com',
-                  style: const TextStyle(color: Colors.grey),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '$roleName Account',
-                    style: const TextStyle(fontSize: 12, color: Colors.blue),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  static void _dummyTabChange(int index) {
+    // No-op for dummy tab change
   }
 }
-
 
 class MainNavigationScreen extends StatefulWidget {
   static const routeName = '/'; // Set this as the initial route
@@ -217,6 +180,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
   void _onItemTapped(int index) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (index == 4 && authProvider.isAuthenticated) {
+      if (authProvider.user!.role == UserRole.seller) {
+        Navigator.of(context).pushNamed('/seller-panel');
+        return;
+      }
+      if (authProvider.user!.role == UserRole.rider) {
+        Navigator.of(context).pushNamed('/rider-panel');
+        return;
+      }
+      if (authProvider.user!.role == UserRole.admin) {
+        Navigator.of(context).pushNamed('/admin-panel');
+        return;
+      }
+    }
     setState(() {
       _selectedIndex = index;
     });

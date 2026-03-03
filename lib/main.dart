@@ -189,13 +189,13 @@ class MyApp extends StatelessWidget {
           case '/register':
             return MaterialPageRoute(builder: (context) => const RegistrationScreen());
           case '/account':
-            return MaterialPageRoute(builder: (context) => const AccountScreen());
+            return MaterialPageRoute(builder: (context) => const AccountScreenWrapper());
           case '/admin-panel':
             return MaterialPageRoute(builder: (context) => const AdminPanelScreen());
           case '/seller-panel':
-            return MaterialPageRoute(builder: (context) => SellerPanelScreen());
+            return MaterialPageRoute(builder: (context) => const SellerPanelScreen());
           case '/rider-panel':
-            return MaterialPageRoute(builder: (context) => RiderPanelScreen());
+            return MaterialPageRoute(builder: (context) => const RiderPanelScreen());
           case '/buyer-panel': // New Buyer Panel route
             return MaterialPageRoute(builder: (context) => const BuyerPanelScreen());
           case '/forgot-password': // New Forgot Password route
