@@ -1,11 +1,11 @@
 {
-    "name": "Hubli SCM",
+    "name": "Hubli – Online Grocery & Delivery",
     "short_name": "Hubli",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#72BF44",
     "theme_color": "#72BF44",
-    "description": "A Supply Chain Management application named Hubli.",
+    "description": "Hubli is an online shopping app that allows users to browse grocery products, add items to cart, submit RFQ, track orders, manage wishlist, and view shipping updates.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

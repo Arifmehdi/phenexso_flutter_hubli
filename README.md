@@ -1,6 +1,12 @@
-# Hubli
+# Hubli – Online Grocery & Delivery
 
-A new Flutter project.
+Hubli is an online shopping app that allows users to:
+• Browse grocery products
+• Add items to cart
+• Submit RFQ
+• Track orders
+• Manage wishlist
+• View shipping updates
 
 ## Getting Started
 
