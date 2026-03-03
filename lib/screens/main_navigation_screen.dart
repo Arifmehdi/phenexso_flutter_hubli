@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/models/user_role.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:hubli/utils/api_constants.dart';
 
 import 'package:hubli/screens/product_list_screen.dart';
 import 'package:hubli/screens/cart_screen.dart';
@@ -13,6 +16,9 @@ import 'package:hubli/screens/buyer_panel_screen.dart';
 import 'package:hubli/screens/login_screen.dart';
 import 'package:hubli/screens/order_history_screen.dart';
 import 'package:hubli/screens/wishlist_screen.dart';
+import 'package:hubli/screens/profile_edit_screen.dart';
+import 'package:hubli/screens/password_change_screen.dart';
+import 'package:hubli/screens/contact_support_screen.dart';
 
 // Placeholder screens for other bottom nav items
 class RfqScreen extends StatelessWidget {
@@ -98,7 +104,10 @@ class RoleDashboardLauncher extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Account'),
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -213,6 +222,35 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     });
   }
 
+  Future<void> _logout() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConstants.logoutEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authProvider.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await authProvider.logout();
+        if (!mounted) return;
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Logout failed')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred during logout: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -259,6 +297,107 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
 
     return Scaffold(
+      drawer: isBuyer ? Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      authProvider.user?.name[0].toUpperCase() ?? 'U',
+                      style: TextStyle(fontSize: 24, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    authProvider.user?.name ?? 'User',
+                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    authProvider.user?.email ?? '',
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () {
+                Navigator.pop(context);
+                _onItemTapped(0);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt),
+              title: const Text('Order History'),
+              onTap: () {
+                Navigator.pop(context);
+                _onItemTapped(1);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.favorite),
+              title: const Text('My Wishlist'),
+              onTap: () {
+                Navigator.pop(context);
+                _onItemTapped(2);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.shopping_cart),
+              title: const Text('My Cart'),
+              onTap: () {
+                Navigator.pop(context);
+                _onItemTapped(3);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Edit Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfileEditScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.lock),
+              title: const Text('Change Password'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const PasswordChangeScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.support_agent),
+              title: const Text('Contact Support'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ContactSupportScreen()));
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+                _logout();
+              },
+            ),
+          ],
+        ),
+      ) : null,
       body: IndexedStack(
         index: _selectedIndex,
         children: screens,

@@ -31,6 +31,10 @@ class _WishlistScreenState extends State<WishlistScreen> {
       appBar: AppBar(
         title: const Text('My Wishlist'),
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
       ),
       body: Consumer<WishlistProvider>(
         builder: (context, wishlistProvider, child) {

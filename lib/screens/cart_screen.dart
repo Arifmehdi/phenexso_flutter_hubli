@@ -49,12 +49,15 @@ class _CartScreenState extends State<CartScreen> {
         elevation: 1,
         title: const Text('Your Cart'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(
+            Navigator.of(context).canPop() ? Icons.arrow_back : Icons.menu,
+            color: Colors.black,
+          ),
           onPressed: () {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
             } else {
-              Navigator.of(context).pushReplacementNamed('/');
+              Scaffold.of(context).openDrawer();
             }
           },
         ),

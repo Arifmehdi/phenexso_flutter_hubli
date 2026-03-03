@@ -5,6 +5,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onSearch;
   final String? title;
   final bool showBackButton; // New parameter
+  final bool showDrawerButton; // New parameter
   final VoidCallback? onBackButtonPressed; // New parameter
   final bool showSearchBar; // New parameter
 
@@ -14,6 +15,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onSearch, // No longer required
     this.title,
     this.showBackButton = false, // Default to false
+    this.showDrawerButton = false, // Default to false
     this.onBackButtonPressed,
     this.showSearchBar = true, // Default to true
   });
@@ -51,8 +53,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                           icon: const Icon(Icons.arrow_back, color: Colors.black),
                           onPressed: onBackButtonPressed ?? () => Navigator.of(context).pop(),
                         )
+                      else if (showDrawerButton)
+                        IconButton(
+                          icon: const Icon(Icons.menu, color: Colors.black),
+                          onPressed: () {
+                            Scaffold.of(context).openDrawer();
+                          },
+                        )
                       else
-                        const SizedBox(width: 16.0), // Padding if no back button
+                        const SizedBox(width: 16.0), // Padding if no back button or drawer button
                       Padding(
                         padding: const EdgeInsets.only(left: 0.0), // No extra left padding here
                         child: SizedBox(

@@ -131,6 +131,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
       appBar: CustomAppBar(
         searchController: _searchController,
         onSearch: _filterProducts,
+        showDrawerButton: true,
       ),
       body: Consumer<ProductProvider>(
         builder: (context, productProvider, child) {

@@ -27,6 +27,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       appBar: AppBar(
         title: const Text('Order History'),
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
       ),
       body: Consumer<OrderProvider>(
         builder: (context, orderData, child) {
