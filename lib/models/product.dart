@@ -5,6 +5,7 @@ class Product {
   final int stock; // New field for stock
   final List<String> imageUrls;
   final String category;
+  final String? categoryId; // Added for editing
   final double rating;
   final String description;
 
@@ -15,6 +16,7 @@ class Product {
     required this.stock, // Added to constructor
     required this.imageUrls,
     required this.category,
+    this.categoryId,
     required this.rating,
     required this.description,
   });
@@ -31,6 +33,7 @@ class Product {
           : (json['stock'] as num?)?.toInt() ?? 0,
       imageUrls: [(json['featured_image'] != null ? 'https://hublibd.com/uslive/pnism/${json['featured_image']}' : 'assets/images/placeholder.png')],
       category: json['category'] as String? ?? 'Uncategorized',
+      categoryId: (json['category_id'] ?? '').toString(),
       rating: (json['average_rating'] is String)
           ? (double.tryParse(json['average_rating']) ?? 0.0)
           : (json['average_rating'] as num?)?.toDouble() ?? 0.0,

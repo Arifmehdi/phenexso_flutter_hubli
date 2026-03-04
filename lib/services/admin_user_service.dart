@@ -20,7 +20,7 @@ class AdminUserService {
 
   Future<Map<String, dynamic>> fetchAllUsers({int page = 1}) async {
     final response = await http.get(
-      Uri.parse('${ApiConstants.baseUrl}/api/users?page=$page'),
+      Uri.parse('${ApiConstants.baseUrl}/api/users?page=$page&per_page=100'),
       headers: _getHeaders(),
     );
 

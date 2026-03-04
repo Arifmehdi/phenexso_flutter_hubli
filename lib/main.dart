@@ -127,7 +127,7 @@ class MyApp extends StatelessWidget {
     return Builder(
       builder: (context) {
         return MaterialApp(
-      title: 'Hubli E-commerce', // Changed title
+      title: 'Hubli', // Changed title
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: appColorsPrimary),

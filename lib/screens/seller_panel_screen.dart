@@ -36,10 +36,24 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
   }
 
   void _startEditing(Product product) {
-    setState(() {
-      _editingProduct = product;
-      _selectedIndex = 2; // Switch to Products tab
-    });
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Edit Product'),
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          body: AddEditProductScreen(
+            product: product,
+            onSuccess: () {
+              Navigator.pop(context);
+              Provider.of<SellerProductProvider>(context, listen: false).fetchSellerProducts();
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   void _onItemTapped(int index) {
@@ -48,7 +62,6 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
     } else {
       setState(() {
         _selectedIndex = index;
-        if (index != 1) _editingProduct = null;
       });
     }
   }
@@ -58,7 +71,7 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
     final List<Widget> widgetOptions = <Widget>[
       const SizedBox.shrink(),
       AddEditProductScreen(
-        product: _editingProduct,
+        product: null,
         onSuccess: () => _changeTab(2),
       ),
       SellerProductListScreen(onEdit: _startEditing),
@@ -70,9 +83,7 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(_selectedIndex == 1 && _editingProduct != null 
-            ? 'Edit Product' 
-            : (_selectedIndex == 5 ? 'Seller Dashboard' : 'Seller Panel')),
+        title: Text(_selectedIndex == 5 ? 'Seller Dashboard' : 'Seller Panel'),
         elevation: 0,
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
@@ -438,6 +449,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       _priceController.text = widget.product!.price.toString();
       _stockController.text = widget.product!.stock.toString();
       _descEnController.text = widget.product!.description;
+      // Ensure we don't set an empty string as the selected ID, use null instead
+      _selectedCategoryId = (widget.product!.categoryId != null && widget.product!.categoryId!.isNotEmpty) 
+          ? widget.product!.categoryId 
+          : null;
       _onNameChanged();
     } else {
       _nameEnController.clear();

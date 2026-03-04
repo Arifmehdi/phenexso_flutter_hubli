@@ -4,6 +4,7 @@ import 'package:hubli/services/order_service.dart';
 
 class OrderProvider with ChangeNotifier {
   List<Order> _orders = [];
+  List<Order> _allOrders = [];
   List<Order> _sellerOrders = [];
   final OrderService _orderService;
   bool _isLoading = false;
@@ -12,6 +13,7 @@ class OrderProvider with ChangeNotifier {
   OrderProvider(this._orderService);
 
   List<Order> get orders => [..._orders];
+  List<Order> get allOrders => [..._allOrders];
   List<Order> get sellerOrders => [..._sellerOrders];
   bool get isLoading => _isLoading;
   bool get didFetchInitialData => _didFetchInitialData;
@@ -39,6 +41,35 @@ class OrderProvider with ChangeNotifier {
       debugPrint('OrderProvider: Final order count in provider: ${_orders.length}');
     } catch (error) {
       debugPrint('OrderProvider: Error fetching orders: $error');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchAndSetAllOrders() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final List<dynamic> fetchedData = await _orderService.fetchAllOrders();
+      _allOrders = fetchedData.map((item) {
+        try {
+          return Order.fromJson(item);
+        } catch (e) {
+          debugPrint('OrderProvider: Error mapping individual order from all: $e');
+          return null;
+        }
+      })
+      .where((order) => order != null)
+      .cast<Order>()
+      .toList();
+      
+      // Also update _orders if this is used in contexts where _orders is expected
+      // But keeping them separate is safer. 
+      // For simplicity in UI reuse, we might want to also assign it to _orders 
+      // or make the UI use allOrders.
+    } catch (error) {
+      debugPrint('OrderProvider: Error fetching all orders: $error');
     } finally {
       _isLoading = false;
       notifyListeners();

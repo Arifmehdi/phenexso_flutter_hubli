@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
-import 'package:http/http.dart' as http; // Import for http requests
-import 'package:hubli/utils/api_constants.dart'; // Import API constants
-import 'package:hubli/screens/chat_screen.dart'; // Import ChatScreen
-import 'package:hubli/screens/conversation_screen.dart'; // New import for ConversationScreen
-import 'package:hubli/providers/user_provider.dart'; // Original UserProvider (for chat if needed elsewhere)
-import 'package:hubli/providers/chat_provider.dart'; // New import for ChatProvider
-import 'package:hubli/models/chat/user.dart'; // Original chat User model (for chat if needed elsewhere)
-import 'package:hubli/providers/admin_user_provider.dart'; // New import for AdminUserProvider
+import 'package:http/http.dart' as http;
+import 'package:hubli/utils/api_constants.dart';
+import 'package:hubli/screens/chat_screen.dart';
+import 'package:hubli/providers/admin_user_provider.dart';
 import 'package:hubli/providers/product_provider.dart';
-import 'package:hubli/models/user.dart'; // New import for general app User model
-import 'dart:convert'; // Import for json.decode
-import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
-import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
-import 'package:hubli/screens/contact_support_screen.dart'; // Import ContactSupportScreen
+import 'package:hubli/providers/order_provider.dart';
+import 'package:hubli/screens/profile_edit_screen.dart';
+import 'package:hubli/screens/password_change_screen.dart';
+import 'package:hubli/screens/contact_support_screen.dart';
 import 'package:hubli/widgets/user_header.dart';
+import 'package:hubli/models/user_role.dart';
+import 'package:intl/intl.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -26,6 +23,20 @@ class AdminPanelScreen extends StatefulWidget {
 
 class _AdminPanelScreenState extends State<AdminPanelScreen> {
   int _selectedIndex = 5; // Default to Dashboard (index 5)
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.isAuthenticated) {
+        // Fetch initial data for dashboard metrics
+        Provider.of<AdminUserProvider>(context, listen: false).fetchAllUsers(page: 1);
+        Provider.of<ProductProvider>(context, listen: false).fetchProducts(clearProducts: true);
+        Provider.of<OrderProvider>(context, listen: false).fetchAndSetAllOrders();
+      }
+    });
+  }
 
   final List<Widget> _widgetOptions = <Widget>[
     const SizedBox.shrink(), // Index 0: Home (navigates away)
@@ -124,7 +135,7 @@ class AdminDrawer extends StatelessWidget {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred during logout: $e')),
+        SnackBar(content: Text('An error occurred during logout')),
       );
     }
   }
@@ -254,6 +265,10 @@ class AdminHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final orderProvider = Provider.of<OrderProvider>(context);
+    final productProvider = Provider.of<ProductProvider>(context);
+    final userProvider = Provider.of<AdminUserProvider>(context);
+
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -273,10 +288,10 @@ class AdminHomeScreen extends StatelessWidget {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           children: <Widget>[
-            _buildMetricCard(context, 'Total Users', '1,234', Icons.people),
-            _buildMetricCard(context, 'Total Products', '567', Icons.shopping_basket),
-            _buildMetricCard(context, 'New Orders Today', '42', Icons.receipt),
-            _buildMetricCard(context, 'Revenue', '\$12,345', Icons.attach_money),
+            _buildMetricCard(context, 'Total Users', userProvider.totalUsers.toString(), Icons.people),
+            _buildMetricCard(context, 'Total Products', productProvider.totalProducts.toString(), Icons.shopping_basket),
+            _buildMetricCard(context, 'Total Orders', orderProvider.allOrders.length.toString(), Icons.receipt),
+            _buildMetricCard(context, 'Revenue', '৳${orderProvider.allOrders.fold(0.0, (sum, item) => sum + item.grandTotal).toStringAsFixed(0)}', Icons.attach_money),
           ],
         ),
       ],
@@ -353,24 +368,102 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
           return Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total Users: ${adminUserProvider.totalUsers}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Text(
+                      'Showing: ${adminUserProvider.users.length}',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
               Expanded(
                 child: ListView.builder(
                   itemCount: adminUserProvider.users.length,
                   itemBuilder: (context, index) {
                     final user = adminUserProvider.users[index];
+                    final String roleName = user.role.toString().split('.').last.toUpperCase();
+                    final bool isApproved = user.is_approve == 1;
+
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         leading: CircleAvatar(
-                          child: Text(user.name.isNotEmpty ? user.name[0] : '?'),
+                          radius: 22,
+                          backgroundImage: (user.image != null && user.image!.isNotEmpty)
+                              ? NetworkImage('${ApiConstants.baseUrl}/storage/${user.image}')
+                              : null,
+                          child: (user.image == null || user.image!.isEmpty)
+                              ? Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : '?', style: const TextStyle(fontSize: 16))
+                              : null,
                         ),
-                        title: Text(user.name),
-                        subtitle: Text('${user.email} - Role: ${user.role?.name ?? 'N/A'}'),
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Tapped on ${user.name}')),
-                          );
-                        },
+                        title: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                user.name, 
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: isApproved ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                isApproved ? 'APPROVED' : 'PENDING',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: isApproved ? Colors.green : Colors.orange,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(user.email, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis),
+                            Text('Role: $roleName', style: const TextStyle(fontSize: 12)),
+                            if (user.mobile != null && user.mobile!.isNotEmpty)
+                              Text('Mob: ${user.mobile}', style: const TextStyle(fontSize: 12)),
+                          ],
+                        ),
+                        trailing: SizedBox(
+                          width: 100,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              _buildCompactActionIcon(
+                                icon: Icons.edit,
+                                color: Colors.blue,
+                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Edit ${user.name}'))),
+                              ),
+                              _buildCompactActionIcon(
+                                icon: isApproved ? Icons.block : Icons.check_circle,
+                                color: isApproved ? Colors.orange : Colors.green,
+                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isApproved ? 'Suspend ${user.name}' : 'Approve ${user.name}'))),
+                              ),
+                              _buildCompactActionIcon(
+                                icon: Icons.delete,
+                                color: Colors.red,
+                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete ${user.name}'))),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -378,30 +471,14 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: adminUserProvider.currentPage > 1
-                          ? () => adminUserProvider.goToPreviousPage()
-                          : null,
-                      child: const Text('Previous'),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text(
-                        'Page ${adminUserProvider.currentPage} of ${adminUserProvider.lastPage}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: adminUserProvider.currentPage < adminUserProvider.lastPage
-                          ? () => adminUserProvider.goToNextPage()
-                          : null,
-                      child: const Text('Next'),
-                    ),
-                  ],
-                ),
+                child: adminUserProvider.hasMore
+                    ? (adminUserProvider.isFetchingMore
+                        ? const CircularProgressIndicator()
+                        : ElevatedButton(
+                            onPressed: () => adminUserProvider.fetchNextPage(),
+                            child: const Text('Load More'),
+                          ))
+                    : const Text('No more users to load', style: TextStyle(color: Colors.grey)),
               ),
             ],
           );
@@ -451,33 +528,39 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   return Card(
                     margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       leading: product.imageUrls.isNotEmpty && !product.imageUrls[0].contains('placeholder')
-                          ? Image.network(product.imageUrls[0], width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.image))
-                          : const Icon(Icons.image, size: 50),
-                      title: Text(product.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          ? Image.network(product.imageUrls[0], width: 45, height: 45, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.image))
+                          : const Icon(Icons.image, size: 45),
+                      title: Text(
+                        product.name, 
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Price: ৳${product.price.toStringAsFixed(2)}'),
-                          Text('Stock: ${product.stock}'),
+                          Text('Price: ৳${product.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13)),
+                          Text('Stock: ${product.stock}', style: const TextStyle(fontSize: 12)),
                         ],
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Edit ${product.name}')));
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete ${product.name}')));
-                            },
-                          ),
-                        ],
+                      trailing: SizedBox(
+                        width: 70,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            _buildCompactActionIcon(
+                              icon: Icons.edit,
+                              color: Colors.blue,
+                              onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Edit ${product.name}'))),
+                            ),
+                            _buildCompactActionIcon(
+                              icon: Icons.delete,
+                              color: Colors.red,
+                              onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete ${product.name}'))),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -501,13 +584,151 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   }
 }
 
-class OrderManagementScreen extends StatelessWidget {
+class OrderManagementScreen extends StatefulWidget {
   const OrderManagementScreen({super.key});
 
   @override
+  State<OrderManagementScreen> createState() => _OrderManagementScreenState();
+}
+
+class _OrderManagementScreenState extends State<OrderManagementScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      Provider.of<OrderProvider>(context, listen: false).fetchAndSetAllOrders();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Order Management Screen', style: TextStyle(fontSize: 24)),
+    return Consumer<OrderProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (provider.allOrders.isEmpty) {
+          return const Center(child: Text('No orders found.'));
+        }
+
+        return RefreshIndicator(
+          onRefresh: () => provider.fetchAndSetAllOrders(),
+          child: ListView.builder(
+            itemCount: provider.allOrders.length,
+            itemBuilder: (context, index) {
+              final order = provider.allOrders[index];
+              final String status = order.paymentStatus.toUpperCase();
+              final bool isPaid = order.paymentStatus.toLowerCase() == 'paid';
+
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: ExpansionTile(
+                  tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  leading: CircleAvatar(
+                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                    child: Icon(Icons.receipt, color: Theme.of(context).primaryColor),
+                  ),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Order #${order.id}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isPaid ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isPaid ? Colors.green : Colors.orange,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Customer: ${order.name}', style: const TextStyle(fontSize: 13)),
+                      Text('Total: ৳${order.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                      Text('Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(order.orderDate)}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                    ],
+                  ),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Order Items:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const Divider(),
+                          ...order.items.map((item) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(child: Text('${item.productName} x ${item.quantity}', style: const TextStyle(fontSize: 13))),
+                                Text('৳${item.totalCost.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13)),
+                              ],
+                            ),
+                          )).toList(),
+                          const Divider(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Grand Total', style: TextStyle(fontWeight: FontWeight.bold)),
+                              Text('৳${order.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Text('Shipping Details:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text('Address: ${order.addressTitle}', style: const TextStyle(fontSize: 13)),
+                          Text('Mobile: ${order.mobile}', style: const TextStyle(fontSize: 13)),
+                          if (order.email != null) Text('Email: ${order.email}', style: const TextStyle(fontSize: 13)),
+                          if (order.orderNote != null) ...[
+                            const SizedBox(height: 8),
+                            Text('Note: ${order.orderNote}', style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey)),
+                          ],
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              _buildCompactActionIcon(
+                                icon: Icons.edit,
+                                color: Colors.blue,
+                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update Status Tapped'))),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildCompactActionIcon(
+                                icon: Icons.local_shipping,
+                                color: Colors.orange,
+                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ship Order Tapped'))),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildCompactActionIcon(
+                                icon: Icons.delete,
+                                color: Colors.red,
+                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cancel Order Tapped'))),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -532,4 +753,15 @@ class MoreAdminOptionsScreen extends StatelessWidget {
       child: Text('More Admin Options (e.g., Settings, Reports)', style: TextStyle(fontSize: 24)),
     );
   }
+}
+
+Widget _buildCompactActionIcon({required IconData icon, required Color color, String? tooltip, required VoidCallback onTap}) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(20),
+    child: Padding(
+      padding: const EdgeInsets.all(6.0),
+      child: Icon(icon, size: 18, color: color),
+    ),
+  );
 }

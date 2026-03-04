@@ -91,6 +91,33 @@ class OrderService {
     }
   }
 
+  Future<List<dynamic>> fetchAllOrders() async {
+    debugPrint('OrderService: Fetching all orders from ${ApiConstants.allOrdersEndpoint}');
+    
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConstants.allOrdersEndpoint),
+        headers: _getHeaders(),
+      );
+
+      debugPrint('OrderService: Fetch all orders response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        // If data is a List directly, return it. If it's wrapped in 'data' key, extract it.
+        if (data['data'] is List) {
+          return data['data'];
+        }
+        return data['data'] ?? [];
+      } else {
+        throw Exception('Failed to fetch all orders: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('OrderService: Exception during fetchAllOrders: $e');
+      rethrow;
+    }
+  }
+
   Future<List<dynamic>> fetchSellerOrders() async {
     debugPrint('OrderService: Fetching seller orders from ${ApiConstants.sellerOrdersEndpoint}');
     

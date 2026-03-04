@@ -12,12 +12,14 @@ class ProductProvider with ChangeNotifier {
   final int _pageSize = 10; // Number of items per page
   bool _hasMore = true; // Indicates if there are more products to load
   bool _isFetchingMore = false; // Prevents multiple concurrent fetchMore calls
+  int _totalProducts = 0; // Total count of products from backend
 
   List<Product> get products => _products;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get hasMore => _hasMore; // Public getter for _hasMore
   bool get isFetchingMore => _isFetchingMore; // Public getter for _isFetchingMore
+  int get totalProducts => _totalProducts; // Public getter for totalProducts
 
   ProductProvider() {
     // fetchProducts(); // Removed: Fetching should be triggered by widget lifecycle
@@ -68,6 +70,7 @@ class ProductProvider with ChangeNotifier {
           } else {
             _products.addAll(newProducts);
           }
+          _totalProducts = responseData['total'] ?? (responseData['meta'] != null ? responseData['meta']['total'] : 0);
           _hasMore = newProducts.length == (pageSize ?? _pageSize);
           _currentPage = page; // Update current page after successful fetch
         } else {

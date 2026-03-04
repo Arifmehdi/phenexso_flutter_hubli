@@ -11,59 +11,77 @@ class AdminUserProvider with ChangeNotifier {
   int _currentPage = 0;
   int _lastPage = 1;
   int _totalUsers = 0;
+  bool _isFetchingMore = false;
 
   AdminUserProvider(this._adminUserService);
 
   List<User> get users => _users;
   bool get isLoading => _isLoading;
+  bool get isFetchingMore => _isFetchingMore;
   String? get errorMessage => _errorMessage;
   int get currentPage => _currentPage;
   int get lastPage => _lastPage;
   int get totalUsers => _totalUsers;
+  bool get hasMore => _currentPage < _lastPage;
 
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
   }
 
-  void _setErrorMessage(String? message) {
-    _errorMessage = message;
+  Future<void> fetchAllUsers({int page = 1, bool clearUsers = true}) async {
+    if (_isLoading || _isFetchingMore) return;
+
+    if (clearUsers) {
+      _isLoading = true;
+      _users = [];
+    } else {
+      _isFetchingMore = true;
+    }
+    
+    _errorMessage = null;
     notifyListeners();
-  }
-
-  Future<void> fetchAllUsers({int page = 1}) async {
-    if (_isLoading) return; // Prevent multiple simultaneous fetches
-
-    _setLoading(true);
-    _setErrorMessage(null);
 
     try {
       final responseData = await _adminUserService.fetchAllUsers(page: page);
 
-      _users = (responseData['data'] as List)
+      final List<User> newUsers = (responseData['data'] as List)
           .map((json) => User.fromJson(json))
           .toList();
-      _currentPage = responseData['current_page'] ?? 1;
-      _lastPage = responseData['last_page'] ?? 1;
-      _totalUsers = responseData['total'] ?? 0;
-      notifyListeners(); // Notify listeners after successful data update
+      
+      if (clearUsers) {
+        _users = newUsers;
+      } else {
+        _users.addAll(newUsers);
+      }
+
+      // Laravel Resources usually place pagination in 'meta' or at root. 
+      // Let's handle both.
+      final Map<String, dynamic> meta = responseData['meta'] ?? responseData;
+      _currentPage = meta['current_page'] ?? 1;
+      _lastPage = meta['last_page'] ?? 1;
+      _totalUsers = meta['total'] ?? 0;
     } catch (e) {
-      _setErrorMessage(e.toString());
-      _users = []; // Clear users on error
+      _errorMessage = e.toString();
     } finally {
-      _setLoading(false);
+      _isLoading = false;
+      _isFetchingMore = false;
+      notifyListeners();
     }
   }
 
-  void goToNextPage() {
-    if (_currentPage < _lastPage) {
-      fetchAllUsers(page: _currentPage + 1);
+  void fetchNextPage() {
+    if (hasMore) {
+      fetchAllUsers(page: _currentPage + 1, clearUsers: false);
     }
   }
 
-  void goToPreviousPage() {
-    if (_currentPage > 1) {
-      fetchAllUsers(page: _currentPage - 1);
-    }
+  void resetUsers() {
+    _users = [];
+    _currentPage = 0;
+    _lastPage = 1;
+    _totalUsers = 0;
+    _errorMessage = null;
+    notifyListeners();
   }
 }
