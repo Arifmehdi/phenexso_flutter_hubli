@@ -12,6 +12,7 @@ import 'package:hubli/screens/contact_support_screen.dart';
 import 'package:hubli/providers/seller_dashboard_provider.dart';
 import 'package:hubli/providers/seller_product_provider.dart';
 import 'package:hubli/providers/category_provider.dart';
+import 'package:hubli/providers/product_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
 import 'package:hubli/models/product.dart';
 import 'package:image_picker/image_picker.dart';
@@ -31,7 +32,8 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
   void _changeTab(int index) {
     setState(() {
       _selectedIndex = index;
-      if (index != 1) _editingProduct = null; // Clear edit state if not on Add/Edit tab
+      if (index != 1)
+        _editingProduct = null; // Clear edit state if not on Add/Edit tab
     });
   }
 
@@ -48,7 +50,10 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
             product: product,
             onSuccess: () {
               Navigator.pop(context);
-              Provider.of<SellerProductProvider>(context, listen: false).fetchSellerProducts();
+              Provider.of<SellerProductProvider>(
+                context,
+                listen: false,
+              ).fetchSellerProducts();
             },
           ),
         ),
@@ -70,10 +75,7 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
   Widget build(BuildContext context) {
     final List<Widget> widgetOptions = <Widget>[
       const SizedBox.shrink(),
-      AddEditProductScreen(
-        product: null,
-        onSuccess: () => _changeTab(2),
-      ),
+      AddEditProductScreen(product: null, onSuccess: () => _changeTab(2)),
       SellerProductListScreen(onEdit: _startEditing),
       const OrderManagementScreen(),
       const SellerChatUsersScreen(),
@@ -88,10 +90,7 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
         ],
       ),
       drawer: SellerDrawer(
@@ -142,12 +141,14 @@ class SellerDrawer extends StatelessWidget {
       if (response.statusCode == 200) {
         await authProvider.logout();
         if (!context.mounted) return;
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/login', (route) => false);
       } else {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Logout failed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Logout failed')));
       }
     } catch (e) {
       if (!context.mounted) return;
@@ -160,7 +161,7 @@ class SellerDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -176,13 +177,21 @@ class SellerDrawer extends StatelessWidget {
                   backgroundColor: Colors.white,
                   child: Text(
                     authProvider.user?.name[0].toUpperCase() ?? 'S',
-                    style: TextStyle(fontSize: 24, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   authProvider.user?.name ?? 'Seller',
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   authProvider.user?.email ?? '',
@@ -242,7 +251,9 @@ class SellerDrawer extends StatelessWidget {
             title: const Text('Edit Profile'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileEditScreen()));
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileEditScreen()),
+              );
             },
           ),
           ListTile(
@@ -250,7 +261,9 @@ class SellerDrawer extends StatelessWidget {
             title: const Text('Change Password'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PasswordChangeScreen()));
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PasswordChangeScreen()),
+              );
             },
           ),
           ListTile(
@@ -258,7 +271,9 @@ class SellerDrawer extends StatelessWidget {
             title: const Text('Contact Support'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ContactSupportScreen()));
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ContactSupportScreen()),
+              );
             },
           ),
           const Divider(),
@@ -288,19 +303,26 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() =>
-        Provider.of<SellerDashboardProvider>(context, listen: false).fetchDashboardData());
+    Future.microtask(
+      () => Provider.of<SellerDashboardProvider>(
+        context,
+        listen: false,
+      ).fetchDashboardData(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
-    
+
     return Consumer<SellerDashboardProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
-        if (provider.errorMessage != null) return Center(child: Text('Error: ${provider.errorMessage}'));
-        if (provider.dashboardData == null) return const Center(child: Text('No data'));
+        if (provider.isLoading)
+          return const Center(child: CircularProgressIndicator());
+        if (provider.errorMessage != null)
+          return Center(child: Text('Error: ${provider.errorMessage}'));
+        if (provider.dashboardData == null)
+          return const Center(child: Text('No data'));
 
         final data = provider.dashboardData!;
         final content = Column(
@@ -320,7 +342,10 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                       backgroundColor: Theme.of(context).primaryColor,
                       child: Text(
                         user?.name[0].toUpperCase() ?? 'S',
-                        style: const TextStyle(fontSize: 30, color: Colors.white),
+                        style: const TextStyle(
+                          fontSize: 30,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 20),
@@ -330,7 +355,10 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                         children: [
                           Text(
                             user?.name ?? 'Seller Name',
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
@@ -340,14 +368,20 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                           ),
                           Container(
                             margin: const EdgeInsets.only(top: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.orange.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: const Text(
                               'Seller Account',
-                              style: TextStyle(fontSize: 12, color: Colors.orange),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.orange,
+                              ),
                             ),
                           ),
                         ],
@@ -370,10 +404,30 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               children: <Widget>[
-                _buildMetricCard(context, 'Total Products', data.totalProducts.toString(), Icons.production_quantity_limits),
-                _buildMetricCard(context, 'Sales Today', '৳${data.totalSalesToday.toStringAsFixed(2)}', Icons.attach_money),
-                _buildMetricCard(context, 'Pending', data.totalOrdersPending.toString(), Icons.pending_actions),
-                _buildMetricCard(context, 'Shipped', data.totalOrdersShipped.toString(), Icons.local_shipping),
+                _buildMetricCard(
+                  context,
+                  'Total Products',
+                  data.totalProducts.toString(),
+                  Icons.production_quantity_limits,
+                ),
+                _buildMetricCard(
+                  context,
+                  'Sales Today',
+                  '৳${data.totalSalesToday.toStringAsFixed(2)}',
+                  Icons.attach_money,
+                ),
+                _buildMetricCard(
+                  context,
+                  'Pending',
+                  data.totalOrdersPending.toString(),
+                  Icons.pending_actions,
+                ),
+                _buildMetricCard(
+                  context,
+                  'Shipped',
+                  data.totalOrdersShipped.toString(),
+                  Icons.local_shipping,
+                ),
               ],
             ),
           ],
@@ -391,7 +445,12 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     );
   }
 
-  Widget _buildMetricCard(BuildContext context, String title, String value, IconData icon) {
+  Widget _buildMetricCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+  ) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -405,8 +464,17 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ],
@@ -419,129 +487,235 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
 class AddEditProductScreen extends StatefulWidget {
   final Product? product;
   final VoidCallback onSuccess;
-  const AddEditProductScreen({super.key, this.product, required this.onSuccess});
+  const AddEditProductScreen({
+    super.key,
+    this.product,
+    required this.onSuccess,
+  });
 
   @override
   State<AddEditProductScreen> createState() => _AddEditProductScreenState();
 }
 
+class ProductFormModel {
+  final nameEnController = TextEditingController();
+  final slugController = TextEditingController();
+  final priceController = TextEditingController();
+  final purchasePriceController = TextEditingController();
+  final stockController = TextEditingController();
+  final descEnController = TextEditingController();
+  String? selectedCategoryId;
+  String? selectedProductName; // New field for dropdown
+  File? image;
+
+  void dispose() {
+    nameEnController.dispose();
+    slugController.dispose();
+    priceController.dispose();
+    purchasePriceController.dispose();
+    stockController.dispose();
+    descEnController.dispose();
+  }
+}
+
 class _AddEditProductScreenState extends State<AddEditProductScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameEnController = TextEditingController();
-  final _slugController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _stockController = TextEditingController();
-  final _descEnController = TextEditingController();
-  String? _selectedCategoryId;
-  File? _image;
+  final List<ProductFormModel> _forms = [];
 
   @override
   void initState() {
     super.initState();
-    _nameEnController.addListener(_onNameChanged);
-    _initFields();
-    Future.microtask(() => Provider.of<CategoryProvider>(context, listen: false).fetchCategories());
+    _initForms();
+    Future.microtask(() {
+      Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
+      // Fetch a larger list of products to populate the name dropdown
+      Provider.of<ProductProvider>(context, listen: false).fetchProducts(pageSize: 100);
+    });
   }
 
-  void _initFields() {
-    if (widget.product != null) {
-      _nameEnController.text = widget.product!.name;
-      _priceController.text = widget.product!.price.toString();
-      _stockController.text = widget.product!.stock.toString();
-      _descEnController.text = widget.product!.description;
-      // Ensure we don't set an empty string as the selected ID, use null instead
-      _selectedCategoryId = (widget.product!.categoryId != null && widget.product!.categoryId!.isNotEmpty) 
-          ? widget.product!.categoryId 
-          : null;
-      _onNameChanged();
-    } else {
-      _nameEnController.clear();
-      _priceController.clear();
-      _stockController.clear();
-      _descEnController.clear();
-      _slugController.clear();
-      _selectedCategoryId = null;
-      _image = null;
+  void _initForms() {
+    for (var form in _forms) {
+      form.dispose();
     }
+    _forms.clear();
+
+    final allProducts = Provider.of<ProductProvider>(context, listen: false).products;
+    final allProductNames = allProducts.map((p) => p.name).toSet().toList();
+
+    if (widget.product != null) {
+      final form = ProductFormModel();
+      form.nameEnController.text = widget.product!.name;
+      form.priceController.text = widget.product!.price.toString();
+      form.purchasePriceController.text =
+          widget.product!.purchasePrice.toString();
+      form.stockController.text = widget.product!.stock.toString();
+      form.descEnController.text = widget.product!.description;
+      form.selectedCategoryId =
+          (widget.product!.categoryId != null &&
+                  widget.product!.categoryId!.isNotEmpty)
+              ? widget.product!.categoryId
+              : null;
+      
+      // Determine if name is in dropdown
+      if (allProductNames.contains(widget.product!.name)) {
+        form.selectedProductName = widget.product!.name;
+      } else {
+        form.selectedProductName = 'Other';
+      }
+
+      _updateSlug(form);
+      form.nameEnController.addListener(() => _updateSlug(form));
+      _forms.add(form);
+    } else {
+      _addNewForm();
+    }
+  }
+
+  void _addNewForm() {
+    setState(() {
+      final form = ProductFormModel();
+      form.selectedProductName = 'Other'; // Default to Other for new products
+      form.nameEnController.addListener(() => _updateSlug(form));
+      _forms.add(form);
+    });
+  }
+
+  void _removeForm(int index) {
+    if (_forms.length > 1) {
+      setState(() {
+        _forms[index].dispose();
+        _forms.removeAt(index);
+      });
+    }
+  }
+
+  void _updateSlug(ProductFormModel form) {
+    String name = form.nameEnController.text;
+    String slug = name.toLowerCase().trim().replaceAll(
+      RegExp(r'[^a-z0-9]+'),
+      '-',
+    );
+    if (slug.endsWith('-')) slug = slug.substring(0, slug.length - 1);
+    form.slugController.text = slug;
   }
 
   @override
   void didUpdateWidget(AddEditProductScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.product != widget.product) {
-      _initFields();
+      _initForms();
     }
   }
 
   @override
   void dispose() {
-    _nameEnController.removeListener(_onNameChanged);
-    _nameEnController.dispose();
-    _slugController.dispose();
-    _priceController.dispose();
-    _stockController.dispose();
-    _descEnController.dispose();
+    for (var form in _forms) {
+      form.dispose();
+    }
     super.dispose();
   }
 
-  void _onNameChanged() {
-    String name = _nameEnController.text;
-    String slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
-    if (slug.endsWith('-')) slug = slug.substring(0, slug.length - 1);
-    _slugController.text = slug;
-  }
-
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(ProductFormModel form) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _image = File(pickedFile.path);
+        form.image = File(pickedFile.path);
       });
     }
   }
 
   void _submit(SellerProductProvider provider) async {
-    if (_formKey.currentState!.validate() && _selectedCategoryId != null) {
+    if (_formKey.currentState!.validate()) {
+      // Check if all forms have a category selected
+      for (var form in _forms) {
+        if (form.selectedCategoryId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a category for all products'),
+            ),
+          );
+          return;
+        }
+      }
+
       try {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final userId = authProvider.user?.id.toString() ?? '0';
 
-        if (widget.product == null) {
-          await provider.addProduct(
-            nameEn: _nameEnController.text,
-            slug: _slugController.text,
-            price: double.parse(_priceController.text),
-            stock: int.parse(_stockController.text),
-            categoryId: _selectedCategoryId!,
-            descriptionEn: _descEnController.text,
-            userId: userId,
-            image: _image,
-          );
-        } else {
+        if (widget.product != null) {
+          // Single Edit
+          final form = _forms[0];
+          final priceVal = double.tryParse(form.purchasePriceController.text) ?? 0.0;
           await provider.updateProduct(
             productId: widget.product!.id,
-            nameEn: _nameEnController.text,
-            slug: _slugController.text,
-            price: double.parse(_priceController.text),
-            stock: int.parse(_stockController.text),
-            categoryId: _selectedCategoryId!,
-            descriptionEn: _descEnController.text,
+            nameEn: form.nameEnController.text,
+            slug: form.slugController.text,
+            price: priceVal,
+            purchasePrice: priceVal,
+            stock: int.parse(form.stockController.text),
+            categoryId: form.selectedCategoryId!,
+            descriptionEn: form.descEnController.text,
             userId: userId,
-            image: _image,
+            image: form.image,
           );
+        } else {
+          // Bulk Add or Single Add
+          if (_forms.length == 1) {
+            // Single Add
+            final form = _forms[0];
+            final priceVal = double.tryParse(form.purchasePriceController.text) ?? 0.0;
+            await provider.addProduct(
+              nameEn: form.nameEnController.text,
+              slug: form.slugController.text,
+              price: priceVal,
+              purchasePrice: priceVal,
+              stock: int.parse(form.stockController.text),
+              categoryId: form.selectedCategoryId!,
+              descriptionEn: form.descEnController.text,
+              userId: userId,
+              image: form.image,
+            );
+          } else {
+            // Bulk Add
+            List<Map<String, dynamic>> productsData = _forms
+                .map(
+                  (form) {
+                    final priceVal = double.tryParse(form.purchasePriceController.text) ?? 0.0;
+                    return {
+                      'name_en': form.nameEnController.text,
+                      'slug': form.slugController.text,
+                      'price': priceVal,
+                      'purchase_price': priceVal,
+                      'stock': int.parse(form.stockController.text),
+                      'category_id': form.selectedCategoryId,
+                      'description_en': form.descEnController.text,
+                      'seller_id': userId,
+                    };
+                  },
+                )
+                .toList();
+
+            await provider.bulkAddProducts(products: productsData);
+          }
         }
-        
+
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(widget.product == null ? 'Product added successfully!' : 'Product updated successfully!'))
+          SnackBar(
+            content: Text(
+              widget.product == null
+                  ? 'Products added successfully!'
+                  : 'Product updated successfully!',
+            ),
+          ),
         );
         widget.onSuccess();
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
-    } else if (_selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a category')));
     }
   }
 
@@ -557,56 +731,252 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
             key: _formKey,
             child: Column(
               children: [
-                Text(widget.product == null ? 'Add New Product' : 'Edit Product', 
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                TextFormField(controller: _nameEnController, decoration: const InputDecoration(labelText: 'Product Name', border: OutlineInputBorder()), validator: (v) => v!.isEmpty ? 'Required' : null),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _slugController, 
-                  decoration: const InputDecoration(labelText: 'Product Slug (URL)', border: OutlineInputBorder()),
-                  validator: (v) => v!.isEmpty ? 'Required' : null,
-                ),
-                const SizedBox(height: 10),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(child: TextFormField(controller: _priceController, decoration: const InputDecoration(labelText: 'Price', border: OutlineInputBorder()), keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? 'Required' : null)),
-                    const SizedBox(width: 10),
-                    Expanded(child: TextFormField(controller: _stockController, decoration: const InputDecoration(labelText: 'Stock', border: OutlineInputBorder()), keyboardType: TextInputType.number, validator: (v) => v!.isEmpty ? 'Required' : null)),
+                    Text(
+                      widget.product == null
+                          ? 'Add New Products'
+                          : 'Edit Product',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (widget.product == null)
+                      IconButton(
+                        onPressed: _addNewForm,
+                        icon: const Icon(
+                          Icons.add_circle,
+                          color: Colors.green,
+                          size: 30,
+                        ),
+                        tooltip: 'Add More Products',
+                      ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  value: _selectedCategoryId,
-                  decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                  items: categories.map((c) => DropdownMenuItem(value: c.id.toString(), child: Text(c.name))).toList(),
-                  onChanged: (v) => setState(() => _selectedCategoryId = v),
-                ),
-                const SizedBox(height: 10),
-                TextFormField(controller: _descEnController, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()), maxLines: 3),
                 const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 150,
-                    width: double.infinity,
-                    decoration: BoxDecoration(border: Border.all(color: Colors.grey), borderRadius: BorderRadius.circular(8)),
-                    child: _image == null 
-                      ? (widget.product != null && widget.product!.imageUrls.isNotEmpty && !widget.product!.imageUrls[0].contains('placeholder')
-                          ? Image.network(widget.product!.imageUrls[0], fit: BoxFit.cover)
-                          : const Center(child: Icon(Icons.add_a_photo, size: 50, color: Colors.grey)))
-                      : Image.file(_image!, fit: BoxFit.cover),
-                  ),
-                ),
+                ...List.generate(_forms.length, (index) {
+                  final form = _forms[index];
+                  return Card(
+                    elevation: 3,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Product #${index + 1}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              if (widget.product == null && _forms.length > 1)
+                                IconButton(
+                                  onPressed: () => _removeForm(index),
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const Divider(),
+                          const SizedBox(height: 10),
+                          Consumer<ProductProvider>(
+                            builder: (context, productProvider, _) {
+                              final allProducts = productProvider.products;
+                              final allProductNames = allProducts.map((p) => p.name).toSet().toList();
+                              
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    value: (allProductNames.contains(form.selectedProductName) || form.selectedProductName == 'Other') 
+                                        ? form.selectedProductName 
+                                        : 'Other',
+                                    decoration: const InputDecoration(
+                                      labelText: 'Select Product',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    items: [
+                                      const DropdownMenuItem(value: 'Other', child: Text('Other (Type manually)')),
+                                      ...allProductNames.map((name) => DropdownMenuItem(value: name, child: Text(name))),
+                                    ],
+                                    onChanged: (v) {
+                                      if (v == null) return;
+                                      setState(() {
+                                        form.selectedProductName = v;
+                                        if (v != 'Other') {
+                                          form.nameEnController.text = v;
+                                        } else {
+                                          form.nameEnController.clear();
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  if (form.selectedProductName == 'Other') ...[
+                                    const SizedBox(height: 10),
+                                    TextFormField(
+                                      controller: form.nameEnController,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Type Product Name',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                                    ),
+                                  ],
+                                ],
+                              );
+                            }
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            controller: form.slugController,
+                            decoration: const InputDecoration(
+                              labelText: 'Product Slug (URL)',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (v) => v!.isEmpty ? 'Required' : null,
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: form.purchasePriceController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Price',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: form.stockController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Stock',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          DropdownButtonFormField<String>(
+                            value: form.selectedCategoryId,
+                            decoration: const InputDecoration(
+                              labelText: 'Category',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: categories
+                                .map(
+                                  (c) => DropdownMenuItem(
+                                    value: c.id.toString(),
+                                    child: Text(c.name),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => form.selectedCategoryId = v),
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            controller: form.descEnController,
+                            decoration: const InputDecoration(
+                              labelText: 'Description',
+                              border: OutlineInputBorder(),
+                            ),
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 10),
+                          if (widget.product != null || _forms.length == 1) ...[
+                            const Text(
+                              'Product Image (Optional for Bulk)',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 5),
+                            GestureDetector(
+                              onTap: () => _pickImage(form),
+                              child: Container(
+                                height: 120,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: form.image == null
+                                    ? (widget.product != null &&
+                                              widget
+                                                  .product!
+                                                  .imageUrls
+                                                  .isNotEmpty &&
+                                              !widget.product!.imageUrls[0]
+                                                  .contains('placeholder')
+                                          ? Image.network(
+                                              widget.product!.imageUrls[0],
+                                              fit: BoxFit.cover,
+                                            )
+                                          : const Center(
+                                              child: Icon(
+                                                Icons.add_a_photo,
+                                                size: 40,
+                                                color: Colors.grey,
+                                              ),
+                                            ))
+                                    : Image.file(
+                                        form.image!,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                            ),
+                          ] else
+                            const Text(
+                              'Note: Bulk upload doesn\'t support images yet.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.orange,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
                 const SizedBox(height: 20),
                 if (sellerProductProvider.isLoading)
                   const CircularProgressIndicator()
                 else
                   ElevatedButton(
                     onPressed: () => _submit(sellerProductProvider),
-                    style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                    child: Text(widget.product == null ? 'SUBMIT PRODUCT' : 'UPDATE PRODUCT'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: Text(
+                      widget.product == null
+                          ? 'SUBMIT ALL PRODUCTS'
+                          : 'UPDATE PRODUCT',
+                    ),
                   ),
+                const SizedBox(height: 50),
               ],
             ),
           ),
@@ -621,23 +991,32 @@ class SellerProductListScreen extends StatefulWidget {
   const SellerProductListScreen({super.key, required this.onEdit});
 
   @override
-  State<SellerProductListScreen> createState() => _SellerProductListScreenState();
+  State<SellerProductListScreen> createState() =>
+      _SellerProductListScreenState();
 }
 
 class _SellerProductListScreenState extends State<SellerProductListScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => Provider.of<SellerProductProvider>(context, listen: false).fetchSellerProducts());
+    Future.microtask(
+      () => Provider.of<SellerProductProvider>(
+        context,
+        listen: false,
+      ).fetchSellerProducts(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<SellerProductProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
-        if (provider.errorMessage != null) return Center(child: Text('Error: ${provider.errorMessage}'));
-        if (provider.products.isEmpty) return const Center(child: Text('No products found. Add one!'));
+        if (provider.isLoading)
+          return const Center(child: CircularProgressIndicator());
+        if (provider.errorMessage != null)
+          return Center(child: Text('Error: ${provider.errorMessage}'));
+        if (provider.products.isEmpty)
+          return const Center(child: Text('No products found. Add one!'));
 
         return ListView.builder(
           itemCount: provider.products.length,
@@ -646,11 +1025,21 @@ class _SellerProductListScreenState extends State<SellerProductListScreen> {
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
               child: ListTile(
-                leading: product.imageUrls.isNotEmpty && !product.imageUrls[0].contains('placeholder')
-                  ? Image.network(product.imageUrls[0], width: 50, height: 50, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.image))
-                  : const Icon(Icons.image),
+                leading:
+                    product.imageUrls.isNotEmpty &&
+                        !product.imageUrls[0].contains('placeholder')
+                    ? Image.network(
+                        product.imageUrls[0],
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                        errorBuilder: (c, e, s) => const Icon(Icons.image),
+                      )
+                    : const Icon(Icons.image),
                 title: Text(product.name),
-                subtitle: Text('Price: ৳${product.price.toStringAsFixed(2)} | Stock: ${product.stock}'),
+                subtitle: Text(
+                  'Price: ৳${product.purchasePrice.toStringAsFixed(2)} | Stock: ${product.stock}',
+                ),
                 trailing: IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () => widget.onEdit(product),
@@ -675,8 +1064,12 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() =>
-        Provider.of<OrderProvider>(context, listen: false).fetchAndSetSellerOrders());
+    Future.microtask(
+      () => Provider.of<OrderProvider>(
+        context,
+        listen: false,
+      ).fetchAndSetSellerOrders(),
+    );
   }
 
   @override
@@ -696,9 +1089,16 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                     Center(
                       child: Column(
                         children: [
-                          Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.grey),
+                          Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 80,
+                            color: Colors.grey,
+                          ),
                           SizedBox(height: 16),
-                          Text('No orders found for your products.', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                          Text(
+                            'No orders found for your products.',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
                         ],
                       ),
                     ),
@@ -709,7 +1109,10 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   itemBuilder: (context, index) {
                     final order = orderProvider.sellerOrders[index];
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 8,
+                      ),
                       child: ExpansionTile(
                         title: Text(
                           'Order #${order.id}',
@@ -718,11 +1121,17 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(DateFormat('dd MMM yyyy, hh:mm a').format(order.orderDate)),
+                            Text(
+                              DateFormat(
+                                'dd MMM yyyy, hh:mm a',
+                              ).format(order.orderDate),
+                            ),
                             Text(
                               'Status: ${order.paymentStatus.toUpperCase()}',
                               style: TextStyle(
-                                color: order.paymentStatus == 'paid' ? Colors.green : Colors.orange,
+                                color: order.paymentStatus == 'paid'
+                                    ? Colors.green
+                                    : Colors.orange,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
@@ -731,7 +1140,10 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                         ),
                         trailing: Text(
                           '৳${order.grandTotal.toStringAsFixed(2)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
                         ),
                         children: [
                           Padding(
@@ -739,34 +1151,64 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Items:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                const Text(
+                                  'Items:',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                                 const SizedBox(height: 8),
-                                ...order.items.map((item) => Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(child: Text('${item.productName} x ${item.quantity}')),
-                                      Text('৳${item.totalCost.toStringAsFixed(2)}'),
-                                    ],
-                                  ),
-                                )).toList(),
+                                ...order.items
+                                    .map(
+                                      (item) => Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 4,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                '${item.productName} x ${item.quantity}',
+                                              ),
+                                            ),
+                                            Text(
+                                              '৳${item.totalCost.toStringAsFixed(2)}',
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
                                 const Divider(),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text('Grand Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                                    Text('৳${order.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    const Text(
+                                      'Grand Total',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '৳${order.grandTotal.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 10),
-                                const Text('Shipping Address:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                const Text(
+                                  'Shipping Address:',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                                 Text(order.addressTitle),
                                 Text('Customer: ${order.name}'),
                                 Text('Mobile: ${order.mobile}'),
                               ],
                             ),
-                          )
+                          ),
                         ],
                       ),
                     );

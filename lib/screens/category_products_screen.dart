@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../providers/product_provider.dart';
 import '../models/product.dart';
 import '../widgets/custom_app_bar.dart'; // Assuming this exists for consistency
@@ -268,8 +269,11 @@ class ProductItem extends StatelessWidget {
             ),
           ),
           Text(
-            '\$${product.price.toStringAsFixed(2)}',
-            style: const TextStyle(fontSize: 14, color: Colors.green),
+            NumberFormat.currency(
+              locale: 'en_BD',
+              symbol: '৳ ',
+            ).format(product.price),
+            style: TextStyle(fontSize: 14, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
           ),
         ],
       ),

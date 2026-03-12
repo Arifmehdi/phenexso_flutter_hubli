@@ -39,6 +39,7 @@ class SellerProductProvider with ChangeNotifier {
     required String nameEn,
     required String slug,
     required double price,
+    required double purchasePrice,
     required int stock,
     required String categoryId,
     required String descriptionEn,
@@ -54,6 +55,7 @@ class SellerProductProvider with ChangeNotifier {
         nameEn: nameEn,
         slug: slug,
         price: price,
+        purchasePrice: purchasePrice,
         stock: stock,
         categoryId: categoryId,
         descriptionEn: descriptionEn,
@@ -76,6 +78,7 @@ class SellerProductProvider with ChangeNotifier {
     required String nameEn,
     required String slug,
     required double price,
+    required double purchasePrice,
     required int stock,
     required String categoryId,
     required String descriptionEn,
@@ -92,12 +95,32 @@ class SellerProductProvider with ChangeNotifier {
         nameEn: nameEn,
         slug: slug,
         price: price,
+        purchasePrice: purchasePrice,
         stock: stock,
         categoryId: categoryId,
         descriptionEn: descriptionEn,
         userId: userId,
         image: image,
       );
+      await fetchSellerProducts();
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> bulkAddProducts({
+    required List<Map<String, dynamic>> products,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _service.bulkAddProducts(products: products);
       await fetchSellerProducts();
     } catch (e) {
       _errorMessage = e.toString();

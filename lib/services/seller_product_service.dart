@@ -13,9 +13,7 @@ class SellerProductService {
   String? get authToken => _authToken;
 
   Map<String, String> _getHeaders() {
-    final Map<String, String> headers = {
-      'Accept': 'application/json',
-    };
+    final Map<String, String> headers = {'Accept': 'application/json'};
     if (_authToken != null && _authToken!.isNotEmpty) {
       headers['Authorization'] = 'Bearer $_authToken';
     }
@@ -41,31 +39,38 @@ class SellerProductService {
     required String nameEn,
     required String slug,
     required double price,
+    required double purchasePrice,
     required int stock,
     required String categoryId,
     required String descriptionEn,
     required String userId, // Add userId to parameters
     File? image,
   }) async {
-    var request = http.MultipartRequest('POST', Uri.parse(ApiConstants.productsEndpoint));
-    
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse(ApiConstants.productsEndpoint),
+    );
+
     request.headers.addAll(_getHeaders());
-    
+
     request.fields['name_en'] = nameEn;
-    request.fields['name_bn'] = nameEn; 
+    request.fields['name_bn'] = nameEn;
     request.fields['slug'] = slug; // Use passed slug
     request.fields['price'] = price.toString();
+    request.fields['purchase_price'] = purchasePrice.toString();
     request.fields['stock'] = stock.toString();
     request.fields['category_id'] = categoryId;
     request.fields['description_en'] = descriptionEn;
     request.fields['description_bn'] = descriptionEn;
     request.fields['addedby_id'] = userId; // Set as login user
-    request.fields['seller_id'] = userId;  // Set as login user
-    
+    request.fields['seller_id'] = userId; // Set as login user
+
     request.fields['active'] = '1';
 
     if (image != null) {
-      request.files.add(await http.MultipartFile.fromPath('featured_image', image.path));
+      request.files.add(
+        await http.MultipartFile.fromPath('featured_image', image.path),
+      );
     }
 
     final streamedResponse = await request.send();
@@ -85,6 +90,7 @@ class SellerProductService {
     required String nameEn,
     required String slug,
     required double price,
+    required double purchasePrice,
     required int stock,
     required String categoryId,
     required String descriptionEn,
@@ -92,26 +98,32 @@ class SellerProductService {
     File? image,
   }) async {
     // Using POST with _method=PATCH for multipart/form-data compatibility with Laravel
-    var request = http.MultipartRequest('POST', Uri.parse('${ApiConstants.sellerProductsEndpoint}/$productId'));
-    
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${ApiConstants.sellerProductsEndpoint}/$productId'),
+    );
+
     request.headers.addAll(_getHeaders());
-    request.fields['_method'] = 'PATCH'; // Match the specified Laravel route method
-    
+    request.fields['_method'] =
+        'PATCH'; // Match the specified Laravel route method
+
     request.fields['name_en'] = nameEn;
-    request.fields['name_bn'] = nameEn; 
+    request.fields['name_bn'] = nameEn;
     request.fields['slug'] = slug;
-    request.fields['price'] = price.toString();
+    request.fields['purchase_price'] = purchasePrice.toString();
     request.fields['stock'] = stock.toString();
     request.fields['category_id'] = categoryId;
     request.fields['description_en'] = descriptionEn;
     request.fields['description_bn'] = descriptionEn;
     request.fields['addedby_id'] = userId;
     request.fields['seller_id'] = userId;
-    
+
     request.fields['active'] = '1';
 
     if (image != null) {
-      request.files.add(await http.MultipartFile.fromPath('featured_image', image.path));
+      request.files.add(
+        await http.MultipartFile.fromPath('featured_image', image.path),
+      );
     }
 
     final streamedResponse = await request.send();
@@ -123,6 +135,24 @@ class SellerProductService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       final errorData = json.decode(response.body);
       throw Exception(errorData['message'] ?? 'Failed to update product');
+    }
+  }
+
+  Future<void> bulkAddProducts({
+    required List<Map<String, dynamic>> products,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${ApiConstants.baseUrl}/api/products/bulk-store'),
+      headers: {..._getHeaders(), 'Content-Type': 'application/json'},
+      body: json.encode({'products': products}),
+    );
+
+    debugPrint('Bulk Add Products Status: ${response.statusCode}');
+    debugPrint('Bulk Add Products Body: ${response.body}');
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'Failed to add bulk products');
     }
   }
 }

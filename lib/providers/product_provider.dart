@@ -53,7 +53,7 @@ class ProductProvider with ChangeNotifier {
       // Add pagination parameters
       final uri = Uri.parse(url).replace(queryParameters: {
         'page': page.toString(),
-        'limit': (pageSize ?? _pageSize).toString(),
+        'per_page': (pageSize ?? _pageSize).toString(),
       });
 
       final response = await http.get(uri);
@@ -70,8 +70,16 @@ class ProductProvider with ChangeNotifier {
           } else {
             _products.addAll(newProducts);
           }
-          _totalProducts = responseData['total'] ?? (responseData['meta'] != null ? responseData['meta']['total'] : 0);
-          _hasMore = newProducts.length == (pageSize ?? _pageSize);
+
+          if (responseData['meta'] != null) {
+            _totalProducts = responseData['meta']['total'] ?? 0;
+            int lastPage = responseData['meta']['last_page'] ?? 1;
+            _hasMore = page < lastPage;
+          } else {
+            _totalProducts = responseData['total'] ?? 0;
+            _hasMore = newProducts.length == (pageSize ?? _pageSize);
+          }
+          
           _currentPage = page; // Update current page after successful fetch
         } else {
           _errorMessage =
