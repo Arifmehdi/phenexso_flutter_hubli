@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http; // Import for http requests
-import 'package:provider/provider.dart'; // Import for AuthProvider
-import 'package:hubli/providers/auth_provider.dart'; // Import AuthProvider
-import 'package:hubli/utils/api_constants.dart'; // Import API constants
-import 'package:hubli/screens/chat_screen.dart'; // Import ChatScreen
-import 'package:hubli/screens/rider_chat_users_screen.dart'; // New import for RiderChatUsersScreen
-import 'dart:convert'; // Import for json.decode
-import 'package:hubli/screens/profile_edit_screen.dart'; // Import ProfileEditScreen
-import 'package:hubli/screens/password_change_screen.dart'; // Import PasswordChangeScreen
-import 'package:hubli/screens/contact_support_screen.dart'; // Import ContactSupportScreen
-import 'package:hubli/providers/rider_dashboard_provider.dart'; // New Import
-import 'package:hubli/models/rider_dashboard.dart'; // New Import
-import 'package:hubli/widgets/user_header.dart'; // Common UserHeader widget
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:hubli/providers/auth_provider.dart';
+import 'package:hubli/utils/api_constants.dart';
+import 'package:hubli/screens/rider_chat_users_screen.dart';
+import 'dart:convert';
+import 'package:hubli/screens/profile_edit_screen.dart';
+import 'package:hubli/screens/password_change_screen.dart';
+import 'package:hubli/screens/contact_support_screen.dart';
+import 'package:hubli/providers/rider_dashboard_provider.dart';
+import 'package:hubli/models/order.dart';
+import 'package:hubli/widgets/user_header.dart';
+import 'package:intl/intl.dart';
 
 class RiderPanelScreen extends StatefulWidget {
   const RiderPanelScreen({super.key});
@@ -24,16 +24,16 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
   int _selectedIndex = 4; // Initialized to Account (index 4)
 
   final List<Widget> _widgetOptions = <Widget>[
-    const SizedBox.shrink(), // Index 0 is Home (navigates away)
-    const ActiveOrdersScreen(), // (index 1)
-    const HistoryScreen(), // (index 2)
-    const RiderChatUsersScreen(), // Chat screen (index 3)
-    const RiderDashboardHome(), // Dashboard (index 4)
+    const SizedBox.shrink(), // Index 0 is Home
+    const ActiveOrdersScreen(), // Index 1
+    const HistoryScreen(), // Index 2
+    const RiderChatUsersScreen(), // Index 3
+    const RiderDashboardHome(), // Index 4
   ];
 
   void _onItemTapped(int index) {
-    if (index == 0) { // If Home icon is tapped
-      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false); // Navigate to apps home page
+    if (index == 0) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
     } else {
       setState(() {
         _selectedIndex = index;
@@ -42,29 +42,20 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    String title = 'Rider Panel';
+    if (_selectedIndex == 4) title = 'Rider Dashboard';
+    if (_selectedIndex == 1) title = 'Active Orders';
+    if (_selectedIndex == 2) title = 'Order History';
+    if (_selectedIndex == 3) title = 'Messages';
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_selectedIndex == 4 ? 'Rider Dashboard' : 'Rider Panel'),
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
+        title: Text(title),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notifications tapped')),
-              );
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -75,31 +66,15 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
       body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          // New: Home item
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.delivery_dining),
-            label: 'Active Orders',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat), // New Chat item
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person), // Account item
-            label: 'Account',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.delivery_dining), label: 'Active'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).primaryColor,
-        unselectedItemColor: Colors.grey, // Ensure unselected items are visible
+        unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
@@ -117,7 +92,6 @@ class RiderDrawer extends StatelessWidget {
     required this.onTabChange,
   });
 
-  // New: Logout functionality
   Future<void> _logout(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     try {
@@ -135,15 +109,11 @@ class RiderDrawer extends StatelessWidget {
         Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
       } else {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Logout failed')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logout failed')));
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred during logout: $e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
     }
   }
 
@@ -163,21 +133,16 @@ class RiderDrawer extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    authProvider.user?.name[0].toUpperCase() ?? 'R',
-                    style: TextStyle(fontSize: 24, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
-                  ),
+                  backgroundImage: authProvider.user?.image != null 
+                    ? NetworkImage(authProvider.user!.image!) 
+                    : null,
+                  child: authProvider.user?.image == null 
+                    ? Text(authProvider.user?.name[0].toUpperCase() ?? 'R') 
+                    : null,
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  authProvider.user?.name ?? 'Rider',
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  authProvider.user?.email ?? '',
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
-                ),
+                Text(authProvider.user?.name ?? 'Rider', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(authProvider.user?.email ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14)),
               ],
             ),
           ),
@@ -185,98 +150,35 @@ class RiderDrawer extends StatelessWidget {
             leading: const Icon(Icons.dashboard),
             title: const Text('Dashboard'),
             selected: selectedIndex == 4,
-            onTap: () {
-              Navigator.pop(context);
-              onTabChange(4);
-            },
+            onTap: () { Navigator.pop(context); onTabChange(4); },
           ),
           ListTile(
             leading: const Icon(Icons.delivery_dining),
             title: const Text('Active Orders'),
             selected: selectedIndex == 1,
-            onTap: () {
-              Navigator.pop(context);
-              onTabChange(1);
-            },
+            onTap: () { Navigator.pop(context); onTabChange(1); },
           ),
           ListTile(
             leading: const Icon(Icons.history),
             title: const Text('Order History'),
             selected: selectedIndex == 2,
-            onTap: () {
-              Navigator.pop(context);
-              onTabChange(2);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.chat),
-            title: const Text('Chat'),
-            selected: selectedIndex == 3,
-            onTap: () {
-              Navigator.pop(context);
-              onTabChange(3);
-            },
+            onTap: () { Navigator.pop(context); onTabChange(2); },
           ),
           const Divider(),
-          ListTile(
-            leading: const Icon(Icons.star),
-            title: const Text('Ratings'),
-            onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Ratings Tapped')),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.money),
-            title: const Text('Earnings'),
-            onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Earnings Tapped')),
-              );
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.support_agent),
-            title: const Text('Call Support'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const ContactSupportScreen()),
-              );
-            },
-          ),
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Edit Profile'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
-              );
-            },
+            onTap: () { Navigator.pop(context); Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfileEditScreen())); },
           ),
           ListTile(
             leading: const Icon(Icons.lock),
             title: const Text('Change Password'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const PasswordChangeScreen()),
-              );
-            },
+            onTap: () { Navigator.pop(context); Navigator.of(context).push(MaterialPageRoute(builder: (context) => const PasswordChangeScreen())); },
           ),
-          const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Logout', style: TextStyle(color: Colors.red)),
-            onTap: () async {
-              Navigator.pop(context);
-              await _logout(context);
-            },
+            onTap: () async { Navigator.pop(context); await _logout(context); },
           ),
         ],
       ),
@@ -296,67 +198,50 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
   @override
   void initState() {
     super.initState();
-    // Fetch dashboard data when the widget initializes
-    Future.microtask(() =>
-        Provider.of<RiderDashboardProvider>(context, listen: false).fetchDashboardData());
+    Future.microtask(() => Provider.of<RiderDashboardProvider>(context, listen: false).fetchDashboardData());
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<RiderDashboardProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (provider.errorMessage != null) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Error: ${provider.errorMessage}',
-                style: const TextStyle(color: Colors.red, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
-        }
-
-        if (provider.dashboardData == null) {
-          return const Center(child: Text('No dashboard data available.'));
-        }
+        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
+        if (provider.errorMessage != null) return Center(child: Text('Error: ${provider.errorMessage}'));
+        if (provider.dashboardData == null) return const Center(child: Text('No data available'));
 
         final data = provider.dashboardData!;
+        final stats = data.stats;
 
         final content = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (!widget.isEmbedded) ...[
               const UserHeader(),
-              const SizedBox(height: 24),
-              const Text(
-                'Rider Dashboard Overview',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              const Text('Statistics Overview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
             ],
             GridView.count(
               crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              shrinkWrap: true, // Use shrinkWrap in GridView inside SingleChildScrollView
-              physics: const NeverScrollableScrollPhysics(), // Disable GridView's own scrolling
-              children: <Widget>[
-                _buildMetricCard(context, 'Active Deliveries', data.activeDeliveries.toString(), Icons.delivery_dining),
-                _buildMetricCard(context, 'Total Rating', '${data.averageRating.toStringAsFixed(1)} (${data.totalReviews} reviews)', Icons.star),
-                _buildMetricCard(context, 'Earnings Today', '\$${data.totalEarningsToday.toStringAsFixed(2)}', Icons.money),
-                _buildMetricCard(context, 'Earnings This Week', '\$${data.totalEarningsWeek.toStringAsFixed(2)}', Icons.money_outlined),
-                _buildMetricCard(context, 'Earnings This Month', '\$${data.totalEarningsMonth.toStringAsFixed(2)}', Icons.currency_exchange),
-                _buildMetricCard(context, 'Completed Today', data.completedDeliveriesToday.toString(), Icons.check_circle_outline),
-                _buildMetricCard(context, 'Completed This Week', data.completedDeliveriesWeek.toString(), Icons.playlist_add_check),
-                _buildMetricCard(context, 'Completed This Month', data.completedDeliveriesMonth.toString(), Icons.done_all),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 1.5,
+              children: [
+                _buildStatCard('Total Orders', stats.totalOrders.toString(), Icons.assignment, Colors.blue),
+                _buildStatCard('Pending', stats.pendingOrders.toString(), Icons.pending_actions, Colors.orange),
+                _buildStatCard('Shipped', stats.shippedOrders.toString(), Icons.local_shipping, Colors.purple),
+                _buildStatCard('Delivered', stats.deliveredOrders.toString(), Icons.check_circle, Colors.green),
               ],
             ),
+            const SizedBox(height: 24),
+            const Text('Recent Orders', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            if (data.recentOrders.isEmpty)
+              const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No recent orders')))
+            else
+              ...data.recentOrders.map((order) => _buildOrderTile(context, order)),
           ],
         );
 
@@ -372,66 +257,200 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
     );
   }
 
-  Widget _buildMetricCard(BuildContext context, String title, String value, IconData icon) {
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 36, color: Theme.of(context).primaryColor),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
+            Icon(icon, color: color),
+            const SizedBox(height: 4),
+            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildOrderTile(BuildContext context, Order order) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        title: Text('Order #${order.id}'),
+        subtitle: Text('Status: ${order.paymentStatus}\nTotal: \$${order.grandTotal.toStringAsFixed(2)}'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () {
+          // Navigate to order details if implemented
+        },
+      ),
+    );
+  }
 }
 
-class ActiveOrdersScreen extends StatelessWidget {
+class ActiveOrdersScreen extends StatefulWidget {
   const ActiveOrdersScreen({super.key});
 
   @override
+  State<ActiveOrdersScreen> createState() => _ActiveOrdersScreenState();
+}
+
+class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => Provider.of<RiderDashboardProvider>(context, listen: false).fetchActiveOrders());
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Active Orders Screen', style: TextStyle(fontSize: 24)),
+    return Consumer<RiderDashboardProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
+        if (provider.errorMessage != null) return Center(child: Text('Error: ${provider.errorMessage}'));
+        if (provider.activeOrders.isEmpty) return const Center(child: Text('No active orders'));
+
+        return RefreshIndicator(
+          onRefresh: () => provider.fetchActiveOrders(),
+          child: ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: provider.activeOrders.length,
+            itemBuilder: (context, index) {
+              final order = provider.activeOrders[index];
+              return Card(
+                elevation: 3,
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Order #${order.id}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                            child: const Text('PENDING', style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+                      _buildInfoRow(Icons.person, 'Customer: ${order.name}'),
+                      _buildInfoRow(Icons.phone, 'Phone: ${order.mobile}'),
+                      _buildInfoRow(Icons.location_on, 'Address: ${order.addressTitle}'),
+                      _buildInfoRow(Icons.payments, 'Amount: \$${order.grandTotal.toStringAsFixed(2)}'),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () => _updateStatus(context, order.id, 'shipped'),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                            child: const Text('Shipped'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => _updateStatus(context, order.id, 'delivered'),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                            child: const Text('Delivered'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => _updateStatus(context, order.id, 'canceled'),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                            child: const Text('Cancel'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
+        ],
+      ),
+    );
+  }
+
+  void _updateStatus(BuildContext context, String orderId, String status) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Update Status'),
+        content: Text('Are you sure you want to mark this order as $status?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('No')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Provider.of<RiderDashboardProvider>(context, listen: false).updateOrderStatus(orderId, status);
+            },
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class HistoryScreen extends StatelessWidget {
+class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Order History Screen', style: TextStyle(fontSize: 24)),
-    );
-  }
+  State<HistoryScreen> createState() => _HistoryScreenState();
 }
 
-class MoreScreen extends StatelessWidget {
-  const MoreScreen({super.key});
+class _HistoryScreenState extends State<HistoryScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => Provider.of<RiderDashboardProvider>(context, listen: false).fetchOrderHistory());
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('More Options (e.g., Ratings, Earnings, Support)', style: TextStyle(fontSize: 24)),
+    return Consumer<RiderDashboardProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
+        if (provider.errorMessage != null) return Center(child: Text('Error: ${provider.errorMessage}'));
+        if (provider.orderHistory.isEmpty) return const Center(child: Text('No order history found'));
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: provider.orderHistory.length,
+          itemBuilder: (context, index) {
+            final order = provider.orderHistory[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: order.paymentStatus == 'paid' ? Colors.green : Colors.grey,
+                  child: Icon(Icons.check, color: Colors.white),
+                ),
+                title: Text('Order #${order.id}'),
+                subtitle: Text('Date: ${DateFormat('yyyy-MM-dd').format(order.orderDate)}\nTotal: \$${order.grandTotal.toStringAsFixed(2)}'),
+                trailing: Text(order.paymentStatus.toUpperCase(), style: TextStyle(color: order.paymentStatus == 'paid' ? Colors.green : Colors.orange, fontWeight: FontWeight.bold, fontSize: 12)),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hubli/providers/notification_provider.dart';
+import 'package:provider/provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final TextEditingController? searchController;
@@ -25,6 +27,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final notificationProvider = Provider.of<NotificationProvider>(context);
+
     return PreferredSize(
       preferredSize: preferredSize,
       child: Container(
@@ -83,19 +87,41 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     padding: const EdgeInsets.only(right: 16.0), // 16.0 right padding
                     child: Row( // Group icons together
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.public, color: Colors.black),
-                          onPressed: () {
-                            // Handle globe press
-                          },
-                          iconSize: 28.0, // Consistent icon size
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.notifications, color: Colors.black),
-                          onPressed: () {
-                            // Handle notification press
-                          },
-                          iconSize: 28.0, // Consistent icon size
+                        Stack(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.notifications, color: Colors.black),
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/notifications');
+                              },
+                              iconSize: 28.0, // Consistent icon size
+                            ),
+                            if (notificationProvider.unreadCount > 0)
+                              Positioned(
+                                right: 8,
+                                top: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    '${notificationProvider.unreadCount}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ],
                     ),

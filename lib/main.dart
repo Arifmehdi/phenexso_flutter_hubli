@@ -47,11 +47,21 @@ import 'package:hubli/services/order_service.dart';
 import 'package:hubli/services/seller_product_service.dart';
 import 'package:hubli/providers/seller_product_provider.dart';
 
+import 'package:hubli/providers/notification_provider.dart';
+import 'package:hubli/screens/notification_screen.dart';
+
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => AuthProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, NotificationProvider>(
+          create: (context) => NotificationProvider(),
+          update: (context, auth, notificationProvider) {
+            notificationProvider!.updateToken(auth.token);
+            return notificationProvider;
+          },
+        ),
         ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
           create: (context) => ChatProvider(ChatService(''), Provider.of<AuthProvider>(context, listen: false)),
           update: (context, auth, chat) {
@@ -208,6 +218,8 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (context) => const CostCalculatorScreen());
           case '/order-tracking': // Add OrderTrackingScreen route
             return MaterialPageRoute(builder: (context) => const OrderTrackingScreen());
+          case '/notifications':
+            return MaterialPageRoute(builder: (context) => const NotificationScreen());
           default:
             return MaterialPageRoute(builder: (context) => Text('Error: Unknown route ${settings.name}'));
         }

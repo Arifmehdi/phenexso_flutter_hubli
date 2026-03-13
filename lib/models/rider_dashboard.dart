@@ -1,51 +1,102 @@
+import 'package:hubli/models/order.dart';
+import 'package:hubli/models/product.dart';
+
+class RiderStats {
+  final int totalOrders;
+  final int pendingOrders;
+  final int confirmedOrders;
+  final int shippedOrders;
+  final int deliveredOrders;
+  final int totalProducts;
+
+  RiderStats({
+    required this.totalOrders,
+    required this.pendingOrders,
+    required this.confirmedOrders,
+    required this.shippedOrders,
+    required this.deliveredOrders,
+    required this.totalProducts,
+  });
+
+  factory RiderStats.fromJson(Map<String, dynamic> json) {
+    return RiderStats(
+      totalOrders: json['total_orders'] ?? 0,
+      pendingOrders: json['pending_orders'] ?? 0,
+      confirmedOrders: json['confirmed_orders'] ?? 0,
+      shippedOrders: json['shipped_orders'] ?? 0,
+      deliveredOrders: json['delivered_orders'] ?? 0,
+      totalProducts: json['total_products'] ?? 0,
+    );
+  }
+}
+
+class RiderProfile {
+  final int id;
+  final String name;
+  final String email;
+  final String mobile;
+  final String? licenseNo;
+  final String? address;
+  final String? image;
+  final String status;
+
+  RiderProfile({
+    required this.id,
+    required this.name,
+    required this.email,
+    required this.mobile,
+    this.licenseNo,
+    this.address,
+    this.image,
+    required this.status,
+  });
+
+  factory RiderProfile.fromJson(Map<String, dynamic> json) {
+    return RiderProfile(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      mobile: json['mobile'] ?? '',
+      licenseNo: json['license_no'],
+      address: json['address'],
+      image: json['image'],
+      status: json['status'] ?? 'Pending',
+    );
+  }
+}
+
 class RiderDashboard {
-  final int activeDeliveries;
-  final int completedDeliveriesToday;
-  final int completedDeliveriesWeek;
-  final int completedDeliveriesMonth;
-  final double totalEarningsToday;
-  final double totalEarningsWeek;
-  final double totalEarningsMonth;
-  final double averageRating; // e.g., 4.5
-  final int totalReviews;
+  final RiderProfile rider;
+  final RiderStats stats;
+  final dynamic assignedVehicle; // You might want a proper Vehicle model later
+  final List<Order> recentOrders;
+  final List<Product> assignedProducts;
 
   RiderDashboard({
-    required this.activeDeliveries,
-    required this.completedDeliveriesToday,
-    required this.completedDeliveriesWeek,
-    required this.completedDeliveriesMonth,
-    required this.totalEarningsToday,
-    required this.totalEarningsWeek,
-    required this.totalEarningsMonth,
-    required this.averageRating,
-    required this.totalReviews,
+    required this.rider,
+    required this.stats,
+    this.assignedVehicle,
+    required this.recentOrders,
+    required this.assignedProducts,
   });
 
   factory RiderDashboard.fromJson(Map<String, dynamic> json) {
-    return RiderDashboard(
-      activeDeliveries: json['active_deliveries'] ?? 0,
-      completedDeliveriesToday: json['completed_deliveries_today'] ?? 0,
-      completedDeliveriesWeek: json['completed_deliveries_week'] ?? 0,
-      completedDeliveriesMonth: json['completed_deliveries_month'] ?? 0,
-      totalEarningsToday: (json['total_earnings_today'] ?? 0.0).toDouble(),
-      totalEarningsWeek: (json['total_earnings_week'] ?? 0.0).toDouble(),
-      totalEarningsMonth: (json['total_earnings_month'] ?? 0.0).toDouble(),
-      averageRating: (json['average_rating'] ?? 0.0).toDouble(),
-      totalReviews: json['total_reviews'] ?? 0,
-    );
-  }
+    var data = json['data'] ?? json;
+    
+    var recentOrdersList = (data['recent_orders'] as List? ?? [])
+        .map((o) => Order.fromJson(o))
+        .toList();
+        
+    var assignedProductsList = (data['assigned_products'] as List? ?? [])
+        .map((p) => Product.fromJson(p))
+        .toList();
 
-  Map<String, dynamic> toJson() {
-    return {
-      'active_deliveries': activeDeliveries,
-      'completed_deliveries_today': completedDeliveriesToday,
-      'completed_deliveries_week': completedDeliveriesWeek,
-      'completed_deliveries_month': completedDeliveriesMonth,
-      'total_earnings_today': totalEarningsToday,
-      'total_earnings_week': totalEarningsWeek,
-      'total_earnings_month': totalEarningsMonth,
-      'average_rating': averageRating,
-      'total_reviews': totalReviews,
-    };
+    return RiderDashboard(
+      rider: RiderProfile.fromJson(data['rider'] ?? {}),
+      stats: RiderStats.fromJson(data['stats'] ?? {}),
+      assignedVehicle: data['assigned_vehicle'],
+      recentOrders: recentOrdersList,
+      assignedProducts: assignedProductsList,
+    );
   }
 }

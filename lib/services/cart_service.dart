@@ -122,14 +122,14 @@ class CartService {
     debugPrint('CartService: Merging guest cart ($_guestSessionId) with user account');
 
     try {
-      final response = await http.post(
+      final response = await http.delete(
         Uri.parse('${ApiConstants.cartEndpoint}/merge'),
         headers: _getHeaders(),
         body: json.encode({'session_id': _guestSessionId}),
       );
 
       debugPrint('CartService: Merge response status: ${response.statusCode}');
-      if (response.statusCode != 200) {
+      if (response.statusCode != 200 && response.statusCode != 204) {
         debugPrint('CartService: Merge failed but ignoring to allow user to continue: ${response.body}');
       }
     } catch (e) {
