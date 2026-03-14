@@ -43,6 +43,7 @@ class Order {
   final String addressTitle;
   final String paymentMethod;
   final String paymentStatus;
+  final String orderStatus;
   final String? orderNote;
 
   Order({
@@ -58,6 +59,7 @@ class Order {
     required this.addressTitle,
     required this.paymentMethod,
     required this.paymentStatus,
+    required this.orderStatus,
     this.orderNote,
   });
 
@@ -88,6 +90,7 @@ class Order {
       addressTitle: json['address_title'] ?? json['address'] ?? '',
       paymentMethod: json['payment_method'] ?? 'N/A',
       paymentStatus: json['payment_status'] ?? 'pending',
+      orderStatus: json['order_status'] ?? 'pending',
       orderNote: json['order_note'],
     );
   }

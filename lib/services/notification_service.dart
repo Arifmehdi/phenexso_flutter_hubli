@@ -9,6 +9,7 @@ class NotificationService {
   NotificationService(this.token);
 
   Future<List<NotificationModel>> fetchNotifications() async {
+    print('Fetching notifications with token: $token');
     final response = await http.get(
       Uri.parse(ApiConstants.notificationsEndpoint),
       headers: {
@@ -19,8 +20,20 @@ class NotificationService {
     );
 
     if (response.statusCode == 200) {
+      print('Notification Response: ${response.body}');
       final responseData = json.decode(response.body);
-      final List<dynamic> notificationsData = responseData['notifications']['data'] ?? responseData['notifications'];
+      
+      var notificationsDataRaw = responseData['notifications'];
+      List<dynamic> notificationsData;
+
+      if (notificationsDataRaw is Map && notificationsDataRaw.containsKey('data')) {
+        notificationsData = notificationsDataRaw['data'];
+      } else if (notificationsDataRaw is List) {
+        notificationsData = notificationsDataRaw;
+      } else {
+        notificationsData = [];
+      }
+      
       return notificationsData.map((data) => NotificationModel.fromJson(data)).toList();
     } else {
       print('Notification API Error: ${response.statusCode} - ${response.body}');

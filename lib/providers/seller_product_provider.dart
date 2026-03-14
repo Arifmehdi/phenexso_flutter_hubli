@@ -114,13 +114,14 @@ class SellerProductProvider with ChangeNotifier {
 
   Future<void> bulkAddProducts({
     required List<Map<String, dynamic>> products,
+    required List<File?> images,
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _service.bulkAddProducts(products: products);
+      await _service.bulkAddProducts(products: products, images: images);
       await fetchSellerProducts();
     } catch (e) {
       _errorMessage = e.toString();

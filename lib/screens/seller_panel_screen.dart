@@ -529,7 +529,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     Future.microtask(() {
       Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
       // Fetch a larger list of products to populate the name dropdown
-      Provider.of<ProductProvider>(context, listen: false).fetchProducts(pageSize: 100);
+      Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      ).fetchProducts(pageSize: 100);
     });
   }
 
@@ -539,23 +542,26 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     }
     _forms.clear();
 
-    final allProducts = Provider.of<ProductProvider>(context, listen: false).products;
+    final allProducts = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    ).products;
     final allProductNames = allProducts.map((p) => p.name).toSet().toList();
 
     if (widget.product != null) {
       final form = ProductFormModel();
       form.nameEnController.text = widget.product!.name;
       form.priceController.text = widget.product!.price.toString();
-      form.purchasePriceController.text =
-          widget.product!.purchasePrice.toString();
+      form.purchasePriceController.text = widget.product!.purchasePrice
+          .toString();
       form.stockController.text = widget.product!.stock.toString();
       form.descEnController.text = widget.product!.description;
       form.selectedCategoryId =
           (widget.product!.categoryId != null &&
-                  widget.product!.categoryId!.isNotEmpty)
-              ? widget.product!.categoryId
-              : null;
-      
+              widget.product!.categoryId!.isNotEmpty)
+          ? widget.product!.categoryId
+          : null;
+
       // Determine if name is in dropdown
       if (allProductNames.contains(widget.product!.name)) {
         form.selectedProductName = widget.product!.name;
@@ -646,7 +652,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         if (widget.product != null) {
           // Single Edit
           final form = _forms[0];
-          final priceVal = double.tryParse(form.purchasePriceController.text) ?? 0.0;
+          final priceVal =
+              double.tryParse(form.purchasePriceController.text) ?? 0.0;
           await provider.updateProduct(
             productId: widget.product!.id,
             nameEn: form.nameEnController.text,
@@ -664,7 +671,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
           if (_forms.length == 1) {
             // Single Add
             final form = _forms[0];
-            final priceVal = double.tryParse(form.purchasePriceController.text) ?? 0.0;
+            final priceVal =
+                double.tryParse(form.purchasePriceController.text) ?? 0.0;
             await provider.addProduct(
               nameEn: form.nameEnController.text,
               slug: form.slugController.text,
@@ -678,25 +686,28 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
             );
           } else {
             // Bulk Add
-            List<Map<String, dynamic>> productsData = _forms
-                .map(
-                  (form) {
-                    final priceVal = double.tryParse(form.purchasePriceController.text) ?? 0.0;
-                    return {
-                      'name_en': form.nameEnController.text,
-                      'slug': form.slugController.text,
-                      'price': priceVal,
-                      'purchase_price': priceVal,
-                      'stock': int.parse(form.stockController.text),
-                      'category_id': form.selectedCategoryId,
-                      'description_en': form.descEnController.text,
-                      'seller_id': userId,
-                    };
-                  },
-                )
-                .toList();
+            List<Map<String, dynamic>> productsData = [];
+            List<File?> images = [];
+            for (var form in _forms) {
+              final priceVal =
+                  double.tryParse(form.purchasePriceController.text) ?? 0.0;
+              productsData.add({
+                'name_en': form.nameEnController.text,
+                'slug': form.slugController.text,
+                'price': priceVal,
+                'purchase_price': priceVal,
+                'stock': int.parse(form.stockController.text),
+                'category_id': form.selectedCategoryId,
+                'description_en': form.descEnController.text,
+                'seller_id': userId,
+              });
+              images.add(form.image);
+            }
 
-            await provider.bulkAddProducts(products: productsData);
+            await provider.bulkAddProducts(
+              products: productsData,
+              images: images,
+            );
           }
         }
 
@@ -795,23 +806,38 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                           Consumer<ProductProvider>(
                             builder: (context, productProvider, _) {
                               final allProducts = productProvider.products;
-                              final allProductNames = allProducts.map((p) => p.name).toSet().toList();
-                              
+                              final allProductNames = allProducts
+                                  .map((p) => p.name)
+                                  .toSet()
+                                  .toList();
+
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   DropdownButtonFormField<String>(
                                     isExpanded: true,
-                                    value: (allProductNames.contains(form.selectedProductName) || form.selectedProductName == 'Other') 
-                                        ? form.selectedProductName 
+                                    value:
+                                        (allProductNames.contains(
+                                              form.selectedProductName,
+                                            ) ||
+                                            form.selectedProductName == 'Other')
+                                        ? form.selectedProductName
                                         : 'Other',
                                     decoration: const InputDecoration(
                                       labelText: 'Select Product',
                                       border: OutlineInputBorder(),
                                     ),
                                     items: [
-                                      const DropdownMenuItem(value: 'Other', child: Text('Other (Type manually)')),
-                                      ...allProductNames.map((name) => DropdownMenuItem(value: name, child: Text(name))),
+                                      const DropdownMenuItem(
+                                        value: 'Other',
+                                        child: Text('Other (Type manually)'),
+                                      ),
+                                      ...allProductNames.map(
+                                        (name) => DropdownMenuItem(
+                                          value: name,
+                                          child: Text(name),
+                                        ),
+                                      ),
                                     ],
                                     onChanged: (v) {
                                       if (v == null) return;
@@ -833,12 +859,13 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                         labelText: 'Type Product Name',
                                         border: OutlineInputBorder(),
                                       ),
-                                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                                      validator: (v) =>
+                                          v!.isEmpty ? 'Required' : null,
                                     ),
                                   ],
                                 ],
                               );
-                            }
+                            },
                           ),
                           const SizedBox(height: 10),
                           TextFormField(
@@ -907,9 +934,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                             maxLines: 3,
                           ),
                           const SizedBox(height: 10),
-                          if (widget.product != null || _forms.length == 1) ...[
+                          if (widget.product == null) ...[
                             const Text(
-                              'Product Image (Optional for Bulk)',
+                              'Product Image (Optional)',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 5),
@@ -923,11 +950,36 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: form.image == null
-                                    ? (widget.product != null &&
-                                              widget
-                                                  .product!
-                                                  .imageUrls
-                                                  .isNotEmpty &&
+                                    ? const Center(
+                                        child: Icon(
+                                          Icons.add_a_photo,
+                                          size: 40,
+                                          color: Colors.grey,
+                                        ),
+                                      )
+                                    : Image.file(
+                                        form.image!,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                            ),
+                          ] else ...[
+                            const Text(
+                              'Product Image',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 5),
+                            GestureDetector(
+                              onTap: () => _pickImage(form),
+                              child: Container(
+                                height: 120,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: form.image == null
+                                    ? (widget.product!.imageUrls.isNotEmpty &&
                                               !widget.product!.imageUrls[0]
                                                   .contains('placeholder')
                                           ? Image.network(
@@ -947,15 +999,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                       ),
                               ),
                             ),
-                          ] else
-                            const Text(
-                              'Note: Bulk upload doesn\'t support images yet.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.orange,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
+                          ],
                         ],
                       ),
                     ),

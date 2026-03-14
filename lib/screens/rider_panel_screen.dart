@@ -12,6 +12,12 @@ import 'package:hubli/providers/rider_dashboard_provider.dart';
 import 'package:hubli/models/order.dart';
 import 'package:hubli/widgets/user_header.dart';
 import 'package:intl/intl.dart';
+import 'package:hubli/screens/rider_order_detail_screen.dart';
+import 'package:hubli/providers/notification_provider.dart';
+import 'package:hubli/screens/notification_screen.dart';
+import 'package:badges/badges.dart' as badges;
+
+import 'package:hubli/widgets/custom_app_bar.dart';
 
 class RiderPanelScreen extends StatefulWidget {
   const RiderPanelScreen({super.key});
@@ -50,14 +56,10 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
     if (_selectedIndex == 3) title = 'Messages';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {},
-          ),
-        ],
+      appBar: CustomAppBar(
+        title: title,
+        showDrawerButton: true,
+        showSearchBar: false,
       ),
       drawer: RiderDrawer(
         selectedIndex: _selectedIndex,
@@ -283,7 +285,11 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
         subtitle: Text('Status: ${order.paymentStatus}\nTotal: \$${order.grandTotal.toStringAsFixed(2)}'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          // Navigate to order details if implemented
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => RiderOrderDetailScreen(order: order),
+            ),
+          );
         },
       ),
     );
@@ -319,7 +325,15 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
             itemCount: provider.activeOrders.length,
             itemBuilder: (context, index) {
               final order = provider.activeOrders[index];
-              return Card(
+            return GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => RiderOrderDetailScreen(order: order),
+                  ),
+                );
+              },
+              child: Card(
                 elevation: 3,
                 margin: const EdgeInsets.only(bottom: 16),
                 child: Padding(
@@ -333,8 +347,18 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
                           Text('Order #${order.id}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-                            child: const Text('PENDING', style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
+                            decoration: BoxDecoration(
+                              color: (order.orderStatus == 'shipped' ? Colors.blue : Colors.orange).withOpacity(0.1), 
+                              borderRadius: BorderRadius.circular(4)
+                            ),
+                            child: Text(
+                              order.orderStatus.toUpperCase(), 
+                              style: TextStyle(
+                                color: order.orderStatus == 'shipped' ? Colors.blue : Colors.orange, 
+                                fontSize: 12, 
+                                fontWeight: FontWeight.bold
+                              )
+                            ),
                           ),
                         ],
                       ),
@@ -348,18 +372,36 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           ElevatedButton(
-                            onPressed: () => _updateStatus(context, order.id, 'shipped'),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                            onPressed: order.orderStatus != 'shipped' 
+                                ? () => _updateStatus(context, order.id, 'shipped') 
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue, 
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.grey[300],
+                            ),
                             child: const Text('Shipped'),
                           ),
                           ElevatedButton(
-                            onPressed: () => _updateStatus(context, order.id, 'delivered'),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                            onPressed: order.orderStatus == 'shipped' 
+                                ? () => _updateStatus(context, order.id, 'delivered') 
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green, 
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.grey[300],
+                            ),
                             child: const Text('Delivered'),
                           ),
                           ElevatedButton(
-                            onPressed: () => _updateStatus(context, order.id, 'canceled'),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                            onPressed: order.orderStatus == 'shipped' 
+                                ? () => _updateStatus(context, order.id, 'canceled') 
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red, 
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.grey[300],
+                            ),
                             child: const Text('Cancel'),
                           ),
                         ],
@@ -367,7 +409,8 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
                     ],
                   ),
                 ),
-              );
+              ),
+            );
             },
           ),
         );
@@ -441,11 +484,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: order.paymentStatus == 'paid' ? Colors.green : Colors.grey,
-                  child: Icon(Icons.check, color: Colors.white),
+                  child: const Icon(Icons.check, color: Colors.white),
                 ),
                 title: Text('Order #${order.id}'),
                 subtitle: Text('Date: ${DateFormat('yyyy-MM-dd').format(order.orderDate)}\nTotal: \$${order.grandTotal.toStringAsFixed(2)}'),
                 trailing: Text(order.paymentStatus.toUpperCase(), style: TextStyle(color: order.paymentStatus == 'paid' ? Colors.green : Colors.orange, fontWeight: FontWeight.bold, fontSize: 12)),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => RiderOrderDetailScreen(order: order),
+                    ),
+                  );
+                },
               ),
             );
           },

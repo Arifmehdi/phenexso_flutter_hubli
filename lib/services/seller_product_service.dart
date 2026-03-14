@@ -140,12 +140,40 @@ class SellerProductService {
 
   Future<void> bulkAddProducts({
     required List<Map<String, dynamic>> products,
+    required List<File?> images,
   }) async {
-    final response = await http.post(
+    var request = http.MultipartRequest(
+      'POST',
       Uri.parse('${ApiConstants.baseUrl}/api/products/bulk-store'),
-      headers: {..._getHeaders(), 'Content-Type': 'application/json'},
-      body: json.encode({'products': products}),
     );
+
+    request.headers.addAll(_getHeaders());
+
+    for (int i = 0; i < products.length; i++) {
+      var product = products[i];
+      request.fields['products[$i][name_en]'] = product['name_en'];
+      request.fields['products[$i][slug]'] = product['slug'];
+      request.fields['products[$i][price]'] = product['price'].toString();
+      request.fields['products[$i][purchase_price]'] = product['purchase_price']
+          .toString();
+      request.fields['products[$i][stock]'] = product['stock'].toString();
+      request.fields['products[$i][category_id]'] = product['category_id'];
+      request.fields['products[$i][description_en]'] =
+          product['description_en'];
+      request.fields['products[$i][seller_id]'] = product['seller_id'];
+
+      if (images[i] != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'products[$i][featured_image]',
+            images[i]!.path,
+          ),
+        );
+      }
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
 
     debugPrint('Bulk Add Products Status: ${response.statusCode}');
     debugPrint('Bulk Add Products Body: ${response.body}');
