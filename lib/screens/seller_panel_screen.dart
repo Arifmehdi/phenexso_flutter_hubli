@@ -32,8 +32,9 @@ class _SellerPanelScreenState extends State<SellerPanelScreen> {
   void _changeTab(int index) {
     setState(() {
       _selectedIndex = index;
-      if (index != 1)
+      if (index != 1) {
         _editingProduct = null; // Clear edit state if not on Add/Edit tab
+      }
     });
   }
 
@@ -317,12 +318,15 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
 
     return Consumer<SellerDashboardProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading)
+        if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
-        if (provider.errorMessage != null)
+        }
+        if (provider.errorMessage != null) {
           return Center(child: Text('Error: ${provider.errorMessage}'));
-        if (provider.dashboardData == null)
+        }
+        if (provider.dashboardData == null) {
           return const Center(child: Text('No data'));
+        }
 
         final data = provider.dashboardData!;
         final content = Column(
@@ -506,6 +510,7 @@ class ProductFormModel {
   final descEnController = TextEditingController();
   String? selectedCategoryId;
   String? selectedProductName; // New field for dropdown
+  String? selectedUnit; // New field for unit
   File? image;
 
   void dispose() {
@@ -521,11 +526,13 @@ class ProductFormModel {
 class _AddEditProductScreenState extends State<AddEditProductScreen> {
   final _formKey = GlobalKey<FormState>();
   final List<ProductFormModel> _forms = [];
+  List<String> _units = ['kg', 'liter', 'piece', 'dozen']; // Default units
 
   @override
   void initState() {
     super.initState();
     _initForms();
+    _fetchUnits();
     Future.microtask(() {
       Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
       // Fetch a larger list of products to populate the name dropdown
@@ -569,6 +576,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         form.selectedProductName = 'Other';
       }
 
+      form.selectedUnit = widget.product!.unit;
+
       _updateSlug(form);
       form.nameEnController.addListener(() => _updateSlug(form));
       _forms.add(form);
@@ -577,10 +586,32 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     }
   }
 
+  Future<void> _fetchUnits() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/api/units'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ${authProvider.token}',
+        },
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _units = List<String>.from(data['data'].map((u) => u['name']));
+        });
+      }
+    } catch (e) {
+      // Keep default units if fetch fails
+    }
+  }
+
   void _addNewForm() {
     setState(() {
       final form = ProductFormModel();
       form.selectedProductName = 'Other'; // Default to Other for new products
+      form.selectedUnit = null;
       form.nameEnController.addListener(() => _updateSlug(form));
       _forms.add(form);
     });
@@ -664,6 +695,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
             categoryId: form.selectedCategoryId!,
             descriptionEn: form.descEnController.text,
             userId: userId,
+            unit: form.selectedUnit,
             image: form.image,
           );
         } else {
@@ -682,6 +714,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
               categoryId: form.selectedCategoryId!,
               descriptionEn: form.descEnController.text,
               userId: userId,
+              unit: form.selectedUnit,
               image: form.image,
             );
           } else {
@@ -700,6 +733,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                 'category_id': form.selectedCategoryId,
                 'description_en': form.descEnController.text,
                 'seller_id': userId,
+                'unit': form.selectedUnit,
               });
               images.add(form.image);
             }
@@ -816,7 +850,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                 children: [
                                   DropdownButtonFormField<String>(
                                     isExpanded: true,
-                                    value:
+                                    initialValue:
                                         (allProductNames.contains(
                                               form.selectedProductName,
                                             ) ||
@@ -908,7 +942,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                           ),
                           const SizedBox(height: 10),
                           DropdownButtonFormField<String>(
-                            value: form.selectedCategoryId,
+                            initialValue: form.selectedCategoryId,
                             decoration: const InputDecoration(
                               labelText: 'Category',
                               border: OutlineInputBorder(),
@@ -923,6 +957,33 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                 .toList(),
                             onChanged: (v) =>
                                 setState(() => form.selectedCategoryId = v),
+                          ),
+                          const SizedBox(height: 10),
+                          Builder(
+                            builder: (context) {
+                              List<String> unitItems = _units.toList();
+                              if (form.selectedUnit != null &&
+                                  !unitItems.contains(form.selectedUnit)) {
+                                unitItems.add(form.selectedUnit!);
+                              }
+                              return DropdownButtonFormField<String>(
+                                initialValue: form.selectedUnit,
+                                decoration: const InputDecoration(
+                                  labelText: 'Unit',
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: unitItems
+                                    .map(
+                                      (unit) => DropdownMenuItem(
+                                        value: unit,
+                                        child: Text(unit),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (v) =>
+                                    setState(() => form.selectedUnit = v),
+                              );
+                            },
                           ),
                           const SizedBox(height: 10),
                           TextFormField(
@@ -1055,12 +1116,15 @@ class _SellerProductListScreenState extends State<SellerProductListScreen> {
   Widget build(BuildContext context) {
     return Consumer<SellerProductProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading)
+        if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
-        if (provider.errorMessage != null)
+        }
+        if (provider.errorMessage != null) {
           return Center(child: Text('Error: ${provider.errorMessage}'));
-        if (provider.products.isEmpty)
+        }
+        if (provider.products.isEmpty) {
           return const Center(child: Text('No products found. Add one!'));
+        }
 
         return ListView.builder(
           itemCount: provider.products.length,
@@ -1200,29 +1264,27 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                                   style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 8),
-                                ...order.items
-                                    .map(
-                                      (item) => Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 4,
+                                ...order.items.map(
+                                  (item) => Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '${item.productName} x ${item.quantity}',
+                                          ),
                                         ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                '${item.productName} x ${item.quantity}',
-                                              ),
-                                            ),
-                                            Text(
-                                              '৳${item.totalCost.toStringAsFixed(2)}',
-                                            ),
-                                          ],
+                                        Text(
+                                          '৳${item.totalCost.toStringAsFixed(2)}',
                                         ),
-                                      ),
-                                    )
-                                    .toList(),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                                 const Divider(),
                                 Row(
                                   mainAxisAlignment:

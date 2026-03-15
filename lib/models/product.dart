@@ -9,6 +9,7 @@ class Product {
   final String? categoryId; // Added for editing
   final double rating;
   final String description;
+  final String? unit; // Added unit field
 
   Product({
     required this.id,
@@ -21,6 +22,7 @@ class Product {
     this.categoryId,
     required this.rating,
     required this.description,
+    this.unit, // Added to constructor
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -53,6 +55,7 @@ class Product {
           : (json['average_rating'] as num?)?.toDouble() ?? 0.0,
       description:
           json['description_en'] as String? ?? 'No description available.',
+      unit: json['unit'] as String?, // Added unit field
     );
   }
 

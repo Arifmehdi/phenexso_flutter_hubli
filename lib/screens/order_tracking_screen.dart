@@ -28,7 +28,6 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   // Removed _onSearch method as search bar is removed
 
-
   void _trackOrder() {
     String orderId = _orderIdController.text.trim();
     if (orderId.isEmpty) {
@@ -42,62 +41,77 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     // In a real app, this would involve an API call
     setState(() {
       if (orderId == "12345") {
-        _trackingStatus = "Order #$orderId: Shipped and expected to arrive by Feb 15, 2026.";
+        _trackingStatus =
+            "Order #$orderId: Shipped and expected to arrive by Feb 15, 2026.";
       } else if (orderId == "67890") {
         _trackingStatus = "Order #$orderId: Processing and awaiting shipment.";
       } else {
-        _trackingStatus = "Order #$orderId: Status not found. Please check the ID.";
+        _trackingStatus =
+            "Order #$orderId: Status not found. Please check the ID.";
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    int _selectedIndex = 0; // Default to Home for bottom nav consistency
+    int selectedIndex = 0; // Default to Home for bottom nav consistency
 
-      void _onItemTapped(int index) {
-        if (index == _selectedIndex) {
-          return;
-        }
-        setState(() {
-          _selectedIndex = index;
-        });
-    
-        if (!mounted) return; // Add mounted check here
-    
-        switch (index) {
-          case 0:
-            // Navigate to home only if not already on home
-            if (ModalRoute.of(context)?.settings.name != '/') {
-              Navigator.of(context).pushReplacementNamed('/');
-            }
-            break;
-          case 1:
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
-            );
-            break;
-          case 2:
-            Navigator.of(context).pushReplacementNamed('/cart'); // Cart
-            break;
-          case 3:
-            Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
-            break;
-          case 4:
-            final authProvider = Provider.of<AuthProvider>(context, listen: false);
-            if (!mounted) return; // Re-check mounted after potentially long Provider operation
-            if (authProvider.isAuthenticated) {
-              if (authProvider.user!.role == UserRole.admin) {
-                Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
-              } else {
-                Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
-              }
-            } else {
-              Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
-            }
-            break;
-        }
+    void onItemTapped(int index) {
+      if (index == selectedIndex) {
+        return;
       }
+      setState(() {
+        selectedIndex = index;
+      });
+
+      if (!mounted) return; // Add mounted check here
+
+      switch (index) {
+        case 0:
+          // Navigate to home only if not already on home
+          if (ModalRoute.of(context)?.settings.name != '/') {
+            Navigator.of(context).pushReplacementNamed('/');
+          }
+          break;
+        case 1:
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('RFQ Screen (Not Implemented)')),
+          );
+          break;
+        case 2:
+          Navigator.of(context).pushReplacementNamed('/cart'); // Cart
+          break;
+        case 3:
+          Navigator.of(
+            context,
+          ).pushReplacementNamed('/shipping-address'); // Shipping
+          break;
+        case 4:
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+          if (!mounted)
+            return; // Re-check mounted after potentially long Provider operation
+          if (authProvider.isAuthenticated) {
+            if (authProvider.user!.role == UserRole.admin) {
+              Navigator.of(
+                context,
+              ).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+            } else {
+              Navigator.of(context).pushReplacementNamed(
+                '/account',
+              ); // Navigate to Account for other roles
+            }
+          } else {
+            Navigator.of(
+              context,
+            ).pushReplacementNamed('/login'); // Navigate to Login
+          }
+          break;
+      }
+    }
+
     return Scaffold(
       appBar: CustomAppBar(
         title: 'Order Tracking',
@@ -122,7 +136,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   onPressed: () {
                     _orderIdController.clear();
                     setState(() {
-                      _trackingStatus = "Enter an Order ID to track its status.";
+                      _trackingStatus =
+                          "Enter an Order ID to track its status.";
                     });
                   },
                 ),
@@ -156,7 +171,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   children: [
                     const Text(
                       'Tracking Status:',
-                      style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8.0),
                     Text(
@@ -173,10 +191,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         items: <BottomNavigationBarItem>[
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
+          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           const BottomNavigationBarItem(
             icon: Icon(Icons.assignment), // RFQ
             label: 'RFQ',
@@ -224,10 +239,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             label: 'Account',
           ),
         ],
-        currentIndex: _selectedIndex, // Will always be 0 here as per logic above
+        currentIndex: selectedIndex, // Will always be 0 here as per logic above
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+        onTap: onItemTapped,
         type: BottomNavigationBarType.fixed, // Ensure all items are visible
       ),
     );

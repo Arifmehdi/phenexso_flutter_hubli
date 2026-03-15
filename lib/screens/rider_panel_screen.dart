@@ -4,18 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/utils/api_constants.dart';
 import 'package:hubli/screens/rider_chat_users_screen.dart';
-import 'dart:convert';
 import 'package:hubli/screens/profile_edit_screen.dart';
 import 'package:hubli/screens/password_change_screen.dart';
-import 'package:hubli/screens/contact_support_screen.dart';
 import 'package:hubli/providers/rider_dashboard_provider.dart';
 import 'package:hubli/models/order.dart';
 import 'package:hubli/widgets/user_header.dart';
 import 'package:intl/intl.dart';
 import 'package:hubli/screens/rider_order_detail_screen.dart';
-import 'package:hubli/providers/notification_provider.dart';
-import 'package:hubli/screens/notification_screen.dart';
-import 'package:badges/badges.dart' as badges;
 
 import 'package:hubli/widgets/custom_app_bar.dart';
 
@@ -69,7 +64,10 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.delivery_dining), label: 'Active'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.delivery_dining),
+            label: 'Active',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
@@ -108,14 +106,20 @@ class RiderDrawer extends StatelessWidget {
       if (response.statusCode == 200) {
         await authProvider.logout();
         if (!context.mounted) return;
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/login', (route) => false);
       } else {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logout failed')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Logout failed')));
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
     }
   }
 
@@ -135,16 +139,26 @@ class RiderDrawer extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage: authProvider.user?.image != null 
-                    ? NetworkImage(authProvider.user!.image!) 
-                    : null,
-                  child: authProvider.user?.image == null 
-                    ? Text(authProvider.user?.name[0].toUpperCase() ?? 'R') 
-                    : null,
+                  backgroundImage: authProvider.user?.image != null
+                      ? NetworkImage(authProvider.user!.image!)
+                      : null,
+                  child: authProvider.user?.image == null
+                      ? Text(authProvider.user?.name[0].toUpperCase() ?? 'R')
+                      : null,
                 ),
                 const SizedBox(height: 10),
-                Text(authProvider.user?.name ?? 'Rider', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(authProvider.user?.email ?? '', style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                Text(
+                  authProvider.user?.name ?? 'Rider',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  authProvider.user?.email ?? '',
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                ),
               ],
             ),
           ),
@@ -152,35 +166,61 @@ class RiderDrawer extends StatelessWidget {
             leading: const Icon(Icons.dashboard),
             title: const Text('Dashboard'),
             selected: selectedIndex == 4,
-            onTap: () { Navigator.pop(context); onTabChange(4); },
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(4);
+            },
           ),
           ListTile(
             leading: const Icon(Icons.delivery_dining),
             title: const Text('Active Orders'),
             selected: selectedIndex == 1,
-            onTap: () { Navigator.pop(context); onTabChange(1); },
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(1);
+            },
           ),
           ListTile(
             leading: const Icon(Icons.history),
             title: const Text('Order History'),
             selected: selectedIndex == 2,
-            onTap: () { Navigator.pop(context); onTabChange(2); },
+            onTap: () {
+              Navigator.pop(context);
+              onTabChange(2);
+            },
           ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Edit Profile'),
-            onTap: () { Navigator.pop(context); Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfileEditScreen())); },
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProfileEditScreen(),
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.lock),
             title: const Text('Change Password'),
-            onTap: () { Navigator.pop(context); Navigator.of(context).push(MaterialPageRoute(builder: (context) => const PasswordChangeScreen())); },
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const PasswordChangeScreen(),
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Logout', style: TextStyle(color: Colors.red)),
-            onTap: () async { Navigator.pop(context); await _logout(context); },
+            onTap: () async {
+              Navigator.pop(context);
+              await _logout(context);
+            },
           ),
         ],
       ),
@@ -200,16 +240,24 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => Provider.of<RiderDashboardProvider>(context, listen: false).fetchDashboardData());
+    Future.microtask(
+      () => Provider.of<RiderDashboardProvider>(
+        context,
+        listen: false,
+      ).fetchDashboardData(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<RiderDashboardProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
-        if (provider.errorMessage != null) return Center(child: Text('Error: ${provider.errorMessage}'));
-        if (provider.dashboardData == null) return const Center(child: Text('No data available'));
+        if (provider.isLoading)
+          return const Center(child: CircularProgressIndicator());
+        if (provider.errorMessage != null)
+          return Center(child: Text('Error: ${provider.errorMessage}'));
+        if (provider.dashboardData == null)
+          return const Center(child: Text('No data available'));
 
         final data = provider.dashboardData!;
         final stats = data.stats;
@@ -220,7 +268,10 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
             if (!widget.isEmbedded) ...[
               const UserHeader(),
               const SizedBox(height: 20),
-              const Text('Statistics Overview', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'Statistics Overview',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
             ],
             GridView.count(
@@ -231,19 +282,49 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
               physics: const NeverScrollableScrollPhysics(),
               childAspectRatio: 1.5,
               children: [
-                _buildStatCard('Total Orders', stats.totalOrders.toString(), Icons.assignment, Colors.blue),
-                _buildStatCard('Pending', stats.pendingOrders.toString(), Icons.pending_actions, Colors.orange),
-                _buildStatCard('Shipped', stats.shippedOrders.toString(), Icons.local_shipping, Colors.purple),
-                _buildStatCard('Delivered', stats.deliveredOrders.toString(), Icons.check_circle, Colors.green),
+                _buildStatCard(
+                  'Total Orders',
+                  stats.totalOrders.toString(),
+                  Icons.assignment,
+                  Colors.blue,
+                ),
+                _buildStatCard(
+                  'Pending',
+                  stats.pendingOrders.toString(),
+                  Icons.pending_actions,
+                  Colors.orange,
+                ),
+                _buildStatCard(
+                  'Shipped',
+                  stats.shippedOrders.toString(),
+                  Icons.local_shipping,
+                  Colors.purple,
+                ),
+                _buildStatCard(
+                  'Delivered',
+                  stats.deliveredOrders.toString(),
+                  Icons.check_circle,
+                  Colors.green,
+                ),
               ],
             ),
             const SizedBox(height: 24),
-            const Text('Recent Orders', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Recent Orders',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             if (data.recentOrders.isEmpty)
-              const Center(child: Padding(padding: EdgeInsets.all(20), child: Text('No recent orders')))
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('No recent orders'),
+                ),
+              )
             else
-              ...data.recentOrders.map((order) => _buildOrderTile(context, order)),
+              ...data.recentOrders.map(
+                (order) => _buildOrderTile(context, order),
+              ),
           ],
         );
 
@@ -259,7 +340,12 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -269,8 +355,14 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
           children: [
             Icon(icon, color: color),
             const SizedBox(height: 4),
-            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
           ],
         ),
       ),
@@ -282,7 +374,9 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         title: Text('Order #${order.id}'),
-        subtitle: Text('Status: ${order.paymentStatus}\nTotal: \$${order.grandTotal.toStringAsFixed(2)}'),
+        subtitle: Text(
+          'Status: ${order.paymentStatus}\nTotal: ৳${order.grandTotal.toStringAsFixed(2)}',
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
           Navigator.of(context).push(
@@ -307,16 +401,24 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => Provider.of<RiderDashboardProvider>(context, listen: false).fetchActiveOrders());
+    Future.microtask(
+      () => Provider.of<RiderDashboardProvider>(
+        context,
+        listen: false,
+      ).fetchActiveOrders(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<RiderDashboardProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
-        if (provider.errorMessage != null) return Center(child: Text('Error: ${provider.errorMessage}'));
-        if (provider.activeOrders.isEmpty) return const Center(child: Text('No active orders'));
+        if (provider.isLoading)
+          return const Center(child: CircularProgressIndicator());
+        if (provider.errorMessage != null)
+          return Center(child: Text('Error: ${provider.errorMessage}'));
+        if (provider.activeOrders.isEmpty)
+          return const Center(child: Text('No active orders'));
 
         return RefreshIndicator(
           onRefresh: () => provider.fetchActiveOrders(),
@@ -325,92 +427,126 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
             itemCount: provider.activeOrders.length,
             itemBuilder: (context, index) {
               final order = provider.activeOrders[index];
-            return GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => RiderOrderDetailScreen(order: order),
-                  ),
-                );
-              },
-              child: Card(
-                elevation: 3,
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('Order #${order.id}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: (order.orderStatus == 'shipped' ? Colors.blue : Colors.orange).withOpacity(0.1), 
-                              borderRadius: BorderRadius.circular(4)
+              return GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          RiderOrderDetailScreen(order: order),
+                    ),
+                  );
+                },
+                child: Card(
+                  elevation: 3,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Order #${order.id}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
-                            child: Text(
-                              order.orderStatus.toUpperCase(), 
-                              style: TextStyle(
-                                color: order.orderStatus == 'shipped' ? Colors.blue : Colors.orange, 
-                                fontSize: 12, 
-                                fontWeight: FontWeight.bold
-                              )
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    (order.orderStatus == 'shipped'
+                                            ? Colors.blue
+                                            : Colors.orange)
+                                        .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                order.orderStatus.toUpperCase(),
+                                style: TextStyle(
+                                  color: order.orderStatus == 'shipped'
+                                      ? Colors.blue
+                                      : Colors.orange,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const Divider(height: 24),
-                      _buildInfoRow(Icons.person, 'Customer: ${order.name}'),
-                      _buildInfoRow(Icons.phone, 'Phone: ${order.mobile}'),
-                      _buildInfoRow(Icons.location_on, 'Address: ${order.addressTitle}'),
-                      _buildInfoRow(Icons.payments, 'Amount: \$${order.grandTotal.toStringAsFixed(2)}'),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          ElevatedButton(
-                            onPressed: order.orderStatus != 'shipped' 
-                                ? () => _updateStatus(context, order.id, 'shipped') 
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue, 
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: Colors.grey[300],
+                          ],
+                        ),
+                        const Divider(height: 24),
+                        _buildInfoRow(Icons.person, 'Customer: ${order.name}'),
+                        _buildInfoRow(Icons.phone, 'Phone: ${order.mobile}'),
+                        _buildInfoRow(
+                          Icons.location_on,
+                          'Address: ${order.addressTitle}',
+                        ),
+                        _buildInfoRow(
+                          Icons.payments,
+                          'Amount: ৳${order.grandTotal.toStringAsFixed(2)}',
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              onPressed: order.orderStatus != 'shipped'
+                                  ? () => _updateStatus(
+                                      context,
+                                      order.id,
+                                      'shipped',
+                                    )
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.grey[300],
+                              ),
+                              child: const Text('Shipped'),
                             ),
-                            child: const Text('Shipped'),
-                          ),
-                          ElevatedButton(
-                            onPressed: order.orderStatus == 'shipped' 
-                                ? () => _updateStatus(context, order.id, 'delivered') 
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green, 
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: Colors.grey[300],
+                            ElevatedButton(
+                              onPressed: order.orderStatus == 'shipped'
+                                  ? () => _updateStatus(
+                                      context,
+                                      order.id,
+                                      'delivered',
+                                    )
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.grey[300],
+                              ),
+                              child: const Text('Delivered'),
                             ),
-                            child: const Text('Delivered'),
-                          ),
-                          ElevatedButton(
-                            onPressed: order.orderStatus == 'shipped' 
-                                ? () => _updateStatus(context, order.id, 'canceled') 
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red, 
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: Colors.grey[300],
+                            ElevatedButton(
+                              onPressed: order.orderStatus == 'shipped'
+                                  ? () => _updateStatus(
+                                      context,
+                                      order.id,
+                                      'canceled',
+                                    )
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Colors.grey[300],
+                              ),
+                              child: const Text('Cancel'),
                             ),
-                            child: const Text('Cancel'),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
+              );
             },
           ),
         );
@@ -438,11 +574,17 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
         title: const Text('Update Status'),
         content: Text('Are you sure you want to mark this order as $status?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('No')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('No'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              Provider.of<RiderDashboardProvider>(context, listen: false).updateOrderStatus(orderId, status);
+              Provider.of<RiderDashboardProvider>(
+                context,
+                listen: false,
+              ).updateOrderStatus(orderId, status);
             },
             child: const Text('Yes'),
           ),
@@ -463,16 +605,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => Provider.of<RiderDashboardProvider>(context, listen: false).fetchOrderHistory());
+    Future.microtask(
+      () => Provider.of<RiderDashboardProvider>(
+        context,
+        listen: false,
+      ).fetchOrderHistory(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<RiderDashboardProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
-        if (provider.errorMessage != null) return Center(child: Text('Error: ${provider.errorMessage}'));
-        if (provider.orderHistory.isEmpty) return const Center(child: Text('No order history found'));
+        if (provider.isLoading)
+          return const Center(child: CircularProgressIndicator());
+        if (provider.errorMessage != null)
+          return Center(child: Text('Error: ${provider.errorMessage}'));
+        if (provider.orderHistory.isEmpty)
+          return const Center(child: Text('No order history found'));
 
         return ListView.builder(
           padding: const EdgeInsets.all(12),
@@ -483,16 +633,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
               margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: order.paymentStatus == 'paid' ? Colors.green : Colors.grey,
+                  backgroundColor: order.paymentStatus == 'paid'
+                      ? Colors.green
+                      : Colors.grey,
                   child: const Icon(Icons.check, color: Colors.white),
                 ),
                 title: Text('Order #${order.id}'),
-                subtitle: Text('Date: ${DateFormat('yyyy-MM-dd').format(order.orderDate)}\nTotal: \$${order.grandTotal.toStringAsFixed(2)}'),
-                trailing: Text(order.paymentStatus.toUpperCase(), style: TextStyle(color: order.paymentStatus == 'paid' ? Colors.green : Colors.orange, fontWeight: FontWeight.bold, fontSize: 12)),
+                subtitle: Text(
+                  'Date: ${DateFormat('yyyy-MM-dd').format(order.orderDate)}\nTotal: ৳${order.grandTotal.toStringAsFixed(2)}',
+                ),
+                trailing: Text(
+                  order.paymentStatus.toUpperCase(),
+                  style: TextStyle(
+                    color: order.paymentStatus == 'paid'
+                        ? Colors.green
+                        : Colors.orange,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => RiderOrderDetailScreen(order: order),
+                      builder: (context) =>
+                          RiderOrderDetailScreen(order: order),
                     ),
                   );
                 },

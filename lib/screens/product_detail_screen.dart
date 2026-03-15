@@ -19,7 +19,8 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final ScrollController _scrollController = ScrollController();
-  final PageController _pageController = PageController(); // Added PageController
+  final PageController _pageController =
+      PageController(); // Added PageController
   int _currentImageIndex = 0; // Added current image index
   Color _appBarColor = Colors.transparent;
   Color _iconColor = Colors.white;
@@ -28,7 +29,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _pageController.addListener(() { // Listen to page changes
+    _pageController.addListener(() {
+      // Listen to page changes
       setState(() {
         _currentImageIndex = _pageController.page?.round() ?? 0;
       });
@@ -68,7 +70,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Container(
       margin: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
-        color: _appBarColor == Colors.transparent ? Colors.grey.withOpacity(0.5) : Colors.transparent, // Changed to ash with transparency
+        color: _appBarColor == Colors.transparent
+            ? Colors.grey.withOpacity(0.5)
+            : Colors.transparent, // Changed to ash with transparency
         shape: BoxShape.circle,
       ),
       child: Stack(
@@ -87,16 +91,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 16,
-                  minHeight: 16,
-                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                 child: Text(
                   itemCount.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -119,7 +117,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             pinned: true,
             backgroundColor: _appBarColor,
             elevation: _appBarColor == Colors.white ? 4 : 0,
-            leading: _buildIcon(Icons.arrow_back, () => Navigator.of(context).pop()),
+            leading: _buildIcon(
+              Icons.arrow_back,
+              () => Navigator.of(context).pop(),
+            ),
             actions: [
               Consumer<WishlistProvider>(
                 builder: (context, wishlist, child) {
@@ -131,9 +132,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       if (!mounted) return; // Add mounted check here
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(isFavorite
-                              ? '${widget.product.name} removed from wishlist!'
-                              : '${widget.product.name} added to wishlist!'),
+                          content: Text(
+                            isFavorite
+                                ? '${widget.product.name} removed from wishlist!'
+                                : '${widget.product.name} added to wishlist!',
+                          ),
                           duration: const Duration(seconds: 2),
                         ),
                       );
@@ -141,18 +144,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   );
                 },
               ),
-              _buildIcon(Icons.share, () { // Share icon
+              _buildIcon(Icons.share, () {
+                // Share icon
                 Share.share(
-                    'Check out this product: ${widget.product.name} - \$${widget.product.price.toStringAsFixed(2)} '
-                    'Link: https://hublibd.com/products/${widget.product.id}'); // Placeholder link
+                  'Check out this product: ${widget.product.name} - \$${widget.product.price.toStringAsFixed(2)} '
+                  'Link: https://hublibd.com/products/${widget.product.id}',
+                ); // Placeholder link
               }),
-              _buildIcon(Icons.shopping_cart, () { // Swapped order
+              _buildIcon(Icons.shopping_cart, () {
+                // Swapped order
                 Navigator.of(context).pushNamed('/cart');
               }, itemCount: cart.itemCount), // Pass cart item count
               _buildIcon(Icons.search, () {}), // Swapped order
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: Stack( // Use Stack to layer PageView and indicator
+              background: Stack(
+                // Use Stack to layer PageView and indicator
                 children: [
                   PageView.builder(
                     controller: _pageController,
@@ -174,13 +181,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       );
                     },
                   ),
-                  Positioned( // Pagination indicator
+                  Positioned(
+                    // Pagination indicator
                     bottom: 10,
                     left: 0,
                     right: 0,
                     child: Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.5),
                           borderRadius: BorderRadius.circular(10),
@@ -197,104 +208,114 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           SliverList(
-            delegate: SliverChildListDelegate(
-              [
-                // Thumbnail image strip
-                if (widget.product.imageUrls.length > 1)
-                  SizedBox(
-                    height: 80.0,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: widget.product.imageUrls.length,
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            _pageController.animateToPage(
-                              index,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.ease,
-                            );
-                          },
-                          child: Container(
-                            width: 70.0,
-                            margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8.0),
-                              border: Border.all(
-                                color: _currentImageIndex == index ? Theme.of(context).primaryColor : Colors.grey,
-                                width: _currentImageIndex == index ? 2.0 : 1.0,
-                              ),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(7.0),
-                              child: Image.network(
-                                widget.product.imageUrls[index],
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => const Center(
-                                  child: Icon(Icons.image_not_supported, size: 20),
-                                ),
-                              ),
+            delegate: SliverChildListDelegate([
+              // Thumbnail image strip
+              if (widget.product.imageUrls.length > 1)
+                SizedBox(
+                  height: 80.0,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: widget.product.imageUrls.length,
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onTap: () {
+                          _pageController.animateToPage(
+                            index,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.ease,
+                          );
+                        },
+                        child: Container(
+                          width: 70.0,
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 4.0,
+                            vertical: 8.0,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(
+                              color: _currentImageIndex == index
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.grey,
+                              width: _currentImageIndex == index ? 2.0 : 1.0,
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.product.name,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        NumberFormat.currency(
-                          locale: 'en_BD',
-                          symbol: '৳ ',
-                        ).format(widget.product.price),
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: Theme.of(context).primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 20),
-                          Text(
-                            '${widget.product.rating} (${(widget.product.rating * 20).toInt()} reviews)', // Placeholder for review count
-                            style: const TextStyle(fontSize: 18),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(7.0),
+                            child: Image.network(
+                              widget.product.imageUrls[index],
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Center(
+                                    child: Icon(
+                                      Icons.image_not_supported,
+                                      size: 20,
+                                    ),
+                                  ),
+                            ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Category: ${widget.product.category}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontStyle: FontStyle.italic,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Product Description:',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Html(data: widget.product.description),
-                      const SizedBox(height: 24),
-                    ],
+                      );
+                    },
                   ),
                 ),
-              ],
-            ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.product.name,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      NumberFormat.currency(
+                        locale: 'en_BD',
+                        symbol: '৳ ',
+                      ).format(widget.product.price),
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 20),
+                        Text(
+                          '${widget.product.rating} (${(widget.product.rating * 20).toInt()} reviews)', // Placeholder for review count
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Category: ${widget.product.category}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Product Description:',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Html(data: widget.product.description),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ]),
           ),
         ],
       ),
@@ -306,8 +327,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: ElevatedButton(
                 onPressed: () async {
                   try {
-                    final cart = Provider.of<CartProvider>(context, listen: false);
-                    await cart.addItem(widget.product); // Add to cart before buying
+                    final cart = Provider.of<CartProvider>(
+                      context,
+                      listen: false,
+                    );
+                    await cart.addItem(
+                      widget.product,
+                    ); // Add to cart before buying
                     if (!mounted) return;
                     Navigator.of(context).pushNamed('/shipping-address');
                   } catch (error) {
@@ -317,22 +343,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     );
                   }
                 },
-                child: const Text('Buy Now'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
+                child: const Text('Buy Now'),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  debugPrint('Add to Cart button pressed for product: ${widget.product.name}');
+                  debugPrint(
+                    'Add to Cart button pressed for product: ${widget.product.name}',
+                  );
                   try {
-                    final cart = Provider.of<CartProvider>(context, listen: false);
+                    final cart = Provider.of<CartProvider>(
+                      context,
+                      listen: false,
+                    );
                     await cart.addItem(widget.product);
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -355,7 +386,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   // foregroundColor: Colors.black, // Removed hardcoded color
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0), // Added border radius
+                    borderRadius: BorderRadius.circular(
+                      8.0,
+                    ), // Added border radius
                   ),
                 ),
               ),

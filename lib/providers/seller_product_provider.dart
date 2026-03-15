@@ -44,6 +44,7 @@ class SellerProductProvider with ChangeNotifier {
     required String categoryId,
     required String descriptionEn,
     required String userId,
+    String? unit,
     File? image,
   }) async {
     _isLoading = true;
@@ -60,6 +61,7 @@ class SellerProductProvider with ChangeNotifier {
         categoryId: categoryId,
         descriptionEn: descriptionEn,
         userId: userId,
+        unit: unit,
         image: image,
       );
       // After success, refresh the list
@@ -83,6 +85,7 @@ class SellerProductProvider with ChangeNotifier {
     required String categoryId,
     required String descriptionEn,
     required String userId,
+    String? unit,
     File? image,
   }) async {
     _isLoading = true;
@@ -100,6 +103,7 @@ class SellerProductProvider with ChangeNotifier {
         categoryId: categoryId,
         descriptionEn: descriptionEn,
         userId: userId,
+        unit: unit,
         image: image,
       );
       await fetchSellerProducts();

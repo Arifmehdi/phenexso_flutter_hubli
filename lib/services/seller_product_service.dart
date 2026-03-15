@@ -14,7 +14,7 @@ class SellerProductService {
 
   Map<String, String> _getHeaders() {
     final Map<String, String> headers = {'Accept': 'application/json'};
-    if (_authToken != null && _authToken!.isNotEmpty) {
+    if (_authToken != null && _authToken.isNotEmpty) {
       headers['Authorization'] = 'Bearer $_authToken';
     }
     return headers;
@@ -44,6 +44,7 @@ class SellerProductService {
     required String categoryId,
     required String descriptionEn,
     required String userId, // Add userId to parameters
+    String? unit,
     File? image,
   }) async {
     var request = http.MultipartRequest(
@@ -64,6 +65,7 @@ class SellerProductService {
     request.fields['description_bn'] = descriptionEn;
     request.fields['addedby_id'] = userId; // Set as login user
     request.fields['seller_id'] = userId; // Set as login user
+    if (unit != null) request.fields['unit'] = unit;
 
     request.fields['active'] = '1';
 
@@ -95,6 +97,7 @@ class SellerProductService {
     required String categoryId,
     required String descriptionEn,
     required String userId,
+    String? unit,
     File? image,
   }) async {
     // Using POST with _method=PATCH for multipart/form-data compatibility with Laravel
@@ -117,6 +120,7 @@ class SellerProductService {
     request.fields['description_bn'] = descriptionEn;
     request.fields['addedby_id'] = userId;
     request.fields['seller_id'] = userId;
+    if (unit != null) request.fields['unit'] = unit;
 
     request.fields['active'] = '1';
 
@@ -149,25 +153,12 @@ class SellerProductService {
 
     request.headers.addAll(_getHeaders());
 
-    for (int i = 0; i < products.length; i++) {
-      var product = products[i];
-      request.fields['products[$i][name_en]'] = product['name_en'];
-      request.fields['products[$i][slug]'] = product['slug'];
-      request.fields['products[$i][price]'] = product['price'].toString();
-      request.fields['products[$i][purchase_price]'] = product['purchase_price']
-          .toString();
-      request.fields['products[$i][stock]'] = product['stock'].toString();
-      request.fields['products[$i][category_id]'] = product['category_id'];
-      request.fields['products[$i][description_en]'] =
-          product['description_en'];
-      request.fields['products[$i][seller_id]'] = product['seller_id'];
+    request.fields['products'] = json.encode(products);
 
+    for (int i = 0; i < images.length; i++) {
       if (images[i] != null) {
         request.files.add(
-          await http.MultipartFile.fromPath(
-            'products[$i][featured_image]',
-            images[i]!.path,
-          ),
+          await http.MultipartFile.fromPath('images[$i]', images[i]!.path),
         );
       }
     }
