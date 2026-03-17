@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:hubli/utils/api_constants.dart';
 import 'package:hubli/models/rider_dashboard.dart';
 import 'package:hubli/models/order.dart';
-import 'package:flutter/foundation.dart';
 
 class RiderDashboardService {
   final String? _token;
@@ -26,7 +25,10 @@ class RiderDashboardService {
       final responseData = json.decode(response.body);
       return RiderDashboard.fromJson(responseData);
     } else {
-      throw Exception(json.decode(response.body)['message'] ?? 'Failed to load dashboard data');
+      throw Exception(
+        json.decode(response.body)['message'] ??
+            'Failed to load dashboard data',
+      );
     }
   }
 
@@ -41,14 +43,18 @@ class RiderDashboardService {
       final List<dynamic> data = responseData['data'] ?? [];
       return data.map((o) => Order.fromJson(o)).toList();
     } else {
-      throw Exception(json.decode(response.body)['message'] ?? 'Failed to load active orders');
+      throw Exception(
+        json.decode(response.body)['message'] ?? 'Failed to load active orders',
+      );
     }
   }
 
   Future<void> updateOrderStatus(String orderId, String status) async {
     if (_token == null) throw Exception('Authentication token is missing.');
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/rider/orders/$orderId/update-status');
+    final url = Uri.parse(
+      '${ApiConstants.baseUrl}/api/rider/orders/$orderId/update-status',
+    );
     final response = await http.post(
       url,
       headers: _headers,
@@ -56,11 +62,14 @@ class RiderDashboardService {
     );
 
     if (response.statusCode != 200) {
-      throw Exception(json.decode(response.body)['message'] ?? 'Failed to update order status');
+      throw Exception(
+        json.decode(response.body)['message'] ??
+            'Failed to update order status',
+      );
     }
   }
 
-  // You might want a dedicated endpoint for order history, 
+  // You might want a dedicated endpoint for order history,
   // but for now let's assume we use all orders from dashboard or another endpoint.
   Future<List<Order>> fetchOrderHistory() async {
     if (_token == null) throw Exception('Authentication token is missing.');
@@ -74,7 +83,7 @@ class RiderDashboardService {
     // Wait, let's check if there's any other endpoint in drivers.txt. No.
     // I'll assume /rider/dashboard gives recent orders which can be history.
     // Alternatively, I'll just return recent orders from dashboard for now.
-    
+
     final dashboard = await fetchRiderDashboardData();
     return dashboard.recentOrders;
   }

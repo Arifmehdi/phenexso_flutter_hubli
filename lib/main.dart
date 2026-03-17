@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hubli/utils/colors.dart';
-import 'package:hubli/screens/product_list_screen.dart';
 import 'package:hubli/screens/product_detail_screen.dart';
 import 'package:hubli/screens/cart_screen.dart';
 import 'package:hubli/models/product.dart'; // Import Product model for ProductDetailScreen arguments
@@ -23,7 +23,6 @@ import 'package:hubli/screens/order_history_screen.dart';
 import 'package:hubli/screens/shipping_address_screen.dart';
 import 'package:hubli/screens/login_screen.dart';
 import 'package:hubli/screens/registration_screen.dart';
-import 'package:hubli/screens/account_screen.dart';
 import 'package:hubli/screens/admin_panel_screen.dart';
 import 'package:hubli/screens/seller_panel_screen.dart';
 import 'package:hubli/screens/rider_panel_screen.dart';
@@ -51,6 +50,14 @@ import 'package:hubli/providers/notification_provider.dart';
 import 'package:hubli/screens/notification_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
   runApp(
     MultiProvider(
       providers: [
@@ -63,44 +70,60 @@ void main() {
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
-          create: (context) => ChatProvider(ChatService(''), Provider.of<AuthProvider>(context, listen: false)),
+          create: (context) => ChatProvider(
+            ChatService(''),
+            Provider.of<AuthProvider>(context, listen: false),
+          ),
           update: (context, auth, chat) {
             debugPrint('ChatProvider update with token: ${auth.token}');
             return ChatProvider(ChatService(auth.token ?? ''), auth);
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, UserProvider>(
-          create: (context) => UserProvider(UserService('')), // Initial UserService with empty token
+          create: (context) => UserProvider(
+            UserService(''),
+          ), // Initial UserService with empty token
           update: (context, auth, userProvider) {
             debugPrint('UserProvider update with token: ${auth.token}');
             return UserProvider(UserService(auth.token ?? ''));
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, AdminUserProvider>(
-          create: (context) => AdminUserProvider(AdminUserService('')), // Initial AdminUserService with empty token
+          create: (context) => AdminUserProvider(
+            AdminUserService(''),
+          ), // Initial AdminUserService with empty token
           update: (context, auth, adminUserProvider) {
             debugPrint('AdminUserProvider update with token: ${auth.token}');
             return AdminUserProvider(AdminUserService(auth.token ?? ''));
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, RiderDashboardProvider>(
-          create: (context) => RiderDashboardProvider(RiderDashboardService(null)),
+          create: (context) =>
+              RiderDashboardProvider(RiderDashboardService(null)),
           update: (context, auth, riderDashboardProvider) {
-            riderDashboardProvider!.updateService(RiderDashboardService(auth.token));
+            riderDashboardProvider!.updateService(
+              RiderDashboardService(auth.token),
+            );
             return riderDashboardProvider;
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, SellerDashboardProvider>(
-          create: (context) => SellerDashboardProvider(SellerDashboardService(null)),
+          create: (context) =>
+              SellerDashboardProvider(SellerDashboardService(null)),
           update: (context, auth, sellerDashboardProvider) {
-            sellerDashboardProvider!.updateService(SellerDashboardService(auth.token));
+            sellerDashboardProvider!.updateService(
+              SellerDashboardService(auth.token),
+            );
             return sellerDashboardProvider;
           },
         ),
         ChangeNotifierProxyProvider<AuthProvider, SellerProductProvider>(
-          create: (context) => SellerProductProvider(SellerProductService(null)),
+          create: (context) =>
+              SellerProductProvider(SellerProductService(null)),
           update: (context, auth, sellerProductProvider) {
-            sellerProductProvider!.updateService(SellerProductService(auth.token));
+            sellerProductProvider!.updateService(
+              SellerProductService(auth.token),
+            );
             return sellerProductProvider;
           },
         ),
@@ -108,7 +131,9 @@ void main() {
           create: (context) => CartProvider(CartService(null)),
           update: (context, auth, cartProvider) {
             debugPrint('CartProvider update with token: ${auth.token}');
-            cartProvider!.updateService(CartService(auth.token, cartProvider.guestSessionId));
+            cartProvider!.updateService(
+              CartService(auth.token, cartProvider.guestSessionId),
+            );
             return cartProvider;
           },
         ),
@@ -116,13 +141,20 @@ void main() {
           create: (context) => OrderProvider(OrderService(null)),
           update: (context, auth, orderProvider) {
             // Get guest session ID from CartProvider
-            final cartProvider = Provider.of<CartProvider>(context, listen: false);
-            return OrderProvider(OrderService(auth.token, cartProvider.guestSessionId));
+            final cartProvider = Provider.of<CartProvider>(
+              context,
+              listen: false,
+            );
+            return OrderProvider(
+              OrderService(auth.token, cartProvider.guestSessionId),
+            );
           },
         ),
         ChangeNotifierProvider(create: (context) => ProductProvider()),
         ChangeNotifierProvider(create: (context) => CategoryProvider()),
-        ChangeNotifierProvider(create: (context) => WishlistProvider()), // Add WishlistProvider
+        ChangeNotifierProvider(
+          create: (context) => WishlistProvider(),
+        ), // Add WishlistProvider
       ],
       child: const MyApp(),
     ),
@@ -137,94 +169,142 @@ class MyApp extends StatelessWidget {
     return Builder(
       builder: (context) {
         return MaterialApp(
-      title: 'Hubli', // Changed title
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: appColorsPrimary),
-        useMaterial3: true,
-        textTheme: GoogleFonts.poppinsTextTheme(),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: appColorsPrimary, // Use primary color for ElevatedButtons
-            foregroundColor: Colors.white, // Text color for ElevatedButtons
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0), // Consistent border radius
+          title: 'Hubli', // Changed title
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: appColorsPrimary),
+            useMaterial3: true,
+            textTheme: GoogleFonts.poppinsTextTheme(),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    appColorsPrimary, // Use primary color for ElevatedButtons
+                foregroundColor: Colors.white, // Text color for ElevatedButtons
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    8.0,
+                  ), // Consistent border radius
+                ),
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: appColorsPrimary, // Text color for TextButtons
+              ),
+            ),
+            outlinedButtonTheme: OutlinedButtonThemeData(
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    appColorsPrimary, // Text color for OutlinedButtons
+                side: const BorderSide(color: appColorsPrimary), // Border color
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    8.0,
+                  ), // Consistent border radius
+                ),
+              ),
             ),
           ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: appColorsPrimary, // Text color for TextButtons
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: appColorsPrimary, // Text color for OutlinedButtons
-            side: const BorderSide(color: appColorsPrimary), // Border color
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0), // Consistent border radius
-            ),
-          ),
-        ),
-      ),
-      initialRoute: MainNavigationScreen.routeName,
-      onGenerateRoute: (settings) {
-        switch (settings.name) {
-          case MainNavigationScreen.routeName:
-            return MaterialPageRoute(builder: (context) => const MainNavigationScreen());
-          case '/category-products':
-            final args = settings.arguments as Map<String, String>;
-            return MaterialPageRoute(
-                builder: (context) => CategoryProductsScreen(
-                      categorySlug: args['slug']!,
-                      categoryName: args['name']!,
-                    ));
-          case '/product-detail':
-            final product = settings.arguments as Product;
-            return MaterialPageRoute(builder: (context) => ProductDetailScreen(product: product));
-          case '/cart':
-            return MaterialPageRoute(builder: (context) => const CartScreen());
-          case '/order-confirmation':
-            return MaterialPageRoute(builder: (context) => const OrderConfirmationScreen());
-          case '/shipping-address':
-            return MaterialPageRoute(builder: (context) => const ShippingAddressScreen());
-          case '/orders':
-            return MaterialPageRoute(builder: (context) => const OrderHistoryScreen());
-          case '/login':
-            return MaterialPageRoute(builder: (context) => const LoginScreen());
-          case '/register':
-            return MaterialPageRoute(builder: (context) => const RegistrationScreen());
-          case '/account':
-            return MaterialPageRoute(builder: (context) => const AccountScreenWrapper());
-          case '/admin-panel':
-            return MaterialPageRoute(builder: (context) => const AdminPanelScreen());
-          case '/seller-panel':
-            return MaterialPageRoute(builder: (context) => const SellerPanelScreen());
-          case '/rider-panel':
-            return MaterialPageRoute(builder: (context) => const RiderPanelScreen());
-          case '/buyer-panel': // New Buyer Panel route
-            return MaterialPageRoute(builder: (context) => const BuyerPanelScreen());
-          case '/forgot-password': // New Forgot Password route
-            return MaterialPageRoute(builder: (context) => const ForgotPasswordScreen());
-          case '/all-categories':
-            return MaterialPageRoute(builder: (context) => const AllCategoriesScreen());
-          case '/wishlist': // Add WishlistScreen route
-            return MaterialPageRoute(builder: (context) => const WishlistScreen());
-          case '/cost-calculator': // Add CostCalculatorScreen route
-            return MaterialPageRoute(builder: (context) => const CostCalculatorScreen());
-          case '/order-tracking': // Add OrderTrackingScreen route
-            return MaterialPageRoute(builder: (context) => const OrderTrackingScreen());
-          case '/notifications':
-            return MaterialPageRoute(builder: (context) => const NotificationScreen());
-          default:
-            return MaterialPageRoute(builder: (context) => Text('Error: Unknown route ${settings.name}'));
-        }
-      },
-    ); // End of MaterialApp
+          initialRoute: MainNavigationScreen.routeName,
+          onGenerateRoute: (settings) {
+            switch (settings.name) {
+              case MainNavigationScreen.routeName:
+                return MaterialPageRoute(
+                  builder: (context) => const MainNavigationScreen(),
+                );
+              case '/category-products':
+                final args = settings.arguments as Map<String, String>;
+                return MaterialPageRoute(
+                  builder: (context) => CategoryProductsScreen(
+                    categorySlug: args['slug']!,
+                    categoryName: args['name']!,
+                  ),
+                );
+              case '/product-detail':
+                final product = settings.arguments as Product;
+                return MaterialPageRoute(
+                  builder: (context) => ProductDetailScreen(product: product),
+                );
+              case '/cart':
+                return MaterialPageRoute(
+                  builder: (context) => const CartScreen(),
+                );
+              case '/order-confirmation':
+                return MaterialPageRoute(
+                  builder: (context) => const OrderConfirmationScreen(),
+                );
+              case '/shipping-address':
+                return MaterialPageRoute(
+                  builder: (context) => const ShippingAddressScreen(),
+                );
+              case '/orders':
+                return MaterialPageRoute(
+                  builder: (context) => const OrderHistoryScreen(),
+                );
+              case '/login':
+                return MaterialPageRoute(
+                  builder: (context) => const LoginScreen(),
+                );
+              case '/register':
+                return MaterialPageRoute(
+                  builder: (context) => const RegistrationScreen(),
+                );
+              case '/account':
+                return MaterialPageRoute(
+                  builder: (context) => const AccountScreenWrapper(),
+                );
+              case '/admin-panel':
+                return MaterialPageRoute(
+                  builder: (context) => const AdminPanelScreen(),
+                );
+              case '/seller-panel':
+                return MaterialPageRoute(
+                  builder: (context) => const SellerPanelScreen(),
+                );
+              case '/rider-panel':
+                return MaterialPageRoute(
+                  builder: (context) => const RiderPanelScreen(),
+                );
+              case '/buyer-panel': // New Buyer Panel route
+                return MaterialPageRoute(
+                  builder: (context) => const BuyerPanelScreen(),
+                );
+              case '/forgot-password': // New Forgot Password route
+                return MaterialPageRoute(
+                  builder: (context) => const ForgotPasswordScreen(),
+                );
+              case '/all-categories':
+                return MaterialPageRoute(
+                  builder: (context) => const AllCategoriesScreen(),
+                );
+              case '/wishlist': // Add WishlistScreen route
+                return MaterialPageRoute(
+                  builder: (context) => const WishlistScreen(),
+                );
+              case '/cost-calculator': // Add CostCalculatorScreen route
+                return MaterialPageRoute(
+                  builder: (context) => const CostCalculatorScreen(),
+                );
+              case '/order-tracking': // Add OrderTrackingScreen route
+                return MaterialPageRoute(
+                  builder: (context) => const OrderTrackingScreen(),
+                );
+              case '/notifications':
+                return MaterialPageRoute(
+                  builder: (context) => const NotificationScreen(),
+                );
+              default:
+                return MaterialPageRoute(
+                  builder: (context) =>
+                      Text('Error: Unknown route ${settings.name}'),
+                );
+            }
+          },
+        ); // End of MaterialApp
       }, // End of Builder's builder function
     ); // End of Builder widget
   }

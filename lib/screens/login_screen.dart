@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
-import 'package:hubli/screens/admin_panel_screen.dart';
-import 'package:hubli/screens/rider_panel_screen.dart';
-import 'package:hubli/screens/seller_panel_screen.dart';
 import 'package:hubli/models/user_role.dart'; // Re-add the missing import
 import 'package:hubli/screens/forgot_password_screen.dart'; // Import ForgotPasswordScreen
 
@@ -30,7 +27,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       try {
-        await authProvider.login(_emailController.text, _passwordController.text);
+        await authProvider.login(
+          _emailController.text,
+          _passwordController.text,
+        );
         if (!mounted) return; // Add mounted check here
 
         // Navigate based on user role
@@ -51,13 +51,15 @@ class _LoginScreenState extends State<LoginScreen> {
               routeName = '/'; // Navigate to root for buyers
               break;
           }
-          Navigator.of(context).pushNamedAndRemoveUntil(routeName, (route) => false);
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil(routeName, (route) => false);
         }
       } catch (e) {
         if (!mounted) return; // Add mounted check here
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }
@@ -128,7 +130,9 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 8.0), // Added spacing
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pushNamed(ForgotPasswordScreen.routeName);
+                  Navigator.of(
+                    context,
+                  ).pushNamed(ForgotPasswordScreen.routeName);
                 },
                 child: const Text('Forgot Password?'),
               ),

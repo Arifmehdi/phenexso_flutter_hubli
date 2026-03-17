@@ -4,13 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:hubli/widgets/custom_app_bar.dart';
 import 'dart:async'; // Import for Timer
 import 'package:provider/provider.dart';
-import 'package:hubli/providers/auth_provider.dart';
-import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/product_provider.dart'; // Import ProductProvider
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:hubli/providers/category_provider.dart';
-import 'package:hubli/models/category.dart';
-import 'package:hubli/models/user_role.dart'; // Import UserRole enum
+// Import UserRole enum
 
 class ProductListScreen extends StatefulWidget {
   final String? categorySlug;
@@ -22,8 +18,8 @@ class ProductListScreen extends StatefulWidget {
 
 class _ProductListScreenState extends State<ProductListScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final ScrollController _scrollController = ScrollController(); // Add ScrollController
-
+  final ScrollController _scrollController =
+      ScrollController(); // Add ScrollController
 
   // For auto-sliding image carousel
   final PageController _pageController = PageController();
@@ -40,15 +36,33 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   List<Map<String, dynamic>> get _menuItems {
     return [
-      {'title': 'All Category', 'icon': Icons.category, 'onTap': () => Navigator.of(context).pushNamed('/all-categories')},
-      {'title': 'RFQ', 'icon': Icons.assignment, 'onTap': () => print('RFQ tapped')},
-      {'title': 'Order Tracking', 'icon': Icons.track_changes, 'onTap': () => Navigator.of(context).pushNamed('/order-tracking')},
-      {'title': 'Cost Calculator', 'icon': Icons.calculate, 'onTap': () => Navigator.of(context).pushNamed('/cost-calculator')},
-      {'title': 'Wishlist', 'icon': Icons.favorite_border, 'onTap': () => Navigator.of(context).pushNamed('/wishlist')},
+      {
+        'title': 'All Category',
+        'icon': Icons.category,
+        'onTap': () => Navigator.of(context).pushNamed('/all-categories'),
+      },
+      {
+        'title': 'RFQ',
+        'icon': Icons.assignment,
+        'onTap': () => print('RFQ tapped'),
+      },
+      {
+        'title': 'Order Tracking',
+        'icon': Icons.track_changes,
+        'onTap': () => Navigator.of(context).pushNamed('/order-tracking'),
+      },
+      {
+        'title': 'Cost Calculator',
+        'icon': Icons.calculate,
+        'onTap': () => Navigator.of(context).pushNamed('/cost-calculator'),
+      },
+      {
+        'title': 'Wishlist',
+        'icon': Icons.favorite_border,
+        'onTap': () => Navigator.of(context).pushNamed('/wishlist'),
+      },
     ];
   }
-
-
 
   @override
   void initState() {
@@ -71,7 +85,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   void _fetchInitialProducts() {
-    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
     if (widget.categorySlug != null) {
       productProvider.resetProducts();
       productProvider.fetchProducts(
@@ -84,13 +101,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
     }
   }
 
-
-
-
-
   void _startAutoSlide() {
     _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-      if (_pageController.hasClients) { // Check if controller is attached
+      if (_pageController.hasClients) {
+        // Check if controller is attached
         if (_currentPage < _sliderImages.length - 1) {
           _currentPage++;
         } else {
@@ -123,8 +137,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
     super.dispose();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,13 +152,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
           }
 
           if (productProvider.errorMessage != null) {
-            return Center(child: Text('Error: ${productProvider.errorMessage}'));
+            return Center(
+              child: Text('Error: ${productProvider.errorMessage}'),
+            );
           }
 
           final products = productProvider.products;
 
           // Compute categories for display in ChoiceChips
-          final displayedCategories = products.map((product) => product.category).toSet().toList();
+          final displayedCategories = products
+              .map((product) => product.category)
+              .toSet()
+              .toList();
 
           // Compute filtered products (only by search query)
           final currentFilteredProducts = products.where((product) {
@@ -157,7 +174,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 );
             return matchesSearch; // Only search filter applies locally
           }).toList();
-
 
           return SingleChildScrollView(
             controller: _scrollController, // Attach the scroll controller
@@ -171,7 +187,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       onPanEnd: (_) => _resumeAutoSlide(),
                       onPanCancel: () => _resumeAutoSlide(),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 4.0,
+                        ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12.0),
                           child: SizedBox(
@@ -180,7 +199,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               controller: _pageController,
                               itemCount: _sliderImages.length,
                               itemBuilder: (context, index) {
-                                return Image.asset(_sliderImages[index], fit: BoxFit.cover);
+                                return Image.asset(
+                                  _sliderImages[index],
+                                  fit: BoxFit.cover,
+                                );
                               },
                             ),
                           ),
@@ -200,53 +222,82 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: _menuItems.expand((item) => [
-                        Column(
-                          children: [
-                            SizedBox(
-                              width: 60.0,
-                              height: 60.0,
-                              child: Card(
-                                elevation: 2.0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                                child: InkWell(
-                                  onTap: item['onTap'],
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  child: Center(
-                                    child: Icon(item['icon'], size: 28.0, color: Theme.of(context).primaryColor,),
+                      children:
+                          _menuItems
+                              .expand(
+                                (item) => [
+                                  Column(
+                                    children: [
+                                      SizedBox(
+                                        width: 60.0,
+                                        height: 60.0,
+                                        child: Card(
+                                          elevation: 2.0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8.0,
+                                            ),
+                                          ),
+                                          child: InkWell(
+                                            onTap: item['onTap'],
+                                            borderRadius: BorderRadius.circular(
+                                              8.0,
+                                            ),
+                                            child: Center(
+                                              child: Icon(
+                                                item['icon'],
+                                                size: 28.0,
+                                                color: Theme.of(
+                                                  context,
+                                                ).primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4.0),
+                                      SizedBox(
+                                        width: 60.0,
+                                        height: 28.0,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 2.0,
+                                          ),
+                                          child: Text(
+                                            item['title'],
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 10.0,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4.0),
-                            SizedBox(
-                              width: 60.0,
-                              height: 28.0,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                                child: Text(
-                                  item['title'],
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 10.0, fontWeight: FontWeight.bold),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 8.0),
-                      ]).toList()..removeLast(),
+                                  const SizedBox(width: 8.0),
+                                ],
+                              )
+                              .toList()
+                            ..removeLast(),
                     ),
                   ),
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
                   child: Image.asset(
                     'assets/images/shop_ad.png',
                     fit: BoxFit.cover,
@@ -256,7 +307,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -291,30 +345,43 @@ class _ProductListScreenState extends State<ProductListScreen> {
                               return Padding(
                                 padding: const EdgeInsets.only(right: 10.0),
                                 child: SizedBox(
-                                  width: MediaQuery.of(context).size.width * 0.35,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.35,
                                   child: GestureDetector(
                                     onTap: () {
-                                      Navigator.of(context).pushNamed('/product-detail', arguments: product);
+                                      Navigator.of(context).pushNamed(
+                                        '/product-detail',
+                                        arguments: product,
+                                      );
                                     },
                                     child: Card(
                                       elevation: 2.0,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          8.0,
+                                        ),
+                                      ),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           AspectRatio(
                                             aspectRatio: 1.0,
                                             child: ClipRRect(
-                                              borderRadius: const BorderRadius.vertical(
-                                                top: Radius.circular(8.0),
+                                              borderRadius:
+                                                  const BorderRadius.vertical(
+                                                    top: Radius.circular(8.0),
+                                                  ),
+                                              child: _buildProductImage(
+                                                product.imageUrls,
                                               ),
-                                              child: _buildProductImage(product.imageUrls),
                                             ),
                                           ),
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   '৳ ${NumberFormat.currency(locale: 'en_BD', symbol: '').format(product.price)}',
@@ -327,8 +394,17 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                                 const SizedBox(height: 2.0),
                                                 Row(
                                                   children: [
-                                                    Icon(Icons.star, color: Colors.amber, size: 14),
-                                                    Text('${product.rating.toStringAsFixed(1)} | 4k sold', style: TextStyle(fontSize: 12.0)),
+                                                    Icon(
+                                                      Icons.star,
+                                                      color: Colors.amber,
+                                                      size: 14,
+                                                    ),
+                                                    Text(
+                                                      '${product.rating.toStringAsFixed(1)} | 4k sold',
+                                                      style: TextStyle(
+                                                        fontSize: 12.0,
+                                                      ),
+                                                    ),
                                                   ],
                                                 ),
                                               ],
@@ -364,7 +440,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     return ProductGridItem(product: product);
                   },
                 ),
-                if (productProvider.isFetchingMore) // Loading indicator for fetching more
+                if (productProvider
+                    .isFetchingMore) // Loading indicator for fetching more
                   const Padding(
                     padding: EdgeInsets.all(8.0),
                     child: CircularProgressIndicator(),
@@ -372,10 +449,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ],
             ),
           );
-
         },
       ),
-
     );
   }
 
@@ -391,10 +466,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
       // User has scrolled to the bottom, fetch more products
-      final productProvider = Provider.of<ProductProvider>(context, listen: false);
-      if (!productProvider.isLoading && !productProvider.isFetchingMore && productProvider.hasMore) {
+      final productProvider = Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      );
+      if (!productProvider.isLoading &&
+          !productProvider.isFetchingMore &&
+          productProvider.hasMore) {
         productProvider.fetchNextPage(categorySlug: widget.categorySlug);
       }
     }
@@ -415,14 +496,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
         fit: BoxFit.cover,
         width: double.infinity,
         placeholder: (context, url) => Container(color: Colors.grey[200]),
-        errorWidget: (context, url, error) =>
-            const Center(child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.image_not_supported, size: 50),
-                Text('Failed to load image'),
-              ],
-            )),
+        errorWidget: (context, url, error) => const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.image_not_supported, size: 50),
+              Text('Failed to load image'),
+            ],
+          ),
+        ),
       );
     }
   }
@@ -440,7 +522,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
       duration: const Duration(milliseconds: 150),
       margin: const EdgeInsets.symmetric(horizontal: 4.0),
       height: 8.0,
-      width: isActive ? 8.0 : 8.0, // Keep same size for simplicity, or make active larger
+      width: isActive
+          ? 8.0
+          : 8.0, // Keep same size for simplicity, or make active larger
       decoration: BoxDecoration(
         color: isActive ? Theme.of(context).primaryColor : Colors.grey[400],
         borderRadius: BorderRadius.circular(4.0),
@@ -469,14 +553,15 @@ class ProductGridItem extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         placeholder: (context, url) => Container(color: Colors.grey[200]),
-        errorWidget: (context, url, error) =>
-            const Center(child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.image_not_supported, size: 50),
-                Text('Failed to load image'),
-              ],
-            )),
+        errorWidget: (context, url, error) => const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.image_not_supported, size: 50),
+              Text('Failed to load image'),
+            ],
+          ),
+        ),
       );
     }
   }

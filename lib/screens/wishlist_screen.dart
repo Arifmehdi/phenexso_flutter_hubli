@@ -65,16 +65,13 @@ class _WishlistScreenState extends State<WishlistScreen> {
 class WishlistItem extends StatelessWidget {
   final Product product;
 
-  const WishlistItem({Key? key, required this.product}) : super(key: key);
+  const WishlistItem({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pushNamed(
-          '/product-detail',
-          arguments: product,
-        );
+        Navigator.of(context).pushNamed('/product-detail', arguments: product);
       },
       child: Card(
         elevation: 2,
@@ -87,7 +84,8 @@ class WishlistItem extends StatelessWidget {
                     product.imageUrls[0],
                     fit: BoxFit.cover,
                     width: double.infinity,
-                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image),
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.broken_image),
                   ),
                   Positioned(
                     top: 5,
@@ -96,17 +94,22 @@ class WishlistItem extends StatelessWidget {
                       builder: (context, wishlistProvider, child) {
                         return IconButton(
                           icon: Icon(
-                            wishlistProvider.isInWishlist(product) ? Icons.favorite : Icons.favorite_border,
+                            wishlistProvider.isInWishlist(product)
+                                ? Icons.favorite
+                                : Icons.favorite_border,
                             color: Colors.red,
                           ),
                           onPressed: () {
                             wishlistProvider.toggleWishlist(product);
-                            if (!context.mounted) return; // Add mounted check here
+                            if (!context.mounted)
+                              return; // Add mounted check here
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(wishlistProvider.isInWishlist(product)
-                                    ? '${product.name} added to wishlist!'
-                                    : '${product.name} removed from wishlist!'),
+                                content: Text(
+                                  wishlistProvider.isInWishlist(product)
+                                      ? '${product.name} added to wishlist!'
+                                      : '${product.name} removed from wishlist!',
+                                ),
                                 duration: const Duration(seconds: 2),
                               ),
                             );
@@ -125,7 +128,10 @@ class WishlistItem extends StatelessWidget {
                 children: [
                   Text(
                     product.name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -135,15 +141,25 @@ class WishlistItem extends StatelessWidget {
                       locale: 'en_BD',
                       symbol: '৳ ',
                     ).format(product.price),
-                    style: const TextStyle(fontSize: 14, color: Colors.green, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Align(
                     alignment: Alignment.bottomRight,
                     child: IconButton(
-                      icon: const Icon(Icons.add_shopping_cart, color: Colors.blue),
+                      icon: const Icon(
+                        Icons.add_shopping_cart,
+                        color: Colors.blue,
+                      ),
                       onPressed: () {
-                        Provider.of<CartProvider>(context, listen: false).addItem(product);
+                        Provider.of<CartProvider>(
+                          context,
+                          listen: false,
+                        ).addItem(product);
                         if (!context.mounted) return; // Add mounted check here
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

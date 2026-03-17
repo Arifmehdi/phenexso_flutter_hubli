@@ -1,9 +1,9 @@
 // lib/services/admin_user_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart'; // For debugPrint
+// For debugPrint
 import 'package:hubli/utils/api_constants.dart';
-import 'package:hubli/models/user.dart'; // General app User model
+// General app User model
 
 class AdminUserService {
   final String _authToken;

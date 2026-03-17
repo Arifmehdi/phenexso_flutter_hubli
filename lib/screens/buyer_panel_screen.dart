@@ -5,7 +5,6 @@ import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
 import 'package:hubli/providers/wishlist_provider.dart';
 import 'package:hubli/utils/api_constants.dart';
-import 'dart:convert';
 
 // Import buyer-relevant screens
 import 'package:hubli/screens/profile_edit_screen.dart';
@@ -46,12 +45,14 @@ class _BuyerPanelScreenState extends State<BuyerPanelScreen> {
       if (response.statusCode == 200) {
         await authProvider.logout();
         if (!mounted) return;
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/login', (route) => false);
       } else {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Logout failed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Logout failed')));
       }
     } catch (e) {
       if (!mounted) return;
@@ -112,7 +113,8 @@ class _BuyerPanelScreenState extends State<BuyerPanelScreen> {
                     icon: Icons.track_changes,
                     title: 'Track Orders',
                     subtitle: 'Check real-time status of your shipments',
-                    onTap: () => Navigator.of(context).pushNamed('/order-tracking'),
+                    onTap: () =>
+                        Navigator.of(context).pushNamed('/order-tracking'),
                   ),
                   const SizedBox(height: 24),
                   _buildSectionHeader('Account Settings'),
@@ -121,19 +123,31 @@ class _BuyerPanelScreenState extends State<BuyerPanelScreen> {
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
                     subtitle: 'Update your personal information',
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileEditScreen())),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ProfileEditScreen(),
+                      ),
+                    ),
                   ),
                   _buildDashboardAction(
                     icon: Icons.lock_outline,
                     title: 'Change Password',
                     subtitle: 'Secure your account with a new password',
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PasswordChangeScreen())),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const PasswordChangeScreen(),
+                      ),
+                    ),
                   ),
                   _buildDashboardAction(
                     icon: Icons.support_agent,
                     title: 'Contact Support',
                     subtitle: 'Get help with your orders or account',
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ContactSupportScreen())),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ContactSupportScreen(),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 32),
                   SizedBox(
@@ -143,11 +157,16 @@ class _BuyerPanelScreenState extends State<BuyerPanelScreen> {
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       onPressed: _logout,
                       icon: const Icon(Icons.logout),
-                      label: const Text('Logout from Account', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Logout from Account',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -163,7 +182,11 @@ class _BuyerPanelScreenState extends State<BuyerPanelScreen> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.black87,
+      ),
     );
   }
 
@@ -191,7 +214,10 @@ class _BuyerPanelScreenState extends State<BuyerPanelScreen> {
           child: Icon(icon, color: Theme.of(context).primaryColor),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        ),
         trailing: const Icon(Icons.chevron_right, size: 20),
         onTap: onTap,
       ),
@@ -224,7 +250,11 @@ class DashboardHeader extends StatelessWidget {
             backgroundColor: Colors.white,
             child: Text(
               user?.name[0].toUpperCase() ?? 'U',
-              style: TextStyle(fontSize: 30, color: primaryColor, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 30,
+                color: primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -234,12 +264,19 @@ class DashboardHeader extends StatelessWidget {
               children: [
                 Text(
                   'Hello, ${user?.name ?? 'User'}!',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   user?.email ?? '',
-                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 14),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 14,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -258,7 +295,7 @@ class BuyerStatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final orderProvider = Provider.of<OrderProvider>(context);
     final wishlistProvider = Provider.of<WishlistProvider>(context);
-    
+
     return Transform.translate(
       offset: const Offset(0, -20),
       child: Padding(
@@ -290,7 +327,13 @@ class BuyerStatsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -313,13 +356,9 @@ class BuyerStatsGrid extends StatelessWidget {
             value,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
-          Text(
-            title,
-            style: TextStyle(color: Colors.grey[600], fontSize: 13),
-          ),
+          Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
         ],
       ),
     );
   }
 }
-

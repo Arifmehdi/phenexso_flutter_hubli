@@ -1,4 +1,3 @@
-import 'package:hubli/models/cart_item.dart';
 import 'package:flutter/foundation.dart';
 
 class OrderItem {
@@ -23,9 +22,15 @@ class OrderItem {
       id: (json['id'] ?? '').toString(),
       productId: (json['product_id'] ?? '').toString(),
       productName: json['product_name'] ?? json['name'] ?? 'Unknown Product',
-      quantity: (json['quantity'] is String) ? int.tryParse(json['quantity']) ?? 0 : (json['quantity'] ?? 0),
-      productPrice: (json['product_price'] is String) ? double.tryParse(json['product_price']) ?? 0.0 : (json['product_price'] as num?)?.toDouble() ?? 0.0,
-      totalCost: (json['total_cost'] is String) ? double.tryParse(json['total_cost']) ?? 0.0 : (json['total_cost'] as num?)?.toDouble() ?? 0.0,
+      quantity: (json['quantity'] is String)
+          ? int.tryParse(json['quantity']) ?? 0
+          : (json['quantity'] ?? 0),
+      productPrice: (json['product_price'] is String)
+          ? double.tryParse(json['product_price']) ?? 0.0
+          : (json['product_price'] as num?)?.toDouble() ?? 0.0,
+      totalCost: (json['total_cost'] is String)
+          ? double.tryParse(json['total_cost']) ?? 0.0
+          : (json['total_cost'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }
@@ -65,13 +70,19 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     // Handle potential list key differences
-    var itemsList = (json['order_items'] ?? json['orderItems'] ?? json['items']) as List? ?? [];
-    List<OrderItem> fetchedItems = itemsList.map((i) => OrderItem.fromJson(i)).toList();
+    var itemsList =
+        (json['order_items'] ?? json['orderItems'] ?? json['items']) as List? ??
+        [];
+    List<OrderItem> fetchedItems = itemsList
+        .map((i) => OrderItem.fromJson(i))
+        .toList();
 
     // Safe date parsing
     DateTime parsedDate;
     try {
-      parsedDate = DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()).toLocal();
+      parsedDate = DateTime.parse(
+        json['created_at'] ?? DateTime.now().toIso8601String(),
+      ).toLocal();
     } catch (e) {
       debugPrint('Order mapping: Invalid date format ${json['created_at']}');
       parsedDate = DateTime.now();
@@ -79,9 +90,15 @@ class Order {
 
     return Order(
       id: (json['id'] ?? '').toString(),
-      subtotal: (json['subtotal'] is String) ? double.tryParse(json['subtotal']) ?? 0.0 : (json['subtotal'] as num?)?.toDouble() ?? 0.0,
-      deliveryCost: (json['delivery_cost'] is String) ? double.tryParse(json['delivery_cost']) ?? 0.0 : (json['delivery_cost'] as num?)?.toDouble() ?? 0.0,
-      grandTotal: (json['grand_total'] is String) ? double.tryParse(json['grand_total']) ?? 0.0 : (json['grand_total'] as num?)?.toDouble() ?? 0.0,
+      subtotal: (json['subtotal'] is String)
+          ? double.tryParse(json['subtotal']) ?? 0.0
+          : (json['subtotal'] as num?)?.toDouble() ?? 0.0,
+      deliveryCost: (json['delivery_cost'] is String)
+          ? double.tryParse(json['delivery_cost']) ?? 0.0
+          : (json['delivery_cost'] as num?)?.toDouble() ?? 0.0,
+      grandTotal: (json['grand_total'] is String)
+          ? double.tryParse(json['grand_total']) ?? 0.0
+          : (json['grand_total'] as num?)?.toDouble() ?? 0.0,
       items: fetchedItems,
       orderDate: parsedDate,
       name: json['name'] ?? '',

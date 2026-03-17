@@ -14,10 +14,10 @@ class CategoryProductsScreen extends StatefulWidget {
   final String categoryName;
 
   const CategoryProductsScreen({
-    Key? key,
+    super.key,
     required this.categorySlug,
     required this.categoryName,
-  }) : super(key: key);
+  });
 
   @override
   State<CategoryProductsScreen> createState() => _CategoryProductsScreenState();
@@ -26,7 +26,8 @@ class CategoryProductsScreen extends StatefulWidget {
 class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   late TextEditingController _searchController;
   List<Product> _filteredProducts = []; // To store filtered products
-  final ScrollController _scrollController = ScrollController(); // Add ScrollController
+  final ScrollController _scrollController =
+      ScrollController(); // Add ScrollController
 
   @override
   void initState() {
@@ -36,22 +37,28 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
     // Fetch products when the screen initializes
     Future.delayed(Duration.zero).then((_) {
       if (!mounted) return; // Add mounted check here
-      Provider.of<ProductProvider>(
-        context,
-        listen: false,
-      ).fetchProducts(categorySlug: widget.categorySlug, clearProducts: true).then((_) { // Use fetchProducts directly
-        if (!mounted) return; // Add mounted check here
-        _filterProducts(); // Initial filtering after products are fetched
-      });
+      Provider.of<ProductProvider>(context, listen: false)
+          .fetchProducts(categorySlug: widget.categorySlug, clearProducts: true)
+          .then((_) {
+            // Use fetchProducts directly
+            if (!mounted) return; // Add mounted check here
+            _filterProducts(); // Initial filtering after products are fetched
+          });
     });
 
-    _searchController.addListener(_filterProducts); // Listen to search input changes
+    _searchController.addListener(
+      _filterProducts,
+    ); // Listen to search input changes
 
     // Add listener to scroll controller for infinite scrolling
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+      if (_scrollController.position.pixels ==
+          _scrollController.position.maxScrollExtent) {
         // User has scrolled to the end, fetch more products
-        final productProvider = Provider.of<ProductProvider>(context, listen: false);
+        final productProvider = Provider.of<ProductProvider>(
+          context,
+          listen: false,
+        );
         if (productProvider.hasMore && !productProvider.isFetchingMore) {
           productProvider.fetchNextPage(categorySlug: widget.categorySlug);
         }
@@ -87,23 +94,33 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
         Navigator.of(context).pushReplacementNamed('/cart'); // Cart
         break;
       case 3:
-        Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
+        Navigator.of(
+          context,
+        ).pushReplacementNamed('/shipping-address'); // Shipping
         break;
       case 4:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        if (!mounted) return; // Re-check mounted after potentially long Provider operation
+        if (!mounted)
+          return; // Re-check mounted after potentially long Provider operation
         if (authProvider.isAuthenticated) {
           if (authProvider.user!.role == UserRole.admin) {
-            Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+            Navigator.of(
+              context,
+            ).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
           } else {
-            Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
+            Navigator.of(context).pushReplacementNamed(
+              '/account',
+            ); // Navigate to Account for other roles
           }
         } else {
-          Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
+          Navigator.of(
+            context,
+          ).pushReplacementNamed('/login'); // Navigate to Login
         }
         break;
     }
   }
+
   void _filterProducts() {
     final productProvider = Provider.of<ProductProvider>(
       context,
@@ -156,10 +173,17 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
             ),
-            itemCount: productsToDisplay.length + (productProvider.isFetchingMore ? 1 : 0), // Add 1 for loading indicator
+            itemCount:
+                productsToDisplay.length +
+                (productProvider.isFetchingMore
+                    ? 1
+                    : 0), // Add 1 for loading indicator
             itemBuilder: (ctx, i) {
-              if (i == productsToDisplay.length && productProvider.isFetchingMore) {
-                return const Center(child: CircularProgressIndicator()); // Loading indicator
+              if (i == productsToDisplay.length &&
+                  productProvider.isFetchingMore) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                ); // Loading indicator
               }
               final product = productsToDisplay[i];
               return GestureDetector(
@@ -241,7 +265,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 class ProductItem extends StatelessWidget {
   final Product product;
 
-  const ProductItem({Key? key, required this.product}) : super(key: key);
+  const ProductItem({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -273,7 +297,11 @@ class ProductItem extends StatelessWidget {
               locale: 'en_BD',
               symbol: '৳ ',
             ).format(product.price),
-            style: TextStyle(fontSize: 14, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

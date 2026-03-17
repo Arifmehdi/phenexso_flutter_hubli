@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hubli/models/product.dart';
-import 'package:hubli/utils/colors.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/cart_provider.dart';

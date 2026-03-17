@@ -252,12 +252,15 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
   Widget build(BuildContext context) {
     return Consumer<RiderDashboardProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading)
+        if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
-        if (provider.errorMessage != null)
+        }
+        if (provider.errorMessage != null) {
           return Center(child: Text('Error: ${provider.errorMessage}'));
-        if (provider.dashboardData == null)
+        }
+        if (provider.dashboardData == null) {
           return const Center(child: Text('No data available'));
+        }
 
         final data = provider.dashboardData!;
         final stats = data.stats;
@@ -413,12 +416,15 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
   Widget build(BuildContext context) {
     return Consumer<RiderDashboardProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading)
+        if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
-        if (provider.errorMessage != null)
+        }
+        if (provider.errorMessage != null) {
           return Center(child: Text('Error: ${provider.errorMessage}'));
-        if (provider.activeOrders.isEmpty)
+        }
+        if (provider.activeOrders.isEmpty) {
           return const Center(child: Text('No active orders'));
+        }
 
         return RefreshIndicator(
           onRefresh: () => provider.fetchActiveOrders(),
@@ -617,12 +623,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Consumer<RiderDashboardProvider>(
       builder: (context, provider, child) {
-        if (provider.isLoading)
+        if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
-        if (provider.errorMessage != null)
+        }
+        if (provider.errorMessage != null) {
           return Center(child: Text('Error: ${provider.errorMessage}'));
-        if (provider.orderHistory.isEmpty)
+        }
+        if (provider.orderHistory.isEmpty) {
           return const Center(child: Text('No order history found'));
+        }
 
         return ListView.builder(
           padding: const EdgeInsets.all(12),

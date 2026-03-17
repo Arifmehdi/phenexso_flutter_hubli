@@ -12,18 +12,18 @@ class ProfileEditScreen extends StatefulWidget {
 
 class _ProfileEditScreenState extends State<ProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
-  TextEditingController _nameController = TextEditingController();
-  TextEditingController _fatherNameController = TextEditingController();
-  TextEditingController _addressController = TextEditingController();
-  TextEditingController _bkashNumberController = TextEditingController();
-  TextEditingController _dobController =
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _fatherNameController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _bkashNumberController = TextEditingController();
+  final TextEditingController _dobController =
       TextEditingController(); // Initialize directly
-  TextEditingController _bloodGroupController =
+  final TextEditingController _bloodGroupController =
       TextEditingController(); // Initialize directly
-  TextEditingController _mobileController = TextEditingController();
-  TextEditingController _nidController =
+  final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _nidController =
       TextEditingController(); // Initialize directly
-  TextEditingController _shortBioController = TextEditingController();
+  final TextEditingController _shortBioController = TextEditingController();
 
   @override
   void initState() {
@@ -200,7 +200,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
               ),
               const SizedBox(height: 16.0),
               DropdownButtonFormField<String>(
-                value: _bloodGroupController.text.isEmpty
+                initialValue: _bloodGroupController.text.isEmpty
                     ? null
                     : _bloodGroupController.text,
                 decoration: const InputDecoration(
