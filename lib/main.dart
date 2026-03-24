@@ -45,9 +45,9 @@ import 'package:hubli/services/cart_service.dart';
 import 'package:hubli/services/order_service.dart';
 import 'package:hubli/services/seller_product_service.dart';
 import 'package:hubli/providers/seller_product_provider.dart';
-
 import 'package:hubli/providers/notification_provider.dart';
 import 'package:hubli/screens/notification_screen.dart';
+import 'package:hubli/screens/featured_products_screen.dart'; // Add this import
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -296,6 +296,10 @@ class MyApp extends StatelessWidget {
               case '/notifications':
                 return MaterialPageRoute(
                   builder: (context) => const NotificationScreen(),
+                );
+              case '/featured-products':
+                return MaterialPageRoute(
+                  builder: (context) => const FeaturedProductsScreen(),
                 );
               default:
                 return MaterialPageRoute(

@@ -62,8 +62,11 @@ class ProductProvider with ChangeNotifier {
         final Map<String, dynamic> responseData = json.decode(response.body);
         if (responseData.containsKey('data') && responseData['data'] is List) {
           final List<dynamic> productJsonList = responseData['data'];
-          final List<Product> newProducts =
+          final List<Product> fetchedProducts =
               productJsonList.map((json) => Product.fromJson(json)).toList();
+          
+          // Filter to only include active products
+          final List<Product> newProducts = fetchedProducts.where((p) => p.active == 1).toList();
 
           if (clearProducts) {
             _products = newProducts;

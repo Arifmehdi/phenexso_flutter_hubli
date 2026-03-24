@@ -4,8 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'package:hubli/providers/wishlist_provider.dart'; // Add this import
-import 'package:share_plus/share_plus.dart'; // Add this import
+import 'package:hubli/providers/wishlist_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -18,18 +18,17 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final ScrollController _scrollController = ScrollController();
-  final PageController _pageController =
-      PageController(); // Added PageController
-  int _currentImageIndex = 0; // Added current image index
+  final PageController _pageController = PageController();
+  int _currentImageIndex = 0;
   Color _appBarColor = Colors.transparent;
   Color _iconColor = Colors.white;
+  bool _showBackToTop = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
     _pageController.addListener(() {
-      // Listen to page changes
       setState(() {
         _currentImageIndex = _pageController.page?.round() ?? 0;
       });
@@ -40,13 +39,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-    _pageController.dispose(); // Dispose PageController
+    _pageController.dispose();
     super.dispose();
   }
 
   void _onScroll() {
     if (_scrollController.hasClients) {
       final offset = _scrollController.offset;
+      
+      setState(() {
+        _showBackToTop = offset > 300;
+      });
+
       if (offset > 250) {
         if (_appBarColor != Colors.white) {
           setState(() {
@@ -71,7 +75,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       decoration: BoxDecoration(
         color: _appBarColor == Colors.transparent
             ? Colors.grey.withOpacity(0.5)
-            : Colors.transparent, // Changed to ash with transparency
+            : Colors.transparent,
         shape: BoxShape.circle,
       ),
       child: Stack(
@@ -103,6 +107,263 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  void _showAddToCartBottomSheet(
+    BuildContext context, {
+    bool isBuyNow = false,
+  }) {
+    int quantity = 1;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final bottomPadding = MediaQuery.of(context).padding.bottom;
+            return SizedBox(
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  10,
+                  20,
+                  bottomPadding + 20,
+                ), // Significantly increased bottom padding
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Handle for aesthetic
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: 15),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+
+                    // Header Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isBuyNow ? 'Buy This Item' : 'Product Options',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close, size: 28),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Product Summary Row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            widget.product.imageUrls[0],
+                            width: 110,
+                            height: 110,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  width: 110,
+                                  height: 110,
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.image_not_supported),
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.product.name,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                NumberFormat.currency(
+                                  locale: 'en_BD',
+                                  symbol: '৳ ',
+                                ).format(widget.product.price),
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Available Stock: ${widget.product.stock}',
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+                    const Divider(),
+                    const SizedBox(height: 30),
+
+                    // Quantity Selector
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Select Quantity',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'How many items do you need?',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                onPressed: quantity > 1
+                                    ? () => setModalState(() => quantity--)
+                                    : null,
+                                icon: const Icon(Icons.remove_circle_outline),
+                                color: quantity > 1
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.grey,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                child: Text(
+                                  quantity.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () =>
+                                    setModalState(() => quantity++),
+                                icon: const Icon(Icons.add_circle_outline),
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const Spacer(), // Push the button to the bottom
+                    // Confirmation Button at the bottom visible area
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          try {
+                            final cart = Provider.of<CartProvider>(
+                              context,
+                              listen: false,
+                            );
+                            // Add product to cart multiple times based on quantity
+                            for (int i = 0; i < quantity; i++) {
+                              await cart.addItem(widget.product);
+                            }
+
+                            if (!context.mounted) return;
+                            Navigator.pop(context);
+
+                            if (isBuyNow) {
+                              Navigator.of(
+                                context,
+                              ).pushNamed('/shipping-address');
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '${widget.product.name} added to cart!',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          } catch (error) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed: $error')),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          elevation: 2,
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          isBuyNow
+                              ? 'Proceed to Purchase'
+                              : 'Add to Shopping Cart',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
@@ -128,7 +389,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     isFavorite ? Icons.favorite : Icons.favorite_border,
                     () {
                       wishlist.toggleWishlist(widget.product);
-                      if (!mounted) return; // Add mounted check here
+                      if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -144,21 +405,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 },
               ),
               _buildIcon(Icons.share, () {
-                // Share icon
                 Share.share(
                   'Check out this product: ${widget.product.name} - \$${widget.product.price.toStringAsFixed(2)} '
                   'Link: https://hublibd.com/products/${widget.product.id}',
-                ); // Placeholder link
+                );
               }),
               _buildIcon(Icons.shopping_cart, () {
-                // Swapped order
                 Navigator.of(context).pushNamed('/cart');
-              }, itemCount: cart.itemCount), // Pass cart item count
-              _buildIcon(Icons.search, () {}), // Swapped order
+              }, itemCount: cart.itemCount),
+              _buildIcon(Icons.search, () {}),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
-                // Use Stack to layer PageView and indicator
                 children: [
                   PageView.builder(
                     controller: _pageController,
@@ -181,7 +439,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     },
                   ),
                   Positioned(
-                    // Pagination indicator
                     bottom: 10,
                     left: 0,
                     right: 0,
@@ -208,7 +465,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           SliverList(
             delegate: SliverChildListDelegate([
-              // Thumbnail image strip
               if (widget.product.imageUrls.length > 1)
                 SizedBox(
                   height: 80.0,
@@ -287,7 +543,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       children: [
                         const Icon(Icons.star, color: Colors.amber, size: 20),
                         Text(
-                          '${widget.product.rating} (${(widget.product.rating * 20).toInt()} reviews)', // Placeholder for review count
+                          '${widget.product.rating} (${(widget.product.rating * 20).toInt()} reviews)',
                           style: const TextStyle(fontSize: 18),
                         ),
                       ],
@@ -318,30 +574,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ],
       ),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              mini: true,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.arrow_upward, color: Colors.white),
+            )
+          : null,
       bottomNavigationBar: BottomAppBar(
-        color: Colors.white, // Changed to white
+        color: Colors.white,
         child: Row(
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () async {
-                  try {
-                    final cart = Provider.of<CartProvider>(
-                      context,
-                      listen: false,
-                    );
-                    await cart.addItem(
-                      widget.product,
-                    ); // Add to cart before buying
-                    if (!mounted) return;
-                    Navigator.of(context).pushNamed('/shipping-address');
-                  } catch (error) {
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to add to cart: $error')),
-                    );
-                  }
-                },
+                onPressed: () =>
+                    _showAddToCartBottomSheet(context, isBuyNow: true),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
@@ -354,40 +608,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: () async {
-                  debugPrint(
-                    'Add to Cart button pressed for product: ${widget.product.name}',
-                  );
-                  try {
-                    final cart = Provider.of<CartProvider>(
-                      context,
-                      listen: false,
-                    );
-                    await cart.addItem(widget.product);
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${widget.product.name} added to cart!'),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  } catch (error) {
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to add to cart: $error')),
-                    );
-                  }
-                },
+                onPressed: () =>
+                    _showAddToCartBottomSheet(context, isBuyNow: false),
                 icon: const Icon(Icons.add_shopping_cart),
                 label: const Text('Add to Cart'),
                 style: ElevatedButton.styleFrom(
-                  // backgroundColor: const Color(0xFFDEFFEC), // Removed hardcoded color
-                  // foregroundColor: Colors.black, // Removed hardcoded color
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      8.0,
-                    ), // Added border radius
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
               ),

@@ -50,6 +50,14 @@ class Order {
   final String paymentStatus;
   final String orderStatus;
   final String? orderNote;
+  
+  // Timestamps
+  final DateTime? pendingAt;
+  final DateTime? confirmedAt;
+  final DateTime? readyToShipAt;
+  final DateTime? shippedAt;
+  final DateTime? deliveredAt;
+  final DateTime? canceledAt;
 
   Order({
     required this.id,
@@ -66,6 +74,12 @@ class Order {
     required this.paymentStatus,
     required this.orderStatus,
     this.orderNote,
+    this.pendingAt,
+    this.confirmedAt,
+    this.readyToShipAt,
+    this.shippedAt,
+    this.deliveredAt,
+    this.canceledAt,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -77,7 +91,16 @@ class Order {
         .map((i) => OrderItem.fromJson(i))
         .toList();
 
-    // Safe date parsing
+    // Safe date parsing helper
+    DateTime? _parseDateTime(dynamic value) {
+      if (value == null) return null;
+      try {
+        return DateTime.parse(value.toString()).toLocal();
+      } catch (e) {
+        return null;
+      }
+    }
+
     DateTime parsedDate;
     try {
       parsedDate = DateTime.parse(
@@ -109,6 +132,12 @@ class Order {
       paymentStatus: json['payment_status'] ?? 'pending',
       orderStatus: json['order_status'] ?? 'pending',
       orderNote: json['order_note'],
+      pendingAt: _parseDateTime(json['pending_at']),
+      confirmedAt: _parseDateTime(json['confirmed_at']),
+      readyToShipAt: _parseDateTime(json['ready_to_ship_at']),
+      shippedAt: _parseDateTime(json['shiped_at']), // Matching 'shiped_at' from backend
+      deliveredAt: _parseDateTime(json['delivered_at']),
+      canceledAt: _parseDateTime(json['canceled_at']),
     );
   }
 }

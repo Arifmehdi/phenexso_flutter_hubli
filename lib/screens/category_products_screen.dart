@@ -28,6 +28,7 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
   List<Product> _filteredProducts = []; // To store filtered products
   final ScrollController _scrollController =
       ScrollController(); // Add ScrollController
+  bool _showBackToTop = false;
 
   @override
   void initState() {
@@ -52,6 +53,10 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
     // Add listener to scroll controller for infinite scrolling
     _scrollController.addListener(() {
+      setState(() {
+        _showBackToTop = _scrollController.offset > 300;
+      });
+
       if (_scrollController.position.pixels ==
           _scrollController.position.maxScrollExtent) {
         // User has scrolled to the end, fetch more products
@@ -198,6 +203,20 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           );
         },
       ),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              mini: true,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.arrow_upward, color: Colors.white),
+            )
+          : null,
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         items: <BottomNavigationBarItem>[

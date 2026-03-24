@@ -11,13 +11,29 @@ class OrderHistoryScreen extends StatefulWidget {
 }
 
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTop = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     Future.microtask(() {
       final provider = Provider.of<OrderProvider>(context, listen: false);
       // Always fetch fresh data when entering the history screen
       provider.fetchAndSetOrders();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    setState(() {
+      _showBackToTop = _scrollController.offset > 300;
     });
   }
 
@@ -42,6 +58,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             onRefresh: () => orderData.fetchAndSetOrders(),
             child: orderData.orders.isEmpty
                 ? ListView(
+                    controller: _scrollController,
                     children: [
                       const SizedBox(height: 100),
                       const Center(
@@ -74,6 +91,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     ],
                   )
                 : ListView.builder(
+                    controller: _scrollController,
                     itemCount: orderData.orders.length,
                     itemBuilder: (ctx, i) {
                       final order = orderData.orders[i];
@@ -192,6 +210,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           );
         },
       ),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              mini: true,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.arrow_upward, color: Colors.white),
+            )
+          : null,
     );
   }
 

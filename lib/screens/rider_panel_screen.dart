@@ -24,14 +24,6 @@ class RiderPanelScreen extends StatefulWidget {
 class _RiderPanelScreenState extends State<RiderPanelScreen> {
   int _selectedIndex = 4; // Initialized to Account (index 4)
 
-  final List<Widget> _widgetOptions = <Widget>[
-    const SizedBox.shrink(), // Index 0 is Home
-    const ActiveOrdersScreen(), // Index 1
-    const HistoryScreen(), // Index 2
-    const RiderChatUsersScreen(), // Index 3
-    const RiderDashboardHome(), // Index 4
-  ];
-
   void _onItemTapped(int index) {
     if (index == 0) {
       Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
@@ -50,6 +42,14 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
     if (_selectedIndex == 2) title = 'Order History';
     if (_selectedIndex == 3) title = 'Messages';
 
+    final List<Widget> widgetOptions = <Widget>[
+      const SizedBox.shrink(), // Index 0 is Home
+      const ActiveOrdersScreen(), // Index 1
+      const HistoryScreen(), // Index 2
+      const RiderChatUsersScreen(), // Index 3
+      RiderDashboardHome(onTabChange: _onItemTapped), // Index 4
+    ];
+
     return Scaffold(
       appBar: CustomAppBar(
         title: title,
@@ -60,7 +60,7 @@ class _RiderPanelScreenState extends State<RiderPanelScreen> {
         selectedIndex: _selectedIndex,
         onTabChange: _onItemTapped,
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
+      body: widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
@@ -94,6 +94,10 @@ class RiderDrawer extends StatelessWidget {
 
   Future<void> _logout(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final riderDashboardProvider = Provider.of<RiderDashboardProvider>(
+      context,
+      listen: false,
+    );
     try {
       final response = await http.post(
         Uri.parse(ApiConstants.logoutEndpoint),
@@ -105,6 +109,7 @@ class RiderDrawer extends StatelessWidget {
 
       if (response.statusCode == 200) {
         await authProvider.logout();
+        riderDashboardProvider.clearDashboardData();
         if (!context.mounted) return;
         Navigator.of(
           context,
@@ -139,12 +144,16 @@ class RiderDrawer extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage: authProvider.user?.image != null
-                      ? NetworkImage(authProvider.user!.image!)
-                      : null,
-                  child: authProvider.user?.image == null
-                      ? Text(authProvider.user?.name[0].toUpperCase() ?? 'R')
-                      : null,
+                  backgroundImage:
+                      authProvider.user?.image != null
+                          ? NetworkImage(authProvider.user!.image!)
+                          : null,
+                  child:
+                      authProvider.user?.image == null
+                          ? Text(
+                            authProvider.user?.name[0].toUpperCase() ?? 'R',
+                          )
+                          : null,
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -177,7 +186,23 @@ class RiderDrawer extends StatelessWidget {
             selected: selectedIndex == 1,
             onTap: () {
               Navigator.pop(context);
+              Provider.of<RiderDashboardProvider>(
+                context,
+                listen: false,
+              ).setStatusFilter('All');
               onTabChange(1);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.list_alt),
+            title: const Text('All Orders'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AllOrdersScreen(),
+                ),
+              );
             },
           ),
           ListTile(
@@ -186,6 +211,10 @@ class RiderDrawer extends StatelessWidget {
             selected: selectedIndex == 2,
             onTap: () {
               Navigator.pop(context);
+              Provider.of<RiderDashboardProvider>(
+                context,
+                listen: false,
+              ).setStatusFilter('All');
               onTabChange(2);
             },
           ),
@@ -230,22 +259,62 @@ class RiderDrawer extends StatelessWidget {
 
 class RiderDashboardHome extends StatefulWidget {
   final bool isEmbedded;
-  const RiderDashboardHome({super.key, this.isEmbedded = false});
+  final Function(int)? onTabChange;
+  const RiderDashboardHome({super.key, this.isEmbedded = false, this.onTabChange});
 
   @override
   State<RiderDashboardHome> createState() => _RiderDashboardHomeState();
 }
 
 class _RiderDashboardHomeState extends State<RiderDashboardHome> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTop = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     Future.microtask(
       () => Provider.of<RiderDashboardProvider>(
         context,
         listen: false,
       ).fetchDashboardData(),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    setState(() {
+      _showBackToTop = _scrollController.offset > 300;
+    });
+  }
+
+  void _handleStatTap(String status) {
+    if (status == 'All') {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const AllOrdersScreen(),
+        ),
+      );
+      return;
+    }
+
+    if (widget.onTabChange == null) return;
+
+    final provider = Provider.of<RiderDashboardProvider>(context, listen: false);
+
+    if (status == 'delivered') {
+      provider.setStatusFilter('delivered');
+      widget.onTabChange!(2); // Order History
+    } else {
+      provider.setStatusFilter(status);
+      widget.onTabChange!(1); // Active Orders
+    }
   }
 
   @override
@@ -290,24 +359,28 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
                   stats.totalOrders.toString(),
                   Icons.assignment,
                   Colors.blue,
+                  onTap: () => _handleStatTap('All'),
                 ),
                 _buildStatCard(
                   'Pending',
                   stats.pendingOrders.toString(),
                   Icons.pending_actions,
                   Colors.orange,
+                  onTap: () => _handleStatTap('pending'),
                 ),
                 _buildStatCard(
                   'Shipped',
                   stats.shippedOrders.toString(),
                   Icons.local_shipping,
                   Colors.purple,
+                  onTap: () => _handleStatTap('shipped'),
                 ),
                 _buildStatCard(
                   'Delivered',
                   stats.deliveredOrders.toString(),
                   Icons.check_circle,
                   Colors.green,
+                  onTap: () => _handleStatTap('delivered'),
                 ),
               ],
             ),
@@ -335,9 +408,26 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
           return content;
         }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: content,
+        return Scaffold(
+          body: SingleChildScrollView(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16.0),
+            child: content,
+          ),
+          floatingActionButton: _showBackToTop
+              ? FloatingActionButton(
+                  onPressed: () {
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  mini: true,
+                  backgroundColor: Theme.of(context).primaryColor,
+                  child: const Icon(Icons.arrow_upward, color: Colors.white),
+                )
+              : null,
         );
       },
     );
@@ -347,26 +437,31 @@ class _RiderDashboardHomeState extends State<RiderDashboardHome> {
     String title,
     String value,
     IconData icon,
-    Color color,
-  ) {
+    Color color, {
+    VoidCallback? onTap,
+  }) {
     return Card(
       elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                title,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -401,9 +496,14 @@ class ActiveOrdersScreen extends StatefulWidget {
 }
 
 class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
+  final Map<String, TextEditingController> _noteControllers = {};
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTop = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     Future.microtask(
       () => Provider.of<RiderDashboardProvider>(
         context,
@@ -413,150 +513,225 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<RiderDashboardProvider>(
-      builder: (context, provider, child) {
-        if (provider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (provider.errorMessage != null) {
-          return Center(child: Text('Error: ${provider.errorMessage}'));
-        }
-        if (provider.activeOrders.isEmpty) {
-          return const Center(child: Text('No active orders'));
-        }
+  void dispose() {
+    for (var controller in _noteControllers.values) {
+      controller.dispose();
+    }
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-        return RefreshIndicator(
-          onRefresh: () => provider.fetchActiveOrders(),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: provider.activeOrders.length,
-            itemBuilder: (context, index) {
-              final order = provider.activeOrders[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          RiderOrderDetailScreen(order: order),
+  void _onScroll() {
+    setState(() {
+      _showBackToTop = _scrollController.offset > 300;
+    });
+  }
+
+  TextEditingController _getController(String orderId) {
+    if (!_noteControllers.containsKey(orderId)) {
+      _noteControllers[orderId] = TextEditingController();
+    }
+    return _noteControllers[orderId]!;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Consumer<RiderDashboardProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (provider.errorMessage != null) {
+            return Center(child: Text('Error: ${provider.errorMessage}'));
+          }
+          
+          final baseOrders = provider.activeOrders;
+          
+          final filteredOrders = baseOrders.where((order) {
+            if (provider.selectedStatusFilter == 'All') return true;
+            return order.orderStatus.toLowerCase() == provider.selectedStatusFilter.toLowerCase();
+          }).toList();
+
+          if (filteredOrders.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('No orders found'),
+                  if (provider.selectedStatusFilter != 'All')
+                    TextButton(
+                      onPressed: () => provider.setStatusFilter('All'),
+                      child: const Text('Show All Orders'),
                     ),
-                  );
-                },
-                child: Card(
-                  elevation: 3,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Order #${order.id}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    (order.orderStatus == 'shipped'
-                                            ? Colors.blue
-                                            : Colors.orange)
-                                        .withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                order.orderStatus.toUpperCase(),
-                                style: TextStyle(
-                                  color: order.orderStatus == 'shipped'
-                                      ? Colors.blue
-                                      : Colors.orange,
-                                  fontSize: 12,
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => provider.fetchActiveOrders(),
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(12),
+              itemCount: filteredOrders.length,
+              itemBuilder: (context, index) {
+                final order = filteredOrders[index];
+                final noteController = _getController(order.id);
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RiderOrderDetailScreen(order: order),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    elevation: 3,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Order #${order.id}',
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 24),
-                        _buildInfoRow(Icons.person, 'Customer: ${order.name}'),
-                        _buildInfoRow(Icons.phone, 'Phone: ${order.mobile}'),
-                        _buildInfoRow(
-                          Icons.location_on,
-                          'Address: ${order.addressTitle}',
-                        ),
-                        _buildInfoRow(
-                          Icons.payments,
-                          'Amount: ৳${order.grandTotal.toStringAsFixed(2)}',
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton(
-                              onPressed: order.orderStatus != 'shipped'
-                                  ? () => _updateStatus(
-                                      context,
-                                      order.id,
-                                      'shipped',
-                                    )
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: Colors.grey[300],
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      (order.orderStatus == 'shipped'
+                                              ? Colors.blue
+                                              : Colors.orange)
+                                          .withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  order.orderStatus.toUpperCase(),
+                                  style: TextStyle(
+                                    color: order.orderStatus == 'shipped'
+                                        ? Colors.blue
+                                        : Colors.orange,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                              child: const Text('Shipped'),
-                            ),
-                            ElevatedButton(
-                              onPressed: order.orderStatus == 'shipped'
-                                  ? () => _updateStatus(
-                                      context,
-                                      order.id,
-                                      'delivered',
-                                    )
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: Colors.grey[300],
+                            ],
+                          ),
+                          const Divider(height: 24),
+                          _buildInfoRow(Icons.person, 'Customer: ${order.name}'),
+                          _buildInfoRow(Icons.phone, 'Phone: ${order.mobile}'),
+                          _buildInfoRow(
+                            Icons.location_on,
+                            'Address: ${order.addressTitle}',
+                          ),
+                          _buildInfoRow(
+                            Icons.payments,
+                            'Amount: ৳${order.grandTotal.toStringAsFixed(2)}',
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: noteController,
+                            decoration: const InputDecoration(
+                              hintText: 'Add a note (optional)',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
                               ),
-                              child: const Text('Delivered'),
                             ),
-                            ElevatedButton(
-                              onPressed: order.orderStatus == 'shipped'
-                                  ? () => _updateStatus(
-                                      context,
-                                      order.id,
-                                      'canceled',
-                                    )
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: Colors.grey[300],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton(
+                                onPressed: order.orderStatus != 'shipped'
+                                    ? () => _updateStatus(
+                                        context,
+                                        order.id,
+                                        'shipped',
+                                        noteController.text,
+                                      )
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor: Colors.grey[300],
+                                ),
+                                child: const Text('Shipped'),
                               ),
-                              child: const Text('Cancel'),
-                            ),
-                          ],
-                        ),
-                      ],
+                              ElevatedButton(
+                                onPressed: order.orderStatus == 'shipped'
+                                    ? () => _updateStatus(
+                                        context,
+                                        order.id,
+                                        'delivered',
+                                        noteController.text,
+                                      )
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor: Colors.grey[300],
+                                ),
+                                child: const Text('Delivered'),
+                              ),
+                              ElevatedButton(
+                                onPressed: order.orderStatus == 'shipped'
+                                    ? () => _updateStatus(
+                                        context,
+                                        order.id,
+                                        'canceled',
+                                        noteController.text,
+                                      )
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor: Colors.grey[300],
+                                ),
+                                child: const Text('Cancel'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-        );
-      },
+                );
+              },
+            ),
+          );
+        },
+      ),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              mini: true,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.arrow_upward, color: Colors.white),
+            )
+          : null,
     );
   }
 
@@ -573,7 +748,12 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
     );
   }
 
-  void _updateStatus(BuildContext context, String orderId, String status) {
+  void _updateStatus(
+    BuildContext context,
+    String orderId,
+    String status,
+    String note,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -585,12 +765,18 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
             child: const Text('No'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Provider.of<RiderDashboardProvider>(
-                context,
-                listen: false,
-              ).updateOrderStatus(orderId, status);
+              try {
+                await Provider.of<RiderDashboardProvider>(
+                  context,
+                  listen: false,
+                ).updateOrderStatus(orderId, status, note: note);
+                // Clear the note field on success
+                _noteControllers[orderId]?.clear();
+              } catch (e) {
+                // Error handled by provider
+              }
             },
             child: const Text('Yes'),
           ),
@@ -608,9 +794,13 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTop = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     Future.microtask(
       () => Provider.of<RiderDashboardProvider>(
         context,
@@ -620,60 +810,203 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<RiderDashboardProvider>(
-      builder: (context, provider, child) {
-        if (provider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (provider.errorMessage != null) {
-          return Center(child: Text('Error: ${provider.errorMessage}'));
-        }
-        if (provider.orderHistory.isEmpty) {
-          return const Center(child: Text('No order history found'));
-        }
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(12),
-          itemCount: provider.orderHistory.length,
-          itemBuilder: (context, index) {
-            final order = provider.orderHistory[index];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: order.paymentStatus == 'paid'
-                      ? Colors.green
-                      : Colors.grey,
-                  child: const Icon(Icons.check, color: Colors.white),
-                ),
-                title: Text('Order #${order.id}'),
-                subtitle: Text(
-                  'Date: ${DateFormat('yyyy-MM-dd').format(order.orderDate)}\nTotal: ৳${order.grandTotal.toStringAsFixed(2)}',
-                ),
-                trailing: Text(
-                  order.paymentStatus.toUpperCase(),
-                  style: TextStyle(
-                    color: order.paymentStatus == 'paid'
-                        ? Colors.green
-                        : Colors.orange,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          RiderOrderDetailScreen(order: order),
+  void _onScroll() {
+    setState(() {
+      _showBackToTop = _scrollController.offset > 300;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Consumer<RiderDashboardProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (provider.errorMessage != null) {
+            return Center(child: Text('Error: ${provider.errorMessage}'));
+          }
+          
+          final filteredOrders = provider.orderHistory.where((order) {
+            if (provider.selectedStatusFilter == 'All') return true;
+            return order.orderStatus.toLowerCase() == provider.selectedStatusFilter.toLowerCase();
+          }).toList();
+
+          if (filteredOrders.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('No order history found'),
+                  if (provider.selectedStatusFilter != 'All')
+                    TextButton(
+                      onPressed: () => provider.setStatusFilter('All'),
+                      child: const Text('Show All Orders'),
                     ),
-                  );
-                },
+                ],
               ),
             );
-          },
-        );
-      },
+          }
+
+          return ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(12),
+            itemCount: filteredOrders.length,
+            itemBuilder: (context, index) {
+              final order = filteredOrders[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: order.paymentStatus == 'paid'
+                        ? Colors.green
+                        : Colors.grey,
+                    child: const Icon(Icons.check, color: Colors.white),
+                  ),
+                  title: Text('Order #${order.id}'),
+                  subtitle: Text(
+                    'Date: ${DateFormat('yyyy-MM-dd').format(order.orderDate)}\nTotal: ৳${order.grandTotal.toStringAsFixed(2)}',
+                  ),
+                  trailing: Text(
+                    order.paymentStatus.toUpperCase(),
+                    style: TextStyle(
+                      color: order.paymentStatus == 'paid'
+                          ? Colors.green
+                          : Colors.orange,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RiderOrderDetailScreen(order: order),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              mini: true,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.arrow_upward, color: Colors.white),
+            )
+          : null,
+    );
+  }
+}
+
+class AllOrdersScreen extends StatefulWidget {
+  const AllOrdersScreen({super.key});
+
+  @override
+  State<AllOrdersScreen> createState() => _AllOrdersScreenState();
+}
+
+class _AllOrdersScreenState extends State<AllOrdersScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTop = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    setState(() {
+      _showBackToTop = _scrollController.offset > 300;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('All My Orders'),
+      ),
+      body: Consumer<RiderDashboardProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (provider.errorMessage != null) {
+            return Center(child: Text('Error: ${provider.errorMessage}'));
+          }
+
+          final orders = provider.allOrders;
+
+          if (orders.isEmpty) {
+            return const Center(child: Text('No orders found'));
+          }
+
+          return ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(12),
+            itemCount: orders.length,
+            itemBuilder: (context, index) {
+              final order = orders[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  title: Text('Order #${order.id}'),
+                  subtitle: Text(
+                    'Status: ${order.orderStatus.toUpperCase()}\nDate: ${DateFormat('yyyy-MM-dd').format(order.orderDate)}\nTotal: ৳${order.grandTotal.toStringAsFixed(2)}',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RiderOrderDetailScreen(order: order),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              mini: true,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.arrow_upward, color: Colors.white),
+            )
+          : null,
     );
   }
 }

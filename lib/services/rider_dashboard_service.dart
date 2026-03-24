@@ -49,7 +49,7 @@ class RiderDashboardService {
     }
   }
 
-  Future<void> updateOrderStatus(String orderId, String status) async {
+  Future<void> updateOrderStatus(String orderId, String status, {String? note}) async {
     if (_token == null) throw Exception('Authentication token is missing.');
 
     final url = Uri.parse(
@@ -58,7 +58,10 @@ class RiderDashboardService {
     final response = await http.post(
       url,
       headers: _headers,
-      body: json.encode({'status': status}),
+      body: json.encode({
+        'status': status,
+        if (note != null && note.isNotEmpty) 'order_note': note,
+      }),
     );
 
     if (response.statusCode != 200) {

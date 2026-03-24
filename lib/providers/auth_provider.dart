@@ -95,7 +95,7 @@ class AuthProvider with ChangeNotifier {
       if (user.role != UserRole.buyer && user.role != UserRole.user && user.is_approve != 1) {
         print('Login: Approval check failed for role ${user.role} with is_approve ${user.is_approve}');
         await _clearUserAndToken();
-        throw Exception('Your ${user.role.toString().split('.').last.capitalize()} account is pending admin approval. Please wait.');
+        throw Exception('Your ${user.role.toString().split('.').last} account is currently under admin review. Please wait approval will be completed within 24 hours');
       }
       await _saveUserAndToken(token, user);
     } else {

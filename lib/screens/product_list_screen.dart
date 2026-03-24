@@ -20,6 +20,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController =
       ScrollController(); // Add ScrollController
+  bool _showBackToTop = false; // Add state for FAB visibility
 
   // For auto-sliding image carousel
   final PageController _pageController = PageController();
@@ -158,12 +159,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
           }
 
           final products = productProvider.products;
-
-          // Compute categories for display in ChoiceChips
-          final displayedCategories = products
-              .map((product) => product.category)
-              .toSet()
-              .toList();
 
           // Compute filtered products (only by search query)
           final currentFilteredProducts = products.where((product) {
@@ -327,7 +322,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           IconButton(
                             icon: const Icon(Icons.arrow_forward_ios),
                             onPressed: () {
-                              print('View All Deals tapped');
+                              Navigator.of(context).pushNamed('/featured-products');
                             },
                             iconSize: 14.0,
                             padding: EdgeInsets.zero,
@@ -336,89 +331,112 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         ],
                       ),
                       const SizedBox(height: 8.0),
-                      SizedBox(
-                        height: 220,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: products.take(5).map((product) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 10.0),
-                                child: SizedBox(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.35,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.of(context).pushNamed(
-                                        '/product-detail',
-                                        arguments: product,
-                                      );
-                                    },
-                                    child: Card(
-                                      elevation: 2.0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          8.0,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          AspectRatio(
-                                            aspectRatio: 1.0,
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  const BorderRadius.vertical(
-                                                    top: Radius.circular(8.0),
-                                                  ),
-                                              child: _buildProductImage(
-                                                product.imageUrls,
-                                              ),
+                      Builder(
+                        builder: (context) {
+                          final featuredProducts = products.where((p) => p.featured == 1).take(5).toList();
+                          
+                          if (featuredProducts.isEmpty) {
+                            return Container(
+                              height: 220,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  'No deals available now',
+                                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                                ),
+                              ),
+                            );
+                          }
+
+                          return SizedBox(
+                            height: 220,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: featuredProducts.map((product) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 10.0),
+                                    child: SizedBox(
+                                      width:
+                                          MediaQuery.of(context).size.width * 0.35,
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.of(context).pushNamed(
+                                            '/product-detail',
+                                            arguments: product,
+                                          );
+                                        },
+                                        child: Card(
+                                          elevation: 2.0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8.0,
                                             ),
                                           ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  '৳ ${NumberFormat.currency(locale: 'en_BD', symbol: '').format(product.price)}',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14.0,
-                                                    color: Color(0xFF008739),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              AspectRatio(
+                                                aspectRatio: 1.0,
+                                                child: ClipRRect(
+                                                  borderRadius:
+                                                      const BorderRadius.vertical(
+                                                        top: Radius.circular(8.0),
+                                                      ),
+                                                  child: _buildProductImage(
+                                                    product.imageUrls,
                                                   ),
                                                 ),
-                                                const SizedBox(height: 2.0),
-                                                Row(
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.all(8.0),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
                                                   children: [
-                                                    Icon(
-                                                      Icons.star,
-                                                      color: Colors.amber,
-                                                      size: 14,
-                                                    ),
                                                     Text(
-                                                      '${product.rating.toStringAsFixed(1)} | 4k sold',
-                                                      style: TextStyle(
-                                                        fontSize: 12.0,
+                                                      '৳ ${NumberFormat.currency(locale: 'en_BD', symbol: '').format(product.price)}',
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 14.0,
+                                                        color: Color(0xFF008739),
                                                       ),
+                                                    ),
+                                                    const SizedBox(height: 2.0),
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.star,
+                                                          color: Colors.amber,
+                                                          size: 14,
+                                                        ),
+                                                        Text(
+                                                          '${product.rating.toStringAsFixed(1)} | 4k sold',
+                                                          style: const TextStyle(
+                                                            fontSize: 12.0,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ],
                                                 ),
-                                              ],
-                                            ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          );
+                        }
                       ),
                     ],
                   ),
@@ -451,21 +469,34 @@ class _ProductListScreenState extends State<ProductListScreen> {
           );
         },
       ),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              mini: true,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.arrow_upward, color: Colors.white),
+            )
+          : null,
     );
   }
 
   void _filterProducts() {
     setState(() {
       // Rebuild will trigger the filtering logic in the build method.
-      // NOTE: This currently performs client-side filtering on the products
-      // that have already been loaded. For a comprehensive search across all
-      // products (including those not yet loaded via pagination),
-      // server-side filtering would be required, potentially by triggering
-      // a new `fetchProducts` call with a search query parameter.
     });
   }
 
   void _onScroll() {
+    setState(() {
+      _showBackToTop = _scrollController.offset > 300;
+    });
+
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
       // User has scrolled to the bottom, fetch more products
@@ -522,9 +553,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
       duration: const Duration(milliseconds: 150),
       margin: const EdgeInsets.symmetric(horizontal: 4.0),
       height: 8.0,
-      width: isActive
-          ? 8.0
-          : 8.0, // Keep same size for simplicity, or make active larger
+      width: 8.0,
       decoration: BoxDecoration(
         color: isActive ? Theme.of(context).primaryColor : Colors.grey[400],
         borderRadius: BorderRadius.circular(4.0),

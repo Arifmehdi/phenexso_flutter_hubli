@@ -57,9 +57,13 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } catch (e) {
         if (!mounted) return; // Add mounted check here
+        String errorMessage = e.toString();
+        if (errorMessage.startsWith('Exception: ')) {
+          errorMessage = errorMessage.substring(11);
+        }
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
       }
     }
   }
