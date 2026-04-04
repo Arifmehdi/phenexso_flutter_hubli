@@ -91,8 +91,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             context,
             listen: false,
           );
-          if (!mounted)
+          if (!mounted) {
             return; // Re-check mounted after potentially long Provider operation
+          }
           if (authProvider.isAuthenticated) {
             if (authProvider.user!.role == UserRole.admin) {
               Navigator.of(

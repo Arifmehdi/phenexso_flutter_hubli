@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/chat_provider.dart';
-import 'package:hubli/models/chat/message.dart';
 import 'package:hubli/widgets/chat/chat_bubble.dart';
 import 'package:hubli/widgets/chat/message_input.dart';
 import 'package:image_picker/image_picker.dart'; // Import ImagePicker
@@ -25,8 +24,9 @@ class ConversationScreen extends StatefulWidget {
 
 class _ConversationScreenState extends State<ConversationScreen> {
   final ImagePicker _picker = ImagePicker(); // ImagePicker instance
-  final ScrollController _scrollController = ScrollController(); // ScrollController for message list
-  
+  final ScrollController _scrollController =
+      ScrollController(); // ScrollController for message list
+
   // Track previous message count to know when new messages arrive
   int _previousMessageCount = 0;
 
@@ -34,12 +34,17 @@ class _ConversationScreenState extends State<ConversationScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ChatProvider>(context, listen: false)
-          .fetchMessages(widget.conversationId);
+      Provider.of<ChatProvider>(
+        context,
+        listen: false,
+      ).fetchMessages(widget.conversationId);
     });
 
     // Add a listener to ChatProvider for new messages
-    Provider.of<ChatProvider>(context, listen: false).addListener(_onChatProviderChange);
+    Provider.of<ChatProvider>(
+      context,
+      listen: false,
+    ).addListener(_onChatProviderChange);
   }
 
   void _onChatProviderChange() {
@@ -79,9 +84,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.conversationTitle),
-      ),
+      appBar: AppBar(title: Text(widget.conversationTitle)),
       body: Column(
         children: [
           Expanded(
@@ -92,10 +95,13 @@ class _ConversationScreenState extends State<ConversationScreen> {
                 }
                 if (chatProvider.errorMessage != null) {
                   return Center(
-                      child: Text('Error: ${chatProvider.errorMessage}'));
+                    child: Text('Error: ${chatProvider.errorMessage}'),
+                  );
                 }
                 if (chatProvider.currentMessages.isEmpty) {
-                  return const Center(child: Text('No messages yet. Say hello!'));
+                  return const Center(
+                    child: Text('No messages yet. Say hello!'),
+                  );
                 }
 
                 return ListView.builder(
@@ -103,23 +109,29 @@ class _ConversationScreenState extends State<ConversationScreen> {
                   controller: _scrollController, // Attach controller
                   itemCount: chatProvider.currentMessages.length,
                   itemBuilder: (context, index) {
-                    final reversedIndex = chatProvider.currentMessages.length - 1 - index;
+                    final reversedIndex =
+                        chatProvider.currentMessages.length - 1 - index;
                     final message = chatProvider.currentMessages[reversedIndex];
-                    
+
                     // Logic to show date separator
                     bool showDateSeparator = false;
                     if (reversedIndex == 0) {
                       showDateSeparator = true;
                     } else {
-                      final prevMessage = chatProvider.currentMessages[reversedIndex - 1];
-                      if (!_isSameDay(message.createdAt, prevMessage.createdAt)) {
+                      final prevMessage =
+                          chatProvider.currentMessages[reversedIndex - 1];
+                      if (!_isSameDay(
+                        message.createdAt,
+                        prevMessage.createdAt,
+                      )) {
                         showDateSeparator = true;
                       }
                     }
 
                     return Column(
                       children: [
-                        if (showDateSeparator) _buildDateSeparator(message.createdAt),
+                        if (showDateSeparator)
+                          _buildDateSeparator(message.createdAt),
                         ChatBubble(message: message),
                       ],
                     );
@@ -130,7 +142,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: SafeArea( // Ensures the input is not obscured by system UI (e.g., gesture navigation)
+            child: SafeArea(
+              // Ensures the input is not obscured by system UI (e.g., gesture navigation)
               child: MessageInput(
                 onSendMessage: (text) {
                   Provider.of<ChatProvider>(context, listen: false).sendMessage(
@@ -193,7 +206,10 @@ class _ConversationScreenState extends State<ConversationScreen> {
   @override
   void dispose() {
     _scrollController.dispose(); // Dispose the controller
-    Provider.of<ChatProvider>(context, listen: false).removeListener(_onChatProviderChange);
+    Provider.of<ChatProvider>(
+      context,
+      listen: false,
+    ).removeListener(_onChatProviderChange);
     super.dispose();
   }
 }

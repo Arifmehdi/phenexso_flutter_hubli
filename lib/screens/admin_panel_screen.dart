@@ -11,7 +11,6 @@ import 'package:hubli/screens/profile_edit_screen.dart';
 import 'package:hubli/screens/password_change_screen.dart';
 import 'package:hubli/screens/contact_support_screen.dart';
 import 'package:hubli/widgets/user_header.dart';
-import 'package:hubli/models/user_role.dart';
 import 'package:intl/intl.dart';
 
 class AdminPanelScreen extends StatefulWidget {
@@ -31,9 +30,18 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (authProvider.isAuthenticated) {
         // Fetch initial data for dashboard metrics
-        Provider.of<AdminUserProvider>(context, listen: false).fetchAllUsers(page: 1);
-        Provider.of<ProductProvider>(context, listen: false).fetchProducts(clearProducts: true);
-        Provider.of<OrderProvider>(context, listen: false).fetchAndSetAllOrders();
+        Provider.of<AdminUserProvider>(
+          context,
+          listen: false,
+        ).fetchAllUsers(page: 1);
+        Provider.of<ProductProvider>(
+          context,
+          listen: false,
+        ).fetchProducts(clearProducts: true);
+        Provider.of<OrderProvider>(
+          context,
+          listen: false,
+        ).fetchAndSetAllOrders();
       }
     });
   }
@@ -71,10 +79,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
         ],
       ),
       drawer: AdminDrawer(
@@ -86,10 +91,16 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Users'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'Products'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag),
+            label: 'Products',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Orders'),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).primaryColor,
@@ -125,12 +136,14 @@ class AdminDrawer extends StatelessWidget {
       if (response.statusCode == 200) {
         await authProvider.logout();
         if (!context.mounted) return;
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/login', (route) => false);
       } else {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Logout failed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Logout failed')));
       }
     } catch (e) {
       if (!context.mounted) return;
@@ -143,7 +156,7 @@ class AdminDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -159,13 +172,21 @@ class AdminDrawer extends StatelessWidget {
                   backgroundColor: Colors.white,
                   child: Text(
                     authProvider.user?.name[0].toUpperCase() ?? 'A',
-                    style: TextStyle(fontSize: 24, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   authProvider.user?.name ?? 'Admin',
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   authProvider.user?.email ?? '',
@@ -225,7 +246,9 @@ class AdminDrawer extends StatelessWidget {
             title: const Text('Edit Profile'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileEditScreen()));
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileEditScreen()),
+              );
             },
           ),
           ListTile(
@@ -233,7 +256,9 @@ class AdminDrawer extends StatelessWidget {
             title: const Text('Change Password'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PasswordChangeScreen()));
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PasswordChangeScreen()),
+              );
             },
           ),
           ListTile(
@@ -241,7 +266,9 @@ class AdminDrawer extends StatelessWidget {
             title: const Text('Contact Support'),
             onTap: () {
               Navigator.pop(context);
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ContactSupportScreen()));
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ContactSupportScreen()),
+              );
             },
           ),
           const Divider(),
@@ -272,10 +299,7 @@ class AdminHomeScreen extends StatelessWidget {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!isEmbedded) ...[
-          const UserHeader(),
-          const SizedBox(height: 24),
-        ],
+        if (!isEmbedded) ...[const UserHeader(), const SizedBox(height: 24)],
         const Text(
           'Admin Overview',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -288,10 +312,30 @@ class AdminHomeScreen extends StatelessWidget {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           children: <Widget>[
-            _buildMetricCard(context, 'Total Users', userProvider.totalUsers.toString(), Icons.people),
-            _buildMetricCard(context, 'Total Products', productProvider.totalProducts.toString(), Icons.shopping_basket),
-            _buildMetricCard(context, 'Total Orders', orderProvider.allOrders.length.toString(), Icons.receipt),
-            _buildMetricCard(context, 'Revenue', '৳${orderProvider.allOrders.fold(0.0, (sum, item) => sum + item.grandTotal).toStringAsFixed(0)}', Icons.attach_money),
+            _buildMetricCard(
+              context,
+              'Total Users',
+              userProvider.totalUsers.toString(),
+              Icons.people,
+            ),
+            _buildMetricCard(
+              context,
+              'Total Products',
+              productProvider.totalProducts.toString(),
+              Icons.shopping_basket,
+            ),
+            _buildMetricCard(
+              context,
+              'Total Orders',
+              orderProvider.allOrders.length.toString(),
+              Icons.receipt,
+            ),
+            _buildMetricCard(
+              context,
+              'Revenue',
+              '৳${orderProvider.allOrders.fold(0.0, (sum, item) => sum + item.grandTotal).toStringAsFixed(0)}',
+              Icons.attach_money,
+            ),
           ],
         ),
       ],
@@ -307,7 +351,12 @@ class AdminHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricCard(BuildContext context, String title, String value, IconData icon) {
+  Widget _buildMetricCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+  ) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -321,8 +370,17 @@ class AdminHomeScreen extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ],
@@ -343,8 +401,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final adminUserProvider = Provider.of<AdminUserProvider>(context, listen: false);
-    if (!adminUserProvider.isLoading && adminUserProvider.users.isEmpty && adminUserProvider.errorMessage == null) {
+    final adminUserProvider = Provider.of<AdminUserProvider>(
+      context,
+      listen: false,
+    );
+    if (!adminUserProvider.isLoading &&
+        adminUserProvider.users.isEmpty &&
+        adminUserProvider.errorMessage == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         adminUserProvider.fetchAllUsers(page: 1);
       });
@@ -360,9 +423,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (adminUserProvider.errorMessage != null) {
-            return Center(child: Text('Error: ${adminUserProvider.errorMessage}'));
+            return Center(
+              child: Text('Error: ${adminUserProvider.errorMessage}'),
+            );
           }
-          if (adminUserProvider.users.isEmpty && adminUserProvider.currentPage == 0) {
+          if (adminUserProvider.users.isEmpty &&
+              adminUserProvider.currentPage == 0) {
             return const Center(child: Text('No users found.'));
           }
 
@@ -375,7 +441,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   children: [
                     Text(
                       'Total Users: ${adminUserProvider.totalUsers}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     Text(
                       'Showing: ${adminUserProvider.users.length}',
@@ -389,36 +458,62 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   itemCount: adminUserProvider.users.length,
                   itemBuilder: (context, index) {
                     final user = adminUserProvider.users[index];
-                    final String roleName = user.role.toString().split('.').last.toUpperCase();
+                    final String roleName = user.role
+                        .toString()
+                        .split('.')
+                        .last
+                        .toUpperCase();
                     final bool isApproved = user.is_approve == 1;
 
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                         leading: CircleAvatar(
                           radius: 22,
-                          backgroundImage: (user.image != null && user.image!.isNotEmpty)
-                              ? NetworkImage('${ApiConstants.baseUrl}/storage/${user.image}')
+                          backgroundImage:
+                              (user.image != null && user.image!.isNotEmpty)
+                              ? NetworkImage(
+                                  '${ApiConstants.baseUrl}/storage/${user.image}',
+                                )
                               : null,
                           child: (user.image == null || user.image!.isEmpty)
-                              ? Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : '?', style: const TextStyle(fontSize: 16))
+                              ? Text(
+                                  user.name.isNotEmpty
+                                      ? user.name[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(fontSize: 16),
+                                )
                               : null,
                         ),
                         title: Row(
                           children: [
                             Expanded(
                               child: Text(
-                                user.name, 
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                user.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 1,
+                              ),
                               decoration: BoxDecoration(
-                                color: isApproved ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                                color: isApproved
+                                    ? Colors.green.withOpacity(0.1)
+                                    : Colors.orange.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -426,7 +521,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
-                                  color: isApproved ? Colors.green : Colors.orange,
+                                  color: isApproved
+                                      ? Colors.green
+                                      : Colors.orange,
                                 ),
                               ),
                             ),
@@ -435,10 +532,20 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(user.email, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis),
-                            Text('Role: $roleName', style: const TextStyle(fontSize: 12)),
+                            Text(
+                              user.email,
+                              style: const TextStyle(fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'Role: $roleName',
+                              style: const TextStyle(fontSize: 12),
+                            ),
                             if (user.mobile != null && user.mobile!.isNotEmpty)
-                              Text('Mob: ${user.mobile}', style: const TextStyle(fontSize: 12)),
+                              Text(
+                                'Mob: ${user.mobile}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
                           ],
                         ),
                         trailing: SizedBox(
@@ -449,17 +556,40 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                               _buildCompactActionIcon(
                                 icon: Icons.edit,
                                 color: Colors.blue,
-                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Edit ${user.name}'))),
+                                onTap: () =>
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Edit ${user.name}'),
+                                      ),
+                                    ),
                               ),
                               _buildCompactActionIcon(
-                                icon: isApproved ? Icons.block : Icons.check_circle,
-                                color: isApproved ? Colors.orange : Colors.green,
-                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isApproved ? 'Suspend ${user.name}' : 'Approve ${user.name}'))),
+                                icon: isApproved
+                                    ? Icons.block
+                                    : Icons.check_circle,
+                                color: isApproved
+                                    ? Colors.orange
+                                    : Colors.green,
+                                onTap: () =>
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          isApproved
+                                              ? 'Suspend ${user.name}'
+                                              : 'Approve ${user.name}',
+                                        ),
+                                      ),
+                                    ),
                               ),
                               _buildCompactActionIcon(
                                 icon: Icons.delete,
                                 color: Colors.red,
-                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete ${user.name}'))),
+                                onTap: () =>
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Delete ${user.name}'),
+                                      ),
+                                    ),
                               ),
                             ],
                           ),
@@ -473,12 +603,16 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 padding: const EdgeInsets.all(8.0),
                 child: adminUserProvider.hasMore
                     ? (adminUserProvider.isFetchingMore
-                        ? const CircularProgressIndicator()
-                        : ElevatedButton(
-                            onPressed: () => adminUserProvider.fetchNextPage(),
-                            child: const Text('Load More'),
-                          ))
-                    : const Text('No more users to load', style: TextStyle(color: Colors.grey)),
+                          ? const CircularProgressIndicator()
+                          : ElevatedButton(
+                              onPressed: () =>
+                                  adminUserProvider.fetchNextPage(),
+                              child: const Text('Load More'),
+                            ))
+                    : const Text(
+                        'No more users to load',
+                        style: TextStyle(color: Colors.grey),
+                      ),
               ),
             ],
           );
@@ -492,7 +626,8 @@ class ProductManagementScreen extends StatefulWidget {
   const ProductManagementScreen({super.key});
 
   @override
-  State<ProductManagementScreen> createState() => _ProductManagementScreenState();
+  State<ProductManagementScreen> createState() =>
+      _ProductManagementScreenState();
 }
 
 class _ProductManagementScreenState extends State<ProductManagementScreen> {
@@ -500,7 +635,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      Provider.of<ProductProvider>(context, listen: false).fetchProducts(clearProducts: true);
+      Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      ).fetchProducts(clearProducts: true);
     });
   }
 
@@ -526,22 +664,46 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 itemBuilder: (context, index) {
                   final product = provider.products[index];
                   return Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      leading: product.imageUrls.isNotEmpty && !product.imageUrls[0].contains('placeholder')
-                          ? Image.network(product.imageUrls[0], width: 45, height: 45, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.image))
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      leading:
+                          product.imageUrls.isNotEmpty &&
+                              !product.imageUrls[0].contains('placeholder')
+                          ? Image.network(
+                              product.imageUrls[0],
+                              width: 45,
+                              height: 45,
+                              fit: BoxFit.cover,
+                              errorBuilder: (c, e, s) =>
+                                  const Icon(Icons.image),
+                            )
                           : const Icon(Icons.image, size: 45),
                       title: Text(
-                        product.name, 
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        product.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Price: ৳${product.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13)),
-                          Text('Stock: ${product.stock}', style: const TextStyle(fontSize: 12)),
+                          Text(
+                            'Price: ৳${product.price.toStringAsFixed(2)}',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          Text(
+                            'Stock: ${product.stock}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ],
                       ),
                       trailing: SizedBox(
@@ -552,12 +714,22 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             _buildCompactActionIcon(
                               icon: Icons.edit,
                               color: Colors.blue,
-                              onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Edit ${product.name}'))),
+                              onTap: () =>
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Edit ${product.name}'),
+                                    ),
+                                  ),
                             ),
                             _buildCompactActionIcon(
                               icon: Icons.delete,
                               color: Colors.red,
-                              onTap: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete ${product.name}'))),
+                              onTap: () =>
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Delete ${product.name}'),
+                                    ),
+                                  ),
                             ),
                           ],
                         ),
@@ -623,23 +795,39 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 child: ExpansionTile(
-                  tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  tilePadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   leading: CircleAvatar(
-                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                    child: Icon(Icons.receipt, color: Theme.of(context).primaryColor),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).primaryColor.withOpacity(0.1),
+                    child: Icon(
+                      Icons.receipt,
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                   title: Row(
                     children: [
                       Expanded(
                         child: Text(
                           'Order #${order.id}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: isPaid ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                          color: isPaid
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.orange.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -656,9 +844,24 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Customer: ${order.name}', style: const TextStyle(fontSize: 13)),
-                      Text('Total: ৳${order.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                      Text('Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(order.orderDate)}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                      Text(
+                        'Customer: ${order.name}',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      Text(
+                        'Total: ৳${order.grandTotal.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                      Text(
+                        'Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(order.orderDate)}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                      ),
                     ],
                   ),
                   children: [
@@ -667,34 +870,78 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Order Items:', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const Text(
+                            'Order Items:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           const Divider(),
-                          ...order.items.map((item) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(child: Text('${item.productName} x ${item.quantity}', style: const TextStyle(fontSize: 13))),
-                                Text('৳${item.totalCost.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13)),
-                              ],
+                          ...order.items.map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${item.productName} x ${item.quantity}',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                  Text(
+                                    '৳${item.totalCost.toStringAsFixed(2)}',
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ],
+                              ),
                             ),
-                          )).toList(),
+                          ),
                           const Divider(),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Grand Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                              Text('৳${order.grandTotal.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green)),
+                              const Text(
+                                'Grand Total',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                '৳${order.grandTotal.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.green,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          const Text('Shipping Details:', style: TextStyle(fontWeight: FontWeight.bold)),
-                          Text('Address: ${order.addressTitle}', style: const TextStyle(fontSize: 13)),
-                          Text('Mobile: ${order.mobile}', style: const TextStyle(fontSize: 13)),
-                          if (order.email != null) Text('Email: ${order.email}', style: const TextStyle(fontSize: 13)),
+                          const Text(
+                            'Shipping Details:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            'Address: ${order.addressTitle}',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          Text(
+                            'Mobile: ${order.mobile}',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          if (order.email != null)
+                            Text(
+                              'Email: ${order.email}',
+                              style: const TextStyle(fontSize: 13),
+                            ),
                           if (order.orderNote != null) ...[
                             const SizedBox(height: 8),
-                            Text('Note: ${order.orderNote}', style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey)),
+                            Text(
+                              'Note: ${order.orderNote}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ],
                           const SizedBox(height: 16),
                           Row(
@@ -703,19 +950,34 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                               _buildCompactActionIcon(
                                 icon: Icons.edit,
                                 color: Colors.blue,
-                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update Status Tapped'))),
+                                onTap: () =>
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Update Status Tapped'),
+                                      ),
+                                    ),
                               ),
                               const SizedBox(width: 8),
                               _buildCompactActionIcon(
                                 icon: Icons.local_shipping,
                                 color: Colors.orange,
-                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ship Order Tapped'))),
+                                onTap: () =>
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Ship Order Tapped'),
+                                      ),
+                                    ),
                               ),
                               const SizedBox(width: 8),
                               _buildCompactActionIcon(
                                 icon: Icons.delete,
                                 color: Colors.red,
-                                onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cancel Order Tapped'))),
+                                onTap: () =>
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Cancel Order Tapped'),
+                                      ),
+                                    ),
                               ),
                             ],
                           ),
@@ -750,12 +1012,19 @@ class MoreAdminOptionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text('More Admin Options (e.g., Settings, Reports)', style: TextStyle(fontSize: 24)),
+      child: Text(
+        'More Admin Options (e.g., Settings, Reports)',
+        style: TextStyle(fontSize: 24),
+      ),
     );
   }
 }
 
-Widget _buildCompactActionIcon({required IconData icon, required Color color, String? tooltip, required VoidCallback onTap}) {
+Widget _buildCompactActionIcon({
+  required IconData icon,
+  required Color color,
+  required VoidCallback onTap,
+}) {
   return InkWell(
     onTap: onTap,
     borderRadius: BorderRadius.circular(20),

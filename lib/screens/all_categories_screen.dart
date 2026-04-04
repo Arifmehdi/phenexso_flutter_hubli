@@ -12,13 +12,29 @@ class AllCategoriesScreen extends StatefulWidget {
 }
 
 class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTop = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     // Fetch categories when the screen is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return; // Add mounted check here
       Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    setState(() {
+      _showBackToTop = _scrollController.offset > 300;
     });
   }
 
@@ -43,6 +59,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
           }
 
           return GridView.builder(
+            controller: _scrollController,
             padding: const EdgeInsets.all(10.0),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
@@ -58,6 +75,20 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
           );
         },
       ),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              mini: true,
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.arrow_upward, color: Colors.white),
+            )
+          : null,
     );
   }
 }

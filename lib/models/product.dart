@@ -2,28 +2,49 @@ class Product {
   final String id;
   final String name;
   final double price;
-  final double purchasePrice; // New field for purchase_price
-  final int stock; // New field for stock
+  final double purchasePrice;
+  final int stock;
   final List<String> imageUrls;
   final String category;
-  final String? categoryId; // Added for editing
+  final String? categoryId;
   final double rating;
   final String description;
-  final String? unit; // Added unit field
+  final String? unit;
+  final int active;
+  final int featured;
 
   Product({
     required this.id,
     required this.name,
     required this.price,
-    required this.purchasePrice, // Added to constructor
-    required this.stock, // Added to constructor
+    required this.purchasePrice,
+    required this.stock,
     required this.imageUrls,
     required this.category,
     this.categoryId,
     required this.rating,
     required this.description,
-    this.unit, // Added to constructor
+    this.unit,
+    required this.active,
+    required this.featured,
   });
+
+  static int _safeInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? 0;
+    if (value is num) return value.toInt();
+    return 0;
+  }
+
+  static double _safeDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    if (value is num) return value.toDouble();
+    return 0.0;
+  }
 
   factory Product.fromJson(Map<String, dynamic> json) {
     String categoryName = 'Uncategorized';
@@ -34,15 +55,9 @@ class Product {
     return Product(
       id: (json['id'] ?? '').toString(),
       name: json['name_en'] as String? ?? 'Unknown Product',
-      price: (json['price'] is String)
-          ? (double.tryParse(json['price']) ?? 0.0)
-          : (json['price'] as num?)?.toDouble() ?? 0.0,
-      purchasePrice: (json['purchase_price'] is String)
-          ? (double.tryParse(json['purchase_price']) ?? 0.0)
-          : (json['purchase_price'] as num?)?.toDouble() ?? 0.0,
-      stock: (json['stock'] is String)
-          ? (int.tryParse(json['stock']) ?? 0)
-          : (json['stock'] as num?)?.toInt() ?? 0,
+      price: _safeDouble(json['price']),
+      purchasePrice: _safeDouble(json['purchase_price']),
+      stock: _safeInt(json['stock']),
       imageUrls: [
         (json['featured_image'] != null
             ? 'https://hublibd.com/uslive/pnism/${json['featured_image']}'
@@ -50,12 +65,12 @@ class Product {
       ],
       category: categoryName,
       categoryId: (json['category_id'] ?? '').toString(),
-      rating: (json['average_rating'] is String)
-          ? (double.tryParse(json['average_rating']) ?? 0.0)
-          : (json['average_rating'] as num?)?.toDouble() ?? 0.0,
+      rating: _safeDouble(json['average_rating']),
       description:
           json['description_en'] as String? ?? 'No description available.',
-      unit: json['unit'] as String?, // Added unit field
+      unit: json['unit'] as String?,
+      active: _safeInt(json['active']),
+      featured: _safeInt(json['feature']),
     );
   }
 
@@ -71,6 +86,8 @@ class Product {
       'category': category,
       'average_rating': rating,
       'description_en': description,
+      'active': active,
+      'feature': featured,
     };
   }
 }

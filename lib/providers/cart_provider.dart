@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 class CartProvider with ChangeNotifier {
-  Map<String, CartItem> _items = {};
+  final Map<String, CartItem> _items = {};
   CartService _cartService;
   String? _guestSessionId;
   String? _previousToken;
@@ -21,8 +21,9 @@ class CartProvider with ChangeNotifier {
     final guestId = _guestSessionId;
 
     // Check if user just logged in (token changed from null/empty to something)
-    bool justLoggedIn = (newToken != null && newToken.isNotEmpty) && 
-                        (_previousToken == null || _previousToken!.isEmpty);
+    bool justLoggedIn =
+        (newToken != null && newToken.isNotEmpty) &&
+        (_previousToken == null || _previousToken!.isEmpty);
 
     _cartService = newService;
     _previousToken = newToken;
@@ -30,12 +31,15 @@ class CartProvider with ChangeNotifier {
     if (justLoggedIn && guestId != null) {
       debugPrint('CartProvider: User just logged in, merging cart...');
       // Trigger merge without awaiting it to avoid blocking the update cycle
-      _cartService.mergeCart().then((_) {
-         fetchAndSetCart();
-      }).catchError((e) {
-         debugPrint('CartProvider: Error during background merge: $e');
-         fetchAndSetCart();
-      });
+      _cartService
+          .mergeCart()
+          .then((_) {
+            fetchAndSetCart();
+          })
+          .catchError((e) {
+            debugPrint('CartProvider: Error during background merge: $e');
+            fetchAndSetCart();
+          });
     } else {
       fetchAndSetCart();
     }
@@ -63,9 +67,13 @@ class CartProvider with ChangeNotifier {
     if (_guestSessionId == null) {
       _guestSessionId = const Uuid().v4();
       await prefs.setString('guest_session_id', _guestSessionId!);
-      debugPrint('CartProvider: Generated new guest session ID: $_guestSessionId');
+      debugPrint(
+        'CartProvider: Generated new guest session ID: $_guestSessionId',
+      );
     } else {
-      debugPrint('CartProvider: Loaded existing guest session ID: $_guestSessionId');
+      debugPrint(
+        'CartProvider: Loaded existing guest session ID: $_guestSessionId',
+      );
     }
     // Re-initialize the service with the loaded session ID
     _cartService = CartService(_cartService.authToken, _guestSessionId);
@@ -73,7 +81,9 @@ class CartProvider with ChangeNotifier {
 
   Future<void> fetchAndSetCart() async {
     if (_cartService.authToken == null && _guestSessionId == null) {
-      debugPrint('CartProvider: Skipping fetch, no token or guest session ID yet.');
+      debugPrint(
+        'CartProvider: Skipping fetch, no token or guest session ID yet.',
+      );
       return;
     }
     try {
@@ -92,7 +102,10 @@ class CartProvider with ChangeNotifier {
     try {
       if (_items.containsKey(product.id)) {
         final existingItem = _items[product.id]!;
-        final updatedItem = await _cartService.addToCart(product.id, existingItem.quantity + 1);
+        final updatedItem = await _cartService.addToCart(
+          product.id,
+          existingItem.quantity + 1,
+        );
         _items[product.id] = updatedItem;
       } else {
         final newItem = await _cartService.addToCart(product.id, 1);
@@ -109,7 +122,10 @@ class CartProvider with ChangeNotifier {
     if (_items.containsKey(productId)) {
       try {
         final existingItem = _items[productId]!;
-        final updatedItem = await _cartService.addToCart(productId, existingItem.quantity + 1);
+        final updatedItem = await _cartService.addToCart(
+          productId,
+          existingItem.quantity + 1,
+        );
         _items[productId] = updatedItem;
         notifyListeners();
       } catch (error) {
@@ -125,7 +141,10 @@ class CartProvider with ChangeNotifier {
     try {
       final existingItem = _items[productId]!;
       if (existingItem.quantity > 1) {
-        final updatedItem = await _cartService.addToCart(productId, existingItem.quantity - 1);
+        final updatedItem = await _cartService.addToCart(
+          productId,
+          existingItem.quantity - 1,
+        );
         _items[productId] = updatedItem;
       } else {
         if (existingItem.id != null) {

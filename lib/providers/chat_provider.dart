@@ -1,6 +1,6 @@
 // lib/providers/chat_provider.dart
 import 'dart:async'; // Import for Timer
-import 'dart:convert'; // Import for json.decode
+// Import for json.decode
 import 'dart:io'; // Import for File
 
 import 'package:flutter/material.dart';
@@ -81,7 +81,7 @@ class ChatProvider with ChangeNotifier {
       _currentMessages = await _chatService.getMessages(conversationId);
       // Ensure messages are ordered from oldest to newest for display
       _currentMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      
+
       // Start polling for new messages
       _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
         if (_currentConversation?.id != conversationId) {
@@ -94,7 +94,8 @@ class ChatProvider with ChangeNotifier {
           final newMessages = await _chatService.getMessages(conversationId);
           if (newMessages.length > _currentMessages.length) {
             // Only update if new messages have arrived
-            _currentMessages = newMessages..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+            _currentMessages = newMessages
+              ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
             notifyListeners();
           }
         } catch (e) {
@@ -102,7 +103,6 @@ class ChatProvider with ChangeNotifier {
           // Optionally set an error message, but don't stop polling unless critical
         }
       });
-
     } catch (e) {
       _setErrorMessage(e.toString());
     } finally {
@@ -132,7 +132,9 @@ class ChatProvider with ChangeNotifier {
       );
       _currentMessages.add(newMessage); // Add new message to the end
       // Update latest message in conversations list if this is the current conversation
-      final index = _conversations.indexWhere((conv) => conv.id == conversationId);
+      final index = _conversations.indexWhere(
+        (conv) => conv.id == conversationId,
+      );
       if (index != -1) {
         _conversations[index] = _conversations[index].copyWith(
           latestMessage: newMessage,
@@ -159,7 +161,10 @@ class ChatProvider with ChangeNotifier {
         type: type,
         participantIds: participantIds,
       );
-      _conversations.insert(0, newConversation); // Add new conversation to the top
+      _conversations.insert(
+        0,
+        newConversation,
+      ); // Add new conversation to the top
       notifyListeners();
       return newConversation;
     } catch (e) {
@@ -172,7 +177,9 @@ class ChatProvider with ChangeNotifier {
   Future<Conversation?> getOrCreatePrivateConversation(int userId) async {
     _setErrorMessage(null);
     try {
-      final conversation = await _chatService.getOrCreatePrivateConversation(userId);
+      final conversation = await _chatService.getOrCreatePrivateConversation(
+        userId,
+      );
       // Check if conversation already exists in the list, if not, add it
       if (!_conversations.any((conv) => conv.id == conversation.id)) {
         _conversations.insert(0, conversation);

@@ -16,8 +16,31 @@ class RiderDashboardProvider with ChangeNotifier {
   List<Order> get activeOrders => _activeOrders;
   List<Order> get orderHistory => _orderHistory;
   
+  List<Order> get allOrders {
+    final Map<String, Order> orderMap = {};
+    for (var order in _activeOrders) {
+      orderMap[order.id] = order;
+    }
+    if (_dashboardData != null) {
+      for (var order in _dashboardData!.recentOrders) {
+        orderMap[order.id] = order;
+      }
+    }
+    final List<Order> merged = orderMap.values.toList();
+    merged.sort((a, b) => b.orderDate.compareTo(a.orderDate));
+    return merged;
+  }
+
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  String _selectedStatusFilter = 'All';
+  String get selectedStatusFilter => _selectedStatusFilter;
+
+  void setStatusFilter(String filter) {
+    _selectedStatusFilter = filter;
+    notifyListeners();
+  }
 
   RiderDashboardProvider(this._riderDashboardService);
 
@@ -70,13 +93,13 @@ class RiderDashboardProvider with ChangeNotifier {
     }
   }
 
-  Future<void> updateOrderStatus(String orderId, String status) async {
+  Future<void> updateOrderStatus(String orderId, String status, {String? note}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _riderDashboardService.updateOrderStatus(orderId, status);
+      await _riderDashboardService.updateOrderStatus(orderId, status, note: note);
       // Refresh data
       await fetchActiveOrders();
       await fetchDashboardData();

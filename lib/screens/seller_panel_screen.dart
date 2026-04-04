@@ -917,7 +917,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                 child: TextFormField(
                                   controller: form.purchasePriceController,
                                   decoration: const InputDecoration(
-                                    labelText: 'Price',
+                                    labelText: 'Unit Price',
                                     border: OutlineInputBorder(),
                                   ),
                                   keyboardType: TextInputType.number,
@@ -1146,7 +1146,7 @@ class _SellerProductListScreenState extends State<SellerProductListScreen> {
                     : const Icon(Icons.image),
                 title: Text(product.name),
                 subtitle: Text(
-                  'Price: ৳${product.purchasePrice.toStringAsFixed(2)} | Stock: ${product.stock}',
+                  'Unit Price: ৳${product.purchasePrice.toStringAsFixed(2)} | Stock: ${product.stock}',
                 ),
                 trailing: IconButton(
                   icon: const Icon(Icons.edit),

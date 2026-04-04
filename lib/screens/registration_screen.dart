@@ -52,9 +52,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         Navigator.of(context).pop(); // Go back to login screen
       } catch (e) {
         if (!mounted) return; // Add mounted check here
+        String errorMessage = e.toString();
+        if (errorMessage.startsWith('Exception: ')) {
+          errorMessage = errorMessage.substring(11);
+        }
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
       }
     }
   }

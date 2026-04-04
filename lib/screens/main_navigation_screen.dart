@@ -4,7 +4,6 @@ import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/auth_provider.dart';
 import 'package:hubli/models/user_role.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:hubli/utils/api_constants.dart';
 
 import 'package:hubli/screens/product_list_screen.dart';
@@ -85,7 +84,8 @@ class AccountScreenWrapper extends StatelessWidget {
       return const LoginScreen();
     }
 
-    if (authProvider.user!.role == UserRole.buyer || authProvider.user!.role == UserRole.user) {
+    if (authProvider.user!.role == UserRole.buyer ||
+        authProvider.user!.role == UserRole.user) {
       return BuyerPanelScreen(onTabChange: onTabChange);
     }
 
@@ -114,13 +114,13 @@ class RoleDashboardLauncher extends StatelessWidget {
           ),
         ),
       ),
-      drawer: isRider 
-          ? const RiderDrawer(selectedIndex: 4, onTabChange: _dummyTabChange) 
-          : (isSeller 
-              ? SellerDrawer(selectedIndex: 5, onTabChange: (_) {}) 
-              : (user.role == UserRole.admin 
-                  ? AdminDrawer(selectedIndex: 5, onTabChange: (_) {}) 
-                  : null)),
+      drawer: isRider
+          ? const RiderDrawer(selectedIndex: 4, onTabChange: _dummyTabChange)
+          : (isSeller
+                ? SellerDrawer(selectedIndex: 5, onTabChange: (_) {})
+                : (user.role == UserRole.admin
+                      ? AdminDrawer(selectedIndex: 5, onTabChange: (_) {})
+                      : null)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -137,14 +137,27 @@ class RoleDashboardLauncher extends StatelessWidget {
               color: Theme.of(context).primaryColor,
               child: ListTile(
                 leading: const Icon(Icons.dashboard, color: Colors.white),
-                title: Text('Go to $roleName Dashboard', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                title: Text(
+                  'Go to $roleName Dashboard',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 16,
+                ),
                 onTap: () {
                   String route = '/';
-                  if (user.role == UserRole.admin) route = '/admin-panel';
-                  else if (user.role == UserRole.seller) route = '/seller-panel';
-                  else if (user.role == UserRole.rider) route = '/rider-panel';
-                  
+                  if (user.role == UserRole.admin) {
+                    route = '/admin-panel';
+                  } else if (user.role == UserRole.seller)
+                    route = '/seller-panel';
+                  else if (user.role == UserRole.rider)
+                    route = '/rider-panel';
+
                   Navigator.of(context).pushNamed(route);
                 },
               ),
@@ -214,12 +227,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       if (response.statusCode == 200) {
         await authProvider.logout();
         if (!mounted) return;
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/login', (route) => false);
       } else {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Logout failed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Logout failed')));
       }
     } catch (e) {
       if (!mounted) return;
@@ -232,11 +247,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final bool isBuyer = authProvider.isAuthenticated && 
-        (authProvider.user!.role == UserRole.buyer || authProvider.user!.role == UserRole.user);
+    final bool isBuyer =
+        authProvider.isAuthenticated &&
+        (authProvider.user!.role == UserRole.buyer ||
+            authProvider.user!.role == UserRole.user);
 
     // Dynamic screens based on role
-    final List<Widget> screens = isBuyer 
+    final List<Widget> screens = isBuyer
         ? [
             const ProductListScreen(),
             const OrderHistoryScreen(),
@@ -255,18 +272,42 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     // Dynamic items based on role
     final List<BottomNavigationBarItem> navItems = isBuyer
         ? [
-            const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            const BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Orders'),
-            const BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Wishlist'),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.receipt),
+              label: 'Orders',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.favorite),
+              label: 'Wishlist',
+            ),
             _buildCartItem(),
-            const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Account',
+            ),
           ]
         : [
-            const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            const BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'RFQ'),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.assignment),
+              label: 'RFQ',
+            ),
             _buildCartItem(),
-            const BottomNavigationBarItem(icon: Icon(Icons.local_shipping), label: 'Shipping'),
-            const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.local_shipping),
+              label: 'Shipping',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Account',
+            ),
           ];
 
     // Ensure _selectedIndex is within bounds if role changes
@@ -275,111 +316,136 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
 
     return Scaffold(
-      drawer: isBuyer ? Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
+      drawer: isBuyer
+          ? Drawer(
+              child: ListView(
+                padding: EdgeInsets.zero,
                 children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Text(
-                      authProvider.user?.name[0].toUpperCase() ?? 'U',
-                      style: TextStyle(fontSize: 24, color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+                  DrawerHeader(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        CircleAvatar(
+                          radius: 30,
+                          backgroundColor: Colors.white,
+                          child: Text(
+                            authProvider.user?.name[0].toUpperCase() ?? 'U',
+                            style: TextStyle(
+                              fontSize: 24,
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          authProvider.user?.name ?? 'User',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          authProvider.user?.email ?? '',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    authProvider.user?.name ?? 'User',
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  ListTile(
+                    leading: const Icon(Icons.home),
+                    title: const Text('Home'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _onItemTapped(0);
+                    },
                   ),
-                  Text(
-                    authProvider.user?.email ?? '',
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  ListTile(
+                    leading: const Icon(Icons.receipt),
+                    title: const Text('Order History'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _onItemTapped(1);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.favorite),
+                    title: const Text('My Wishlist'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _onItemTapped(2);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.shopping_cart),
+                    title: const Text('My Cart'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _onItemTapped(3);
+                    },
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.person),
+                    title: const Text('Edit Profile'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ProfileEditScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.lock),
+                    title: const Text('Change Password'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const PasswordChangeScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.support_agent),
+                    title: const Text('Contact Support'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ContactSupportScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.logout, color: Colors.red),
+                    title: const Text(
+                      'Logout',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _logout();
+                    },
                   ),
                 ],
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
-              onTap: () {
-                Navigator.pop(context);
-                _onItemTapped(0);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.receipt),
-              title: const Text('Order History'),
-              onTap: () {
-                Navigator.pop(context);
-                _onItemTapped(1);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.favorite),
-              title: const Text('My Wishlist'),
-              onTap: () {
-                Navigator.pop(context);
-                _onItemTapped(2);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.shopping_cart),
-              title: const Text('My Cart'),
-              onTap: () {
-                Navigator.pop(context);
-                _onItemTapped(3);
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Edit Profile'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfileEditScreen()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.lock),
-              title: const Text('Change Password'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const PasswordChangeScreen()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.support_agent),
-              title: const Text('Contact Support'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ContactSupportScreen()));
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Logout', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pop(context);
-                _logout();
-              },
-            ),
-          ],
-        ),
-      ) : null,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: screens,
-      ),
+            )
+          : null,
+      body: IndexedStack(index: _selectedIndex, children: screens),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         items: navItems,
@@ -414,10 +480,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   ),
                   child: Text(
                     cart.itemCount.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 10),
                     textAlign: TextAlign.center,
                   ),
                 ),

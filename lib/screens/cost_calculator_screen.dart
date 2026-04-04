@@ -30,7 +30,6 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
 
   // Removed _onSearch method as search bar is removed
 
-
   void _buttonPressed(String buttonText) {
     if (buttonText == "CLEAR") {
       _output = "0";
@@ -38,7 +37,10 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
       _num2 = "";
       _operand = "";
       _clearOnNextInput = false;
-    } else if (buttonText == "+" || buttonText == "-" || buttonText == "×" || buttonText == "÷") {
+    } else if (buttonText == "+" ||
+        buttonText == "-" ||
+        buttonText == "×" ||
+        buttonText == "÷") {
       if (_num1.isEmpty) _num1 = _output; // If no num1, use current output
       _operand = buttonText;
       _clearOnNextInput = true;
@@ -50,7 +52,8 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
         _output = _output + buttonText;
       }
     } else if (buttonText == "=") {
-      if (_num1.isEmpty || _operand.isEmpty || _clearOnNextInput) return; // Not enough info to calculate
+      if (_num1.isEmpty || _operand.isEmpty || _clearOnNextInput)
+        return; // Not enough info to calculate
 
       _num2 = _output;
       double n1 = double.parse(_num1);
@@ -85,16 +88,25 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
     setState(() {});
   }
 
-  Widget _buildButton(String buttonText, {Color? buttonColor, Color? textColor}) {
+  Widget _buildButton(
+    String buttonText, {
+    Color? buttonColor,
+    Color? textColor,
+  }) {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.all(4.0),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: buttonColor ?? Theme.of(context).buttonTheme.colorScheme?.primary ?? Colors.grey[200],
+            backgroundColor:
+                buttonColor ??
+                Theme.of(context).buttonTheme.colorScheme?.primary ??
+                Colors.grey[200],
             foregroundColor: textColor ?? Colors.black,
             padding: const EdgeInsets.all(20.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
           ),
           onPressed: () => _buttonPressed(buttonText),
           child: Text(
@@ -108,14 +120,14 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    int _selectedIndex = 0; // Default to Home for bottom nav consistency
+    int selectedIndex = 0; // Default to Home for bottom nav consistency
 
-    void _onItemTapped(int index) {
-      if (index == _selectedIndex) {
+    void onItemTapped(int index) {
+      if (index == selectedIndex) {
         return;
       }
       setState(() {
-        _selectedIndex = index;
+        selectedIndex = index;
       });
 
       if (!mounted) return; // Add mounted check here
@@ -136,19 +148,31 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
           Navigator.of(context).pushReplacementNamed('/cart'); // Cart
           break;
         case 3:
-          Navigator.of(context).pushReplacementNamed('/shipping-address'); // Shipping
+          Navigator.of(
+            context,
+          ).pushReplacementNamed('/shipping-address'); // Shipping
           break;
         case 4:
-          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          if (!mounted) return; // Re-check mounted after potentially long Provider operation
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+          if (!mounted)
+            return; // Re-check mounted after potentially long Provider operation
           if (authProvider.isAuthenticated) {
             if (authProvider.user!.role == UserRole.admin) {
-              Navigator.of(context).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
+              Navigator.of(
+                context,
+              ).pushReplacementNamed('/admin-panel'); // Navigate to Admin Panel
             } else {
-              Navigator.of(context).pushReplacementNamed('/account'); // Navigate to Account for other roles
+              Navigator.of(context).pushReplacementNamed(
+                '/account',
+              ); // Navigate to Account for other roles
             }
           } else {
-            Navigator.of(context).pushReplacementNamed('/login'); // Navigate to Login
+            Navigator.of(
+              context,
+            ).pushReplacementNamed('/login'); // Navigate to Login
           }
           break;
       }
@@ -168,7 +192,10 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
               alignment: Alignment.bottomRight,
               child: Text(
                 _output,
-                style: const TextStyle(fontSize: 48.0, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 48.0,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -180,7 +207,11 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
                   _buildButton("7"),
                   _buildButton("8"),
                   _buildButton("9"),
-                  _buildButton("÷", buttonColor: Colors.orange, textColor: Colors.white),
+                  _buildButton(
+                    "÷",
+                    buttonColor: Colors.orange,
+                    textColor: Colors.white,
+                  ),
                 ],
               ),
               Row(
@@ -188,7 +219,11 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
                   _buildButton("4"),
                   _buildButton("5"),
                   _buildButton("6"),
-                  _buildButton("×", buttonColor: Colors.orange, textColor: Colors.white),
+                  _buildButton(
+                    "×",
+                    buttonColor: Colors.orange,
+                    textColor: Colors.white,
+                  ),
                 ],
               ),
               Row(
@@ -196,7 +231,11 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
                   _buildButton("1"),
                   _buildButton("2"),
                   _buildButton("3"),
-                  _buildButton("-", buttonColor: Colors.orange, textColor: Colors.white),
+                  _buildButton(
+                    "-",
+                    buttonColor: Colors.orange,
+                    textColor: Colors.white,
+                  ),
                 ],
               ),
               Row(
@@ -204,26 +243,35 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
                   _buildButton("."),
                   _buildButton("0"),
                   _buildButton("00"), // Added 00 for convenience
-                  _buildButton("+", buttonColor: Colors.orange, textColor: Colors.white),
+                  _buildButton(
+                    "+",
+                    buttonColor: Colors.orange,
+                    textColor: Colors.white,
+                  ),
                 ],
               ),
               Row(
                 children: [
-                  _buildButton("CLEAR", buttonColor: Colors.red, textColor: Colors.white),
-                  _buildButton("=", buttonColor: Colors.green, textColor: Colors.white),
+                  _buildButton(
+                    "CLEAR",
+                    buttonColor: Colors.red,
+                    textColor: Colors.white,
+                  ),
+                  _buildButton(
+                    "=",
+                    buttonColor: Colors.green,
+                    textColor: Colors.white,
+                  ),
                 ],
               ),
             ],
-          )
+          ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         items: <BottomNavigationBarItem>[
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
+          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           const BottomNavigationBarItem(
             icon: Icon(Icons.assignment), // RFQ
             label: 'RFQ',
@@ -271,10 +319,10 @@ class _CostCalculatorScreenState extends State<CostCalculatorScreen> {
             label: 'Account',
           ),
         ],
-        currentIndex: _selectedIndex, // Will always be 0 here as per logic above
+        currentIndex: selectedIndex, // Will always be 0 here as per logic above
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+        onTap: onItemTapped,
         type: BottomNavigationBarType.fixed, // Ensure all items are visible
       ),
     );
