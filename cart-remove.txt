@@ -1,0 +1,380 @@
+Route::delete('cart/clear', [CartController::class, 'clear']);
+Route::delete('cart/merge', [CartController::class, 'mergeCartAction']);
+Route::delete('cart/item/{product_id}', [CartController::class, 'removeItemByProductId']);
+
+
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\CartResource;
+use App\Models\Cart;
+use App\Models\Product;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Session;
+
+
+class CartController extends Controller
+{
+    /**
+     * Display a listing of the resource (authenticated user's cart).
+     *
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function index(Request $request)
+    {
+        $cartItems = collect();
+        $user = Auth::guard('sanctum')->user();
+
+        if ($user) {
+            // User is authenticated, retrieve cart by user_id
+            $cartItems = Cart::where('user_id', $user->id)
+                                ->with('product')
+                                ->get();
+        } else {
+            // User is a guest, retrieve cart by session_id from request/header
+            $sessionId = $this->getGuestSessionId($request);
+            if ($sessionId) {
+                $cartItems = Cart::where('session_id', $sessionId)
+                                    ->with('product')
+                                    ->get();
+            }
+        }
+
+        return CartResource::collection($cartItems);
+    }
+
+    /**
+     * Add a product to the cart or update its quantity.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \App\Http\Resources\CartResource|\Illuminate\Http\JsonResponse
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'required|integer|min:1',
+            'session_id' => 'nullable|string', // Accept session_id from request
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $product = Product::find($request->product_id);
+
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        if ($product->stock < $request->quantity) {
+            return response()->json(['message' => 'Not enough stock available'], 422);
+        }
+
+        $cartData = [
+            'product_id' => $request->product_id,
+            'quantity' => $request->quantity,
+        ];
+
+        $user = Auth::guard('sanctum')->user();
+
+        if ($user) {
+            $cartData['user_id'] = $user->id;
+            $cart = Cart::updateOrCreate(
+                ['user_id' => $user->id, 'product_id' => $request->product_id],
+                $cartData
+            );
+        } else {
+            $sessionId = $this->getGuestSessionId($request);
+            if (!$sessionId) {
+                return response()->json(['message' => 'session_id is required for guest users.'], 400);
+            }
+            $cartData['session_id'] = $sessionId;
+            $cart = Cart::updateOrCreate(
+                ['session_id' => $sessionId, 'product_id' => $request->product_id],
+                $cartData
+            );
+        }
+
+        return new CartResource($cart->load('product'));
+    }
+
+    /**
+     * Remove the specified resource from storage (a cart item).
+     *
+     * @param  \App\Models\Cart  $cart
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+        /**
+     * Remove the specified resource from storage (a cart item).
+     *
+     * @param  \App\Models\Cart  $cart
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+        /**
+     * Remove the specified resource from storage (a cart item).
+     *
+     * @param  int  $id
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy($id, Request $request)
+    {
+        $cart = Cart::find($id);
+        
+        if (!$cart) {
+            return response()->json(['message' => 'Cart item not found'], 404);
+        }
+
+        $user = Auth::guard('sanctum')->user();
+        $sessionId = $this->getGuestSessionId($request);
+
+        $isOwner = false;
+
+        // Check if it belongs to the authenticated user
+        if ($user && $cart->user_id != null && $cart->user_id == $user->id) {
+            $isOwner = true;
+        }
+
+        // Or check if it belongs to the current guest session
+        if (!$isOwner && $sessionId != null && $cart->session_id == $sessionId) {
+            $isOwner = true;
+        }
+
+        if (!$isOwner) {
+            return response()->json([
+                'message' => 'Unauthorized',
+                'debug' => [
+                    'cart_user_id' => $cart->user_id,
+                    'cart_session_id' => $cart->session_id,
+                    'auth_user_id' => $user ? $user->id : null,
+                    'request_session_id' => $sessionId,
+                ]
+            ], 403);
+        }
+
+        $cart->delete();
+
+        return response()->json(['message' => 'Item removed from cart successfully'], 200);
+    }
+
+        // Or check if it belongs to the current guest session
+        if (!$isOwner && $sessionId != null && $cart->session_id == $sessionId) {
+            $isOwner = true;
+        }
+
+        if (!$isOwner) {
+            return response()->json([
+                'message' => 'Unauthorized',
+                'debug' => [
+                    'cart_user_id' => $cart->user_id,
+                    'cart_session_id' => $cart->session_id,
+                    'auth_user_id' => $user ? $user->id : null,
+                    'request_session_id' => $sessionId,
+                ]
+            ], 403);
+        }
+
+        $cart->delete();
+
+        return response()->json(['message' => 'Item removed from cart successfully'], 200);
+    }
+
+    /**
+     * Get or generate a unique session ID for guest users.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return string|null
+     */
+    private function getGuestSessionId(Request $request): ?string
+    {
+        // Prioritize session_id from request body or header for stateless API
+        if ($request->has('session_id')) {
+            return $request->session_id;
+        }
+        
+        if ($request->header('X-Session-ID')) {
+            return $request->header('X-Session-ID');
+        }
+
+        // Fallback to Laravel session for web compatibility
+        return Session::get('session_id');
+    }
+
+    /**
+     * Merge guest cart items with the authenticated user's cart.
+     * This method should be called after a user logs in.
+     *
+     * @param int $userId The ID of the authenticated user.
+     * @param string|null $guestSessionId The session ID of the guest user.
+     * @return void
+     */
+    
+    /**
+     * Merge guest cart items with the authenticated user's cart (API action).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function mergeCartAction(Request $request)
+    {
+        $user = Auth::guard('sanctum')->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $sessionId = $request->input('session_id');
+        if (!$sessionId) {
+            return response()->json(['message' => 'session_id is required'], 400);
+        }
+
+        $this->mergeGuestCart($user->id, $sessionId);
+
+        return response()->json(['message' => 'Cart merged successfully']);
+    }
+
+    /**
+     * Remove an item from the cart by product ID.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $productId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    
+    /**
+     * Clear all items from the cart.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+        /**
+     * Clear all items from the cart.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function clear(Request $request)
+    {
+        $user = Auth::guard('sanctum')->user();
+        $sessionId = $this->getGuestSessionId($request);
+
+        if (!$user && !$sessionId) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $query = Cart::query();
+        
+        $query->where(function($q) use ($user, $sessionId) {
+            if ($user) {
+                $q->where('user_id', $user->id);
+                if ($sessionId) {
+                    $q->orWhere('session_id', $sessionId);
+                }
+            } else {
+                $q->where('session_id', $sessionId);
+            }
+        });
+        
+        $query->delete();
+        
+        return response()->json(['message' => 'Cart cleared successfully'], 200);
+    } else {
+            $sessionId = $this->getGuestSessionId($request);
+            if (!$sessionId) {
+                 return response()->json(['message' => 'session_id is required'], 400);
+            }
+            $query->where('session_id', $sessionId);
+        }
+        
+        $query->delete();
+        
+        return response()->json(['message' => 'Cart cleared successfully'], 200);
+    }
+        /**
+     * Remove an item from the cart by product ID.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $productId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function removeItemByProductId(Request $request, $productId)
+    {
+        $user = Auth::guard('sanctum')->user();
+        $sessionId = $this->getGuestSessionId($request);
+
+        if (!$user && !$sessionId) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $query = Cart::where('product_id', $productId);
+        
+        $query->where(function($q) use ($user, $sessionId) {
+            if ($user) {
+                $q->where('user_id', $user->id);
+                if ($sessionId) {
+                    $q->orWhere('session_id', $sessionId);
+                }
+            } else {
+                $q->where('session_id', $sessionId);
+            }
+        });
+        
+        $query->delete();
+        
+        return response()->json(['message' => 'Item removed from cart successfully'], 200);
+    } else {
+            $sessionId = $this->getGuestSessionId($request);
+            if (!$sessionId) {
+                 return response()->json(['message' => 'session_id is required'], 400);
+            }
+            $query->where('session_id', $sessionId);
+        }
+        
+        $query->delete();
+        
+        return response()->json(['message' => 'Item removed from cart successfully'], 200);
+    }
+    public function mergeGuestCart(int $userId, ?string $guestSessionId): void
+    {
+        if (!$guestSessionId) {
+            return;
+        }
+
+        $guestCartItems = Cart::where('session_id', $guestSessionId)->get();
+
+        foreach ($guestCartItems as $guestCartItem) {
+            $existingCartItem = Cart::where('user_id', $userId)
+                                    ->where('product_id', $guestCartItem->product_id)
+                                    ->first();
+
+            if ($existingCartItem) {
+                // If the product already exists in the user's cart, update the quantity
+                $existingCartItem->quantity += $guestCartItem->quantity;
+                $existingCartItem->save();
+                $guestCartItem->delete(); // Remove the guest cart item
+            } else {
+                // Otherwise, assign the guest cart item to the user
+                $guestCartItem->user_id = $userId;
+                $guestCartItem->session_id = null; // Clear the session_id
+                $guestCartItem->save();
+            }
+        }
+
+        Session::forget('session_id'); // Clear the guest session ID from the session
+    }
+}
+
+
+
+
+Your Android App Bundle is signed with the wrong key. Ensure that your App Bundle is signed with the correct signing key and try again. Your app bundle is expected to be signed with the certificate with fingerprint:
+SHA1: BA:87:1A:1C:4C:3B:CD:B7:A3:D1:31:08:12:38:40:1B:E4:01:AA:07
+but the certificate used to sign the app bundle that you uploaded has fingerprint:
+SHA1: AB:5A:C5:86:1C:CD:4C:3D:0D:19:1B:DD:5A:7A:1E:16:0B:04:4F:EA

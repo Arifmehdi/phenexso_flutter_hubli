@@ -105,8 +105,15 @@ class CartService {
 
   Future<void> removeFromCart(String cartId) async {
     debugPrint('CartService: Removing cart item $cartId');
+    
+    final uri = Uri.parse('${ApiConstants.cartEndpoint}/$cartId').replace(
+      queryParameters: _authToken == null && _guestSessionId != null
+          ? {'session_id': _guestSessionId}
+          : null,
+    );
+
     final response = await http.delete(
-      Uri.parse('${ApiConstants.cartEndpoint}/$cartId'),
+      uri,
       headers: _getHeaders(),
     );
 

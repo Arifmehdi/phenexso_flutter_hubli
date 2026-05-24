@@ -83,48 +83,168 @@ class _CartScreenState extends State<CartScreen> {
                     itemCount: cart.itemCount,
                     itemBuilder: (ctx, i) {
                       final cartItem = cart.items.values.toList()[i];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pushNamed(
-                            '/product-detail',
-                            arguments: cartItem.product,
+                      return Dismissible(
+                        key: ValueKey(cartItem.product.id),
+                        background: Container(
+                          color: Colors.red.shade400,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 4,
+                          ),
+                          child: const Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                        ),
+                        direction: DismissDirection.endToStart,
+                        confirmDismiss: (direction) {
+                          return showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Remove Item'),
+                              content: const Text(
+                                'Are you sure you want to remove this item from your cart?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  child: const Text('CANCEL'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                  child: const Text('REMOVE'),
+                                ),
+                              ],
+                            ),
                           );
                         },
-                        child: Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                  child: _buildProductImage(cartItem.product.imageUrls),
+                        onDismissed: (direction) {
+                          Provider.of<CartProvider>(context, listen: false)
+                              .removeItem(cartItem.product.id);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${cartItem.product.name} removed from cart'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pushNamed(
+                              '/product-detail',
+                              arguments: cartItem.product,
+                            );
+                          },
+                          child: Card(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 15,
+                              vertical: 4,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(5.0),
+                                    child: _buildProductImage(
+                                      cartItem.product.imageUrls,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              title: Text(cartItem.product.name),
-                              subtitle: Text(
-                                  'Price: ৳${cartItem.product.price.toStringAsFixed(2)}'),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  IconButton(
-                                    icon: const Icon(Icons.remove),
-                                    onPressed: () {
-                                      Provider.of<CartProvider>(context,
-                                              listen: false)
-                                          .decreaseQuantity(cartItem.product.id);
-                                    },
-                                  ),
-                                  Text('${cartItem.quantity}'),
-                                  IconButton(
-                                    icon: const Icon(Icons.add),
-                                    onPressed: () {
-                                      Provider.of<CartProvider>(context,
-                                              listen: false)
-                                          .increaseQuantity(cartItem.product.id);
-                                    },
-                                  ),
-                                ],
+                                title: Text(
+                                  cartItem.product.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  'Price: ৳${cartItem.product.price.toStringAsFixed(2)}',
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    IconButton(
+                                      icon: const Icon(Icons.remove, size: 20),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () {
+                                        Provider.of<CartProvider>(
+                                          context,
+                                          listen: false,
+                                        ).decreaseQuantity(cartItem.product.id);
+                                      },
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0,
+                                      ),
+                                      child: Text(
+                                        '${cartItem.quantity}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.add, size: 20),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () {
+                                        Provider.of<CartProvider>(
+                                          context,
+                                          listen: false,
+                                        ).increaseQuantity(cartItem.product.id);
+                                      },
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        color: Colors.red,
+                                        size: 20,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text('Remove Item'),
+                                            content: const Text(
+                                              'Remove this item from your cart?',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(ctx).pop(false),
+                                                child: const Text('CANCEL'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(ctx).pop(true),
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: Colors.red,
+                                                ),
+                                                child: const Text('REMOVE'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm == true && context.mounted) {
+                                          Provider.of<CartProvider>(
+                                            context,
+                                            listen: false,
+                                          ).removeItem(cartItem.product.id);
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
