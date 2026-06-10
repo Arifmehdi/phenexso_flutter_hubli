@@ -111,13 +111,13 @@ class RiderDashboardProvider with ChangeNotifier {
     }
   }
 
-  Future<void> sendDeliveryOtp(String orderId) async {
+  Future<void> sendDeliveryOtp(String orderId, {String? email}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _riderDashboardService.sendDeliveryOtp(orderId);
+      await _riderDashboardService.sendDeliveryOtp(orderId, email: email);
     } catch (e) {
       _errorMessage = e.toString();
       rethrow;

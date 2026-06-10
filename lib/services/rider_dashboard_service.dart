@@ -72,6 +72,44 @@ class RiderDashboardService {
     }
   }
 
+  Future<void> sendDeliveryOtp(String orderId, {String? email}) async {
+    if (_token == null) throw Exception('Authentication token is missing.');
+
+    final url = Uri.parse(
+      '${ApiConstants.baseUrl}/api/rider/orders/$orderId/send-otp',
+    );
+    final response = await http.post(
+      url,
+      headers: _headers,
+      body: email != null ? json.encode({'email': email}) : null,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        json.decode(response.body)['message'] ?? 'Failed to send OTP',
+      );
+    }
+  }
+
+  Future<void> verifyDeliveryOtp(String orderId, String otp) async {
+    if (_token == null) throw Exception('Authentication token is missing.');
+
+    final url = Uri.parse(
+      '${ApiConstants.baseUrl}/api/rider/orders/$orderId/verify-otp',
+    );
+    final response = await http.post(
+      url,
+      headers: _headers,
+      body: json.encode({'otp': otp}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        json.decode(response.body)['message'] ?? 'Failed to verify OTP',
+      );
+    }
+  }
+
   // You might want a dedicated endpoint for order history,
   // but for now let's assume we use all orders from dashboard or another endpoint.
   Future<List<Order>> fetchOrderHistory() async {

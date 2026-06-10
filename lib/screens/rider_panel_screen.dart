@@ -770,12 +770,28 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
   }
 
   void _showOtpWorkflow(BuildContext context, String orderId) {
+    final emailController = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delivery Confirmation'),
-        content: const Text(
-          'Send OTP to customer email to confirm delivery?',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Send OTP to customer to confirm delivery. You can provide a specific email if needed.',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Specific Email (Optional)',
+                hintText: 'Leave empty for customer default',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -789,10 +805,15 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
                 await Provider.of<RiderDashboardProvider>(
                   context,
                   listen: false,
-                ).sendDeliveryOtp(orderId);
+                ).sendDeliveryOtp(
+                  orderId,
+                  email: emailController.text.trim().isEmpty
+                      ? null
+                      : emailController.text.trim(),
+                );
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('OTP sent to customer email')),
+                  const SnackBar(content: Text('OTP request processed')),
                 );
                 _showOtpInputDialog(context, orderId);
               } catch (e) {
