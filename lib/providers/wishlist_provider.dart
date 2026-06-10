@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hubli/models/product.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:hubli/services/facebook_events_service.dart';
 
 class WishlistProvider with ChangeNotifier {
   List<Product> _wishlistItems = [];
@@ -39,6 +40,14 @@ class WishlistProvider with ChangeNotifier {
       _wishlistItems.removeWhere((item) => item.id == product.id);
     } else {
       _wishlistItems.add(product);
+      
+      // Log Add to Wishlist Event
+      FacebookEventsService.logAddToWishlist(
+        id: product.id,
+        type: product.category,
+        currency: 'BDT',
+        price: product.price,
+      );
     }
     _saveWishlist();
     notifyListeners();

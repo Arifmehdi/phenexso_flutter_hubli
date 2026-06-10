@@ -4,6 +4,7 @@ import 'package:hubli/providers/cart_provider.dart';
 import 'package:hubli/providers/order_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:hubli/models/user_role.dart';
+import 'package:hubli/services/facebook_events_service.dart';
 
 class ShippingAddressScreen extends StatefulWidget {
   const ShippingAddressScreen({super.key});
@@ -94,6 +95,9 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
       });
 
       try {
+        final totalAmount = cart.totalAmount;
+        final cartItems = cart.items.values.toList();
+
         await orders.addOrder(
           name: _nameController.text,
           mobile: _mobileController.text,
@@ -101,6 +105,18 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
           addressTitle: _addressController.text,
           paymentMethod: _paymentMethod,
           orderNote: _noteController.text.isEmpty ? null : _noteController.text,
+        );
+
+        // Log Purchase Event
+        FacebookEventsService.logPurchase(
+          amount: totalAmount,
+          currency: 'BDT',
+          parameters: {
+            'content_ids': cartItems.map((i) => i.product.id).join(','),
+            'content_type': 'product',
+            'num_items': cartItems.length,
+            'payment_method': _paymentMethod,
+          },
         );
 
         cart.clear();
@@ -245,8 +261,11 @@ class _ShippingAddressScreenState extends State<ShippingAddressScreen> {
                             ),
                           )
                           .toList(),
-                      onChanged: (value) =>
-                          setState(() => _paymentMethod = value!),
+                      onChanged: (value) {
+                        setState(() => _paymentMethod = value!);
+                        // Log Add Payment Info Event
+                        FacebookEventsService.logAddPaymentInfo(success: true);
+                      },
                     ),
                     const SizedBox(height: 30),
                     ElevatedButton(

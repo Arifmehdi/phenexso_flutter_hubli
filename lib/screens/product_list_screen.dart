@@ -6,6 +6,7 @@ import 'dart:async'; // Import for Timer
 import 'package:provider/provider.dart';
 import 'package:hubli/providers/product_provider.dart'; // Import ProductProvider
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:hubli/services/facebook_events_service.dart';
 // Import UserRole enum
 
 class ProductListScreen extends StatefulWidget {
@@ -490,6 +491,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
     setState(() {
       // Rebuild will trigger the filtering logic in the build method.
     });
+
+    if (_searchController.text.length >= 3) {
+      FacebookEventsService.logSearch(
+        contentType: 'product',
+        contentId: 'search_results',
+        searchText: _searchController.text,
+        success: true,
+      );
+    }
   }
 
   void _onScroll() {

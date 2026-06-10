@@ -111,6 +111,41 @@ class RiderDashboardProvider with ChangeNotifier {
     }
   }
 
+  Future<void> sendDeliveryOtp(String orderId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _riderDashboardService.sendDeliveryOtp(orderId);
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> verifyDeliveryOtp(String orderId, String otp) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _riderDashboardService.verifyDeliveryOtp(orderId, otp);
+      // Refresh data after successful verification (which marks as delivered)
+      await fetchActiveOrders();
+      await fetchDashboardData();
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   void clearDashboardData() {
     _dashboardData = null;
     _activeOrders = [];

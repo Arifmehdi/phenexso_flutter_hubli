@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hubli/providers/cart_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:hubli/services/facebook_events_service.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -295,6 +296,14 @@ class _CartScreenState extends State<CartScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: () {
+                          // Log Initiated Checkout Event
+                          FacebookEventsService.logInitiatedCheckout(
+                            totalPrice: cart.totalAmount,
+                            currency: 'BDT',
+                            contentType: 'product',
+                            contentId: cart.items.keys.join(','),
+                            numItems: cart.itemCount,
+                          );
                           Navigator.of(context).pushNamed('/shipping-address');
                         },
                         child: const Text(

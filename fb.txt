@@ -1,0 +1,39 @@
+I'd like to start tracking app events in our app. Please use the step-by-step instructions below to 
+add t he code. Feel free to contact me with questions. 
+1 Install the Facebook SDK 
+If you don't have a Facebook app ID, you'll need to create one. If the app doesn't use the Facebook SDK, you'll 
+need to download and install it. 
+iOS SDK 
+Android SDK 
+2 Install App Events 
+Install the code for the following app events to measure ad performance, optimise ad delivery, build audiences 
+for ad targeting or view app analytics. 
+Event name 
+Event parameters 
+Search 
+Content ID, Content Type, Currency, ValueToSum 
+View content 
+Content ID, Content Type, Currency, ValueToSum 
+Subscribe  
+Add to cart 
+Content ID, Content Type, Currency, ValueToSum 
+Add to wishlist 
+Content ID, Content Type, Currency, ValueToSum 
+Initiate checkout 
+Content ID, Content Type, Currency, ValueToSum 
+Start Trial  
+Rate 
+MaxRating Value, Content Type, ValueToSum 
+Purchase 
+Content ID, Content Type, Currency, ValueToSum 
+Add payment info 
+Success 
+iOS 
+Android 
+3 Verify setup 
+Verify that your app is properly logging app events in real time by using the App event tester in App Ads Helper
+
+
+
+App ID: 1630014868225669
+Client Token : 99bc92c1a7cc111d2150855ec020dbc0

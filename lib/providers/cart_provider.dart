@@ -4,6 +4,7 @@ import 'package:hubli/models/product.dart';
 import 'package:hubli/services/cart_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:hubli/services/facebook_events_service.dart';
 
 class CartProvider with ChangeNotifier {
   final Map<String, CartItem> _items = {};
@@ -112,6 +113,14 @@ class CartProvider with ChangeNotifier {
         _items.putIfAbsent(product.id, () => newItem);
       }
       notifyListeners();
+
+      // Log Add to Cart Event
+      FacebookEventsService.logAddToCart(
+        id: product.id,
+        type: product.category,
+        currency: 'BDT',
+        price: product.price,
+      );
     } catch (error) {
       debugPrint('Error adding to cart: $error');
       rethrow;

@@ -6,6 +6,7 @@ import 'package:hubli/providers/cart_provider.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:hubli/providers/wishlist_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:hubli/services/facebook_events_service.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -33,6 +34,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _currentImageIndex = _pageController.page?.round() ?? 0;
       });
     });
+
+    // Log View Content Event
+    FacebookEventsService.logViewContent(
+      id: widget.product.id,
+      type: widget.product.category,
+      currency: 'BDT',
+      price: widget.product.price,
+    );
   }
 
   @override

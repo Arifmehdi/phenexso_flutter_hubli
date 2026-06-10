@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>FacebookAppID</key>
+	<string>1630014868225669</string>
+	<key>FacebookClientToken</key>
+	<string>99bc92c1a7cc111d2150855ec020dbc0</string>
+	<key>FacebookDisplayName</key>
+	<string>Hubli</string>
 </dict>
 </plist>

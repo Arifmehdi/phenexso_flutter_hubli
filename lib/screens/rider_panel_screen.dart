@@ -655,59 +655,80 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              ElevatedButton(
-                                onPressed: order.orderStatus != 'shipped'
-                                    ? () => _updateStatus(
-                                        context,
-                                        order.id,
-                                        'shipped',
-                                        noteController.text,
-                                      )
-                                    : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue,
-                                  foregroundColor: Colors.white,
-                                  disabledBackgroundColor: Colors.grey[300],
+                          order.orderStatus.toLowerCase() == 'delivered'
+                              ? Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'Completed & Paid',
+                                      style: TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: order.orderStatus.toLowerCase() != 'shipped' && order.orderStatus.toLowerCase() != 'delivered' && order.orderStatus.toLowerCase() != 'canceled'
+                                          ? () => _updateStatus(
+                                                context,
+                                                order.id,
+                                                'shipped',
+                                                noteController.text,
+                                              )
+                                          : null,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blue,
+                                        foregroundColor: Colors.white,
+                                        disabledBackgroundColor:
+                                            Colors.grey[300],
+                                      ),
+                                      child: const Text('Shipped'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: order.orderStatus.toLowerCase() == 'shipped'
+                                          ? () => _showOtpWorkflow(
+                                                context,
+                                                order.id,
+                                              )
+                                          : null,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                        disabledBackgroundColor:
+                                            Colors.grey[300],
+                                      ),
+                                      child: const Text('Delivered'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: order.orderStatus.toLowerCase() == 'shipped' || order.orderStatus.toLowerCase() == 'pending' || order.orderStatus.toLowerCase() == 'confirmed'
+                                          ? () => _updateStatus(
+                                                context,
+                                                order.id,
+                                                'canceled',
+                                                noteController.text,
+                                              )
+                                          : null,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        foregroundColor: Colors.white,
+                                        disabledBackgroundColor:
+                                            Colors.grey[300],
+                                      ),
+                                      child: const Text('Cancel'),
+                                    ),
+                                  ],
                                 ),
-                                child: const Text('Shipped'),
-                              ),
-                              ElevatedButton(
-                                onPressed: order.orderStatus == 'shipped'
-                                    ? () => _updateStatus(
-                                        context,
-                                        order.id,
-                                        'delivered',
-                                        noteController.text,
-                                      )
-                                    : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  disabledBackgroundColor: Colors.grey[300],
-                                ),
-                                child: const Text('Delivered'),
-                              ),
-                              ElevatedButton(
-                                onPressed: order.orderStatus == 'shipped'
-                                    ? () => _updateStatus(
-                                        context,
-                                        order.id,
-                                        'canceled',
-                                        noteController.text,
-                                      )
-                                    : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
-                                  disabledBackgroundColor: Colors.grey[300],
-                                ),
-                                child: const Text('Cancel'),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
                     ),
@@ -743,6 +764,108 @@ class _ActiveOrdersScreenState extends State<ActiveOrdersScreen> {
           Icon(icon, size: 16, color: Colors.grey),
           const SizedBox(width: 8),
           Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
+        ],
+      ),
+    );
+  }
+
+  void _showOtpWorkflow(BuildContext context, String orderId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delivery Confirmation'),
+        content: const Text(
+          'Send OTP to customer email to confirm delivery?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await Provider.of<RiderDashboardProvider>(
+                  context,
+                  listen: false,
+                ).sendDeliveryOtp(orderId);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('OTP sent to customer email')),
+                );
+                _showOtpInputDialog(context, orderId);
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: ${e.toString()}')),
+                );
+              }
+            },
+            child: const Text('Send OTP'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showOtpInputDialog(BuildContext context, String orderId) {
+    final otpController = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Enter OTP'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Enter the 6-digit OTP received by the customer.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: otpController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 24, letterSpacing: 8),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                counterText: '',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (otpController.text.length != 6) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter 6-digit OTP')),
+                );
+                return;
+              }
+              Navigator.pop(ctx);
+              try {
+                await Provider.of<RiderDashboardProvider>(
+                  context,
+                  listen: false,
+                ).verifyDeliveryOtp(orderId, otpController.text);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Order delivered successfully!')),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Verification failed: $e')),
+                );
+              }
+            },
+            child: const Text('Verify'),
+          ),
         ],
       ),
     );
